@@ -1,0 +1,70 @@
+---
+import PostCard from '@/components/PostCard.astro';
+import ScrollShader from '@/components/ScrollShader.astro';
+import TagBadge from '@/components/TagBadge.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { SITE } from '@/consts';
+import { getPosts, getTags, toArchiveItem } from '@/lib/posts';
+
+const items = (await getPosts()).map(toArchiveItem);
+const tags = (await getTags()).slice(0, 8);
+---
+
+<BaseLayout>
+  <section class="border-border/60 relative isolate overflow-hidden border-b">
+    <ScrollShader />
+
+    <div class="mx-auto flex max-w-5xl flex-col gap-5 px-4 py-24 sm:px-6 sm:py-32">
+      <h1
+        class="max-w-2xl text-3xl leading-tight font-bold tracking-tight text-balance sm:text-5xl"
+        data-anim="fade-up"
+      >
+        {SITE.title}
+      </h1>
+      <p
+        class="text-muted-foreground max-w-xl text-base sm:text-lg"
+        data-anim="fade-up"
+        data-anim-delay="0.08"
+      >
+        {SITE.description}
+      </p>
+
+      {
+        tags.length > 0 && (
+          <div
+            class="flex flex-wrap gap-1.5"
+            data-anim="fade-up"
+            data-anim-children="a"
+            data-anim-stagger="0.04"
+            data-anim-delay="0.16"
+          >
+            {tags.map((tag) => (
+              <TagBadge tag={tag.tag} count={tag.count} />
+            ))}
+          </div>
+        )
+      }
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-5xl px-4 py-12 sm:px-6" aria-labelledby="archive-heading">
+    <h2 id="archive-heading" class="text-muted-foreground mb-6 text-sm font-medium tracking-wide">
+      Archive
+      <span class="ml-1 tabular-nums">({items.length})</span>
+    </h2>
+
+    {
+      items.length === 0 ? (
+        <p class="border-border text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm">
+          <code>src/content/posts/</code> に Markdown を追加すると、ここに並びます。
+        </p>
+      ) : (
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((item, index) => (
+            <PostCard item={item} eager={index < 3} />
+          ))}
+        </div>
+      )
+    }
+  </section>
+</BaseLayout>

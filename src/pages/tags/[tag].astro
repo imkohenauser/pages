@@ -1,0 +1,43 @@
+---
+import type { GetStaticPaths } from 'astro';
+import PostCard from '@/components/PostCard.astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getPosts, getTags, toArchiveItem, type Post } from '@/lib/posts';
+import { tagSlug } from '@/lib/paths';
+
+interface Props {
+  tag: string;
+  posts: Post[];
+}
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const [tags, posts] = await Promise.all([getTags(), getPosts()]);
+
+  return tags.map(({ tag, slug }) => ({
+    params: { tag: slug },
+    props: {
+      tag,
+      // Filtered here rather than per-page so the collection is only read once.
+      posts: posts.filter((post) => post.data.tags.some((value) => tagSlug(value) === slug)),
+    },
+  }));
+};
+
+const { tag, posts } = Astro.props;
+const items = posts.map(toArchiveItem);
+---
+
+<BaseLayout title={`#${tag}`} description={`${tag} タグの記事とリンク（${items.length} 件）。`}>
+  <section class="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+    <h1 class="text-2xl font-bold tracking-tight" data-anim="fade-up">
+      #{tag}
+      <span class="text-muted-foreground ml-1 text-base font-normal tabular-nums">
+        ({items.length})
+      </span>
+    </h1>
+
+    <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {items.map((item, index) => <PostCard item={item} eager={index < 3} />)}
+    </div>
+  </section>
+</BaseLayout>

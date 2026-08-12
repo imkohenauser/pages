@@ -1,0 +1,91 @@
+---
+import { ArrowUpRight } from 'lucide-react';
+import FeaturedImage from '@/components/FeaturedImage.astro';
+import TagBadge from '@/components/TagBadge.astro';
+import { formatDate, isoDate, type ArchiveItem } from '@/lib/posts';
+
+interface Props {
+  item: ArchiveItem;
+  /** Set on the first screenful so the hero thumbnails are not lazy-loaded. */
+  eager?: boolean;
+}
+
+const { item, eager = false } = Astro.props;
+---
+
+<article
+  data-anim="fade-up"
+  data-anim-start="top 92%"
+  data-anim-duration="0.55"
+  data-external={item.external ? '' : undefined}
+  class="group border-border/60 bg-card hover:border-border hover:bg-muted/40 focus-within:border-ring relative flex flex-col gap-3 rounded-xl border p-4 transition-colors"
+>
+  {
+    item.featuredImage && (
+      <div class="bg-muted overflow-hidden rounded-lg">
+        <FeaturedImage
+          src={item.featuredImage}
+          alt=""
+          loading={eager ? 'eager' : 'lazy'}
+          class="aspect-16/9 w-full scale-[1.02] object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      </div>
+    )
+  }
+
+  <div class="flex flex-col gap-1.5">
+    <div class="text-muted-foreground flex items-center gap-2 text-xs">
+      <time datetime={isoDate(item.date)}>{formatDate(item.date)}</time>
+      {
+        item.external && (
+          <>
+            <span aria-hidden="true">/</span>
+            <span class="truncate">{item.host}</span>
+          </>
+        )
+      }
+    </div>
+
+    <h2 class="text-base leading-snug font-semibold tracking-tight">
+      {
+        /*
+        The `after:` overlay turns the whole card into one hit target while the
+        accessible name stays on a real anchor, so the tag links below (lifted
+        with `z-10`) remain separately clickable instead of being swallowed.
+      */
+      }
+      <a
+        href={item.href}
+        target={item.external ? '_blank' : undefined}
+        rel={item.external ? 'noopener noreferrer' : undefined}
+        class="after:absolute after:inset-0 after:content-[''] hover:underline focus-visible:outline-none"
+      >
+        {item.title}
+      </a>
+      {
+        item.external && (
+          <ArrowUpRight
+            className="ml-1 inline-block size-3.5 align-baseline text-muted-foreground"
+            aria-label="外部サイトを開く"
+          />
+        )
+      }
+    </h2>
+
+    {
+      item.description && (
+        <p class="text-muted-foreground line-clamp-2 text-sm">{item.description}</p>
+      )
+    }
+  </div>
+
+  {
+    item.tags.length > 0 && (
+      <div class="relative z-10 mt-auto flex flex-wrap gap-1.5 pt-1">
+        {item.tags.map((tag) => (
+          <TagBadge tag={tag} />
+        ))}
+      </div>
+    )
+  }
+</article>

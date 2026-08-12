@@ -1,0 +1,42 @@
+---
+import ThemeToggle from '@/components/ThemeToggle.astro';
+import { NAV_LINKS, SITE } from '@/consts';
+import { withBase } from '@/lib/paths';
+
+const current = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const isActive = (href: string) => {
+  const target = withBase(href).replace(/\/+$/, '') || '/';
+  return target === '/' ? current === target : current.startsWith(target);
+};
+---
+
+<header
+  class="border-border/60 bg-background/80 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40 border-b backdrop-blur-md"
+>
+  <div class="mx-auto flex h-14 max-w-5xl items-center gap-6 px-4 sm:px-6">
+    <a
+      href={withBase('/')}
+      class="text-sm font-bold tracking-tight transition-opacity hover:opacity-70"
+    >
+      {SITE.title}
+    </a>
+
+    <nav aria-label="サイト内ナビゲーション" class="flex items-center gap-1 text-sm">
+      {
+        NAV_LINKS.map((link) => (
+          <a
+            href={withBase(link.href)}
+            aria-current={isActive(link.href) ? 'page' : undefined}
+            class="text-muted-foreground hover:text-foreground aria-[current=page]:text-foreground rounded-md px-2 py-1 transition-colors aria-[current=page]:font-medium"
+          >
+            {link.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="ml-auto flex items-center gap-1">
+      <ThemeToggle />
+    </div>
+  </div>
+</header>

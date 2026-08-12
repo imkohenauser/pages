@@ -1,0 +1,30 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+import PostLayout from '@/layouts/PostLayout.astro';
+import { getRoutablePosts, type Post } from '@/lib/posts';
+
+interface Props {
+  post: Post;
+}
+
+/**
+ * Only entries without an `externalLink` get a route. Anything that points
+ * elsewhere is archive-only by design, so this is the one place that decision is
+ * enforced for URLs — the archive itself just renders whatever it is given.
+ *
+ * `[...slug]` (rest param) rather than `[slug]` so ids containing a slash, which
+ * happen when posts are nested in subdirectories, keep working.
+ */
+export const getStaticPaths: GetStaticPaths = async () => {
+  const posts = await getRoutablePosts();
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+};
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+---
+
+<PostLayout post={post}>
+  <Content />
+</PostLayout>

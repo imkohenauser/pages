@@ -1,0 +1,18 @@
+---
+import { buttonVariants } from '@/components/ui/button';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { withBase } from '@/lib/paths';
+---
+
+<BaseLayout title="404" noindex>
+  <section class="mx-auto flex max-w-xl flex-col items-start gap-4 px-4 py-32 sm:px-6">
+    <p class="text-muted-foreground font-mono text-sm">404</p>
+    <h1 class="text-2xl font-bold tracking-tight" data-anim="fade-up">
+      ページが見つかりませんでした
+    </h1>
+    <p class="text-muted-foreground text-sm">
+      URL が変更されたか、記事が外部リンクとしてアーカイブされている可能性があります。
+    </p>
+    <a href={withBase('/')} class={buttonVariants({ variant: 'outline' })}>アーカイブへ</a>
+  </section>
+</BaseLayout>

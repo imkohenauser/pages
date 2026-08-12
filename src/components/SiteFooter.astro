@@ -1,0 +1,16 @@
+---
+import { SITE } from '@/consts';
+import { withBase } from '@/lib/paths';
+---
+
+<footer class="border-border/60 mt-24 border-t">
+  <div
+    class="text-muted-foreground mx-auto flex max-w-5xl flex-col gap-2 px-4 py-8 text-xs sm:flex-row sm:items-center sm:px-6"
+  >
+    <p>{SITE.copyright}</p>
+    <nav class="flex gap-4 sm:ml-auto" aria-label="フッター">
+      <a href={withBase('/rss.xml')} class="hover:text-foreground transition-colors">RSS</a>
+      <a href={withBase('/tags')} class="hover:text-foreground transition-colors">Tags</a>
+    </nav>
+  </div>
+</footer>

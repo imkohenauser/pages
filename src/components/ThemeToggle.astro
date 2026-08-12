@@ -1,0 +1,37 @@
+---
+import { Moon, Sun } from 'lucide-react';
+import { buttonVariants } from '@/components/ui/button';
+
+/**
+ * shadcn/ui ships React components, but a theme toggle needs no React runtime —
+ * only the class list. Reusing the exported `buttonVariants` keeps it visually
+ * identical to every hydrated `<Button>` while shipping zero React to the
+ * client. Reach for `client:*` only when a component owns real state.
+ *
+ * The lucide icons are rendered on the server too: both SVGs are in the HTML and
+ * CSS decides which one is visible, so there is no swap on hydration.
+ */
+---
+
+<button
+  type="button"
+  data-theme-toggle
+  aria-label="テーマを切り替える"
+  class={buttonVariants({ variant: 'ghost', size: 'icon' })}
+>
+  <Sun className="hidden dark:block" aria-hidden="true" />
+  <Moon className="block dark:hidden" aria-hidden="true" />
+</button>
+
+<script>
+  const toggle = (button: HTMLElement) => {
+    const isDark = document.documentElement.classList.toggle('dark');
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    button.setAttribute('aria-pressed', String(isDark));
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-theme-toggle]').forEach((button) => {
+    button.addEventListener('click', () => toggle(button));
+  });
+</script>

@@ -1,0 +1,51 @@
+---
+import { Image } from 'astro:assets';
+
+interface Props {
+  src: ImageMetadata | string;
+  alt: string;
+  class?: string;
+  widths?: number[];
+  sizes?: string;
+  loading?: 'lazy' | 'eager';
+}
+
+const {
+  src,
+  alt,
+  class: className,
+  widths = [400, 800, 1200],
+  sizes = '(min-width: 768px) 50vw, 100vw',
+  loading = 'lazy',
+} = Astro.props;
+
+const isRemote = typeof src === 'string';
+---
+
+{
+  /*
+   * Local images go through astro:assets: resized, converted, and given a
+   * content-hashed filename, all at build time.
+   *
+   * Remote URLs are passed through as a plain <img>. Optimizing them would mean
+   * either `inferSize` (a build-time fetch, so a slow or dead third-party host
+   * fails the deploy) or hardcoded dimensions per post. Neither is worth it for
+   * an occasional link thumbnail — prefer colocated files for anything that
+   * matters.
+   */
+}
+{
+  isRemote ? (
+    <img src={src} alt={alt} loading={loading} decoding="async" class={className} />
+  ) : (
+    <Image
+      src={src}
+      alt={alt}
+      widths={widths}
+      sizes={sizes}
+      loading={loading}
+      decoding="async"
+      class={className}
+    />
+  )
+}

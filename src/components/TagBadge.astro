@@ -1,0 +1,18 @@
+---
+import { badgeVariants } from '@/components/ui/badge';
+import { tagPath } from '@/lib/paths';
+import { cn } from '@/lib/utils';
+
+interface Props {
+  tag: string;
+  count?: number;
+  class?: string;
+}
+
+const { tag, count, class: className } = Astro.props;
+---
+
+<a href={tagPath(tag)} class={cn(badgeVariants({ variant: 'outline' }), className)}>
+  #{tag}
+  {count !== undefined && <span class="text-muted-foreground">{count}</span>}
+</a>

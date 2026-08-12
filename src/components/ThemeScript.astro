@@ -1,0 +1,17 @@
+---
+/**
+ * Must stay inline and render before any painted markup: reading the stored
+ * theme from a bundled module would apply the class after first paint and flash
+ * the wrong background.
+ */
+---
+
+<script is:inline>
+  (() => {
+    const stored = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const isDark = stored ? stored === 'dark' : prefersDark;
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+  })();
+</script>
