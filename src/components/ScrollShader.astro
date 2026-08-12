@@ -1,0 +1,69 @@
+---
+import { cn } from '@/lib/utils';
+
+interface Props {
+  class?: string;
+  /** Alpha multiplier for the shader output. */
+  intensity?: number;
+  colorA?: string;
+  colorB?: string;
+}
+
+const { class: className, intensity = 0.32, colorA = '#0f172a', colorB = '#6d5ce7' } = Astro.props;
+---
+
+{
+  /*
+  Decoration only, so it is `aria-hidden` and `pointer-events-none`. The CSS
+  gradient underneath is the real background: it renders identically with no JS,
+  no WebGL, or a lost context, and the canvas simply layers on top when it can.
+*/
+}
+<div
+  aria-hidden="true"
+  class={cn('pointer-events-none absolute inset-0 -z-10 overflow-hidden', className)}
+>
+  <div class="from-primary/8 absolute inset-0 bg-linear-to-b via-transparent to-transparent"></div>
+  <canvas
+    data-scroll-shader
+    data-intensity={intensity}
+    data-color-a={colorA}
+    data-color-b={colorB}
+    class="block size-full opacity-0 transition-opacity duration-700 data-[ready]:opacity-100"
+  ></canvas>
+</div>
+
+<script>
+  const canvases = document.querySelectorAll<HTMLCanvasElement>('canvas[data-scroll-shader]');
+
+  if (canvases.length > 0) {
+    /*
+     * The WebGL runtime (ogl plus the shader source) is a dynamic import so it
+     * lands in its own chunk and is fetched only once a canvas is close to the
+     * viewport. Pages without a shader never pay for it.
+     */
+    const observer = new IntersectionObserver(
+      (entries, self) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          self.unobserve(entry.target);
+
+          const canvas = entry.target as HTMLCanvasElement;
+          void import('@/lib/webgl/scroll-shader').then(({ mountScrollShader }) => {
+            const handle = mountScrollShader(canvas, {
+              intensity: Number(canvas.dataset.intensity ?? 0.32),
+              colorA: canvas.dataset.colorA,
+              colorB: canvas.dataset.colorB,
+            });
+            if (!handle) return;
+            canvas.dataset.ready = '';
+            document.addEventListener('astro:before-swap', () => handle.dispose(), { once: true });
+          });
+        }
+      },
+      { rootMargin: '200px' },
+    );
+
+    canvases.forEach((canvas) => observer.observe(canvas));
+  }
+</script>
