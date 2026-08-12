@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Format
+        run: pnpm run format:check
+
+      # `astro check` type-checks .astro templates and the content collection
+      # schema, so a typo in frontmatter fails here rather than in production.
+      - name: Types
+        run: pnpm run check
+
+      - name: Build
+        run: pnpm run build

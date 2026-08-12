@@ -1,0 +1,48 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# A queued deploy should replace the running one rather than pile up.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # Resolves the published URL for this repository: `origin` is
+      # https://<user>.github.io and `base_path` is `/` for a user page or
+      # `/<repo>` for a project page. Feeding both into the build is what lets
+      # astro.config.mjs stay free of hardcoded URLs.
+      - name: Resolve Pages URL
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Build
+        uses: withastro/action@v6
+        with:
+          node-version: 24
+        env:
+          SITE_URL: ${{ steps.pages.outputs.origin }}
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
