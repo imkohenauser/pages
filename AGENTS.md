@@ -29,6 +29,8 @@ Use the skills under `.agents/skills/` according to the task, and read the selec
 
 ### Shared constraints
 
+- Keep motion consistent across the site.
+- Centralize motion values in a shared motion-token file instead of defining them per component.
 - Accessibility takes precedence over decorative motion. Never make motion the only indication of a state change.
 - Prefer `transform` and `opacity`; do not animate layout properties when a composited alternative exists.
 - Name transition properties explicitly. Do not use `transition: all`.
