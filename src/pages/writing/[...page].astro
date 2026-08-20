@@ -1,6 +1,5 @@
 ---
 import type { GetStaticPaths } from 'astro';
-import Header from '../../components/Header.astro';
 import List from '../../components/List.astro';
 import Base from '../../layouts/Base.astro';
 import { getPosts, type Post } from '../../lib/posts';
@@ -22,7 +21,6 @@ const { page } = Astro.props;
 ---
 
 <Base title="Writing" description="Writing">
-  <Header />
   <main>
     <h1>Writing</h1>
     <List posts={page.data} />

@@ -2,7 +2,6 @@
 import { Image } from 'astro:assets';
 import { render } from 'astro:content';
 import type { GetStaticPaths } from 'astro';
-import Header from '../../components/Header.astro';
 import Base from '../../layouts/Base.astro';
 import { getPosts, type Post } from '../../lib/posts';
 import { path } from '../../lib/path';
@@ -31,7 +30,6 @@ const format = new Intl.DateTimeFormat('ja-JP');
 ---
 
 <Base title={post.data.title} description={post.data.description}>
-  <Header />
   <main>
     <article>
       <header>

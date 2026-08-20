@@ -1,4 +1,17 @@
+---
+import { projects } from '../../data/site';
+---
+
 <section class="projects" aria-labelledby="projects-title">
   <h2 id="projects-title">Projects</h2>
-  <slot />
+  <ul>
+    {projects.map((project) => (
+      <li>
+        <h3>
+          <a href={project.url}>{project.name} ↗</a>
+        </h3>
+        <p>{project.text}</p>
+      </li>
+    ))}
+  </ul>
 </section>

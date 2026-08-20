@@ -1,45 +1,18 @@
 ---
 import Base from '../layouts/Base.astro';
-import Header from '../components/Header.astro';
-import List from '../components/List.astro';
+import Hero from '../components/home/Hero.astro';
+import ProjectsSection from '../components/home/ProjectsSection.astro';
+import WritingSection from '../components/home/WritingSection.astro';
 import { getPosts } from '../lib/posts';
-import { path } from '../lib/path';
-import { projects, site } from '../data/site';
+import { site } from '../data/site';
 
 const posts = (await getPosts()).slice(0, 10);
 ---
 
 <Base description={site.bio}>
-  <Header />
   <main>
-    <header>
-      <div>
-        <h1>{site.name}</h1>
-        <p>{site.bio}</p>
-        <a href={path('/writing/')}>Writing →</a>
-      </div>
-      {site.avatar && (
-        <img src={site.avatar} alt="" />
-      )}
-    </header>
-
-    <section aria-labelledby="writing-title">
-      <h2 id="writing-title">Writing</h2>
-      <List posts={posts} />
-    </section>
-
-    <section aria-labelledby="projects-title">
-      <h2 id="projects-title">Projects</h2>
-      <ul>
-        {projects.map((project) => (
-          <li>
-            <h3>
-              <a href={project.url}>{project.name} ↗</a>
-            </h3>
-            <p>{project.text}</p>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <Hero title={site.title} description={site.bio} />
+    <WritingSection posts={posts} />
+    <ProjectsSection />
   </main>
 </Base>
