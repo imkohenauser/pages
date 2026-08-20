@@ -1,65 +1,42 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { globSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { parse as parseYaml } from 'yaml';
+import { contentEntryId } from './content-id';
+import { writingSitemapSchema } from './content-schema';
 
-function extractFrontmatter(text: string) {
+const writingDir = fileURLToPath(new URL('../content/writing', import.meta.url));
+
+function extractFrontmatter(text: string, filePath: string) {
   const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
-  return match?.[1];
-}
-
-function parseYamlLineValue(raw: string) {
-  const value = raw.trim();
-  if (value === '' || value.startsWith('#')) {
-    return null;
-  }
-
-  const quote = value[0];
-  if (quote === '"' || quote === "'") {
-    const end = value.indexOf(quote, 1);
-    return end === -1 ? value.slice(1) : value.slice(1, end);
-  }
-
-  const unquoted = value.split(/\s+#/, 2)[0].trim();
-  if (unquoted === '' || /^null$/i.test(unquoted) || unquoted === '~') {
-    return null;
-  }
-
-  return unquoted;
-}
-
-function fieldValue(frontmatter: string, key: string) {
-  const match = frontmatter.match(new RegExp(`^${key}:[ \\t]*(.*)$`, 'm'));
   if (!match) {
-    return undefined;
+    throw new Error(`Missing YAML frontmatter in ${filePath}`);
   }
-  return parseYamlLineValue(match[1]);
+  return match[1];
 }
 
-function writingFrontmatter(writingDir = './src/content/writing') {
-  return readdirSync(writingDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .flatMap((entry) => {
-      try {
-        const text = readFileSync(join(writingDir, entry.name, 'index.md'), 'utf8');
-        const frontmatter = extractFrontmatter(text);
-        return frontmatter === undefined ? [] : [{ slug: entry.name, frontmatter }];
-      } catch {
-        return [];
-      }
-    });
+function writingSitemapFields(filePath: string) {
+  const text = readFileSync(filePath, 'utf8');
+  const parsed = writingSitemapSchema.safeParse(
+    parseYaml(extractFrontmatter(text, filePath)) ?? {},
+  );
+  if (!parsed.success) {
+    const details = parsed.error.issues
+      .map((issue) => `${issue.path.join('.') || 'frontmatter'}: ${issue.message}`)
+      .join('; ');
+    throw new Error(`Invalid writing frontmatter in ${filePath}: ${details}`);
+  }
+  return parsed.data;
 }
 
-function hasNoindex(frontmatter: string) {
-  return fieldValue(frontmatter, 'noindex') === 'true';
+function excludedWritingSlugs() {
+  return globSync('**/*.md', { cwd: writingDir }).flatMap((entry) => {
+    const data = writingSitemapFields(join(writingDir, entry));
+    return data.noindex || data.canonicalUrl ? [contentEntryId(entry)] : [];
+  });
 }
 
-function hasCanonicalUrl(frontmatter: string) {
-  const value = fieldValue(frontmatter, 'canonicalUrl');
-  return value !== undefined && value !== null && value !== '';
-}
-
-const excludedSlugs = writingFrontmatter()
-  .filter(({ frontmatter }) => hasNoindex(frontmatter) || hasCanonicalUrl(frontmatter))
-  .map(({ slug }) => slug);
+const excludedSlugs = excludedWritingSlugs();
 
 export function includeInSitemap(page: string) {
   const { pathname } = new URL(page);

@@ -1,9 +1,8 @@
 import { defineCollection, type SchemaContext } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
-
-const empty = (value: unknown) =>
-  value === '' || value === null ? undefined : value;
+import { contentEntryId } from './lib/content-id';
+import { empty, writingSitemapSchema } from './lib/content-schema';
 
 const featuredImageAlt = (data: {
   featuredImage?: unknown;
@@ -23,7 +22,7 @@ const markdownLoader = (base: string) =>
   glob({
     pattern: '**/*.md',
     base,
-    generateId: ({ entry }) => entry.replace(/(?:\/index)?\.md$/, ''),
+    generateId: ({ entry }) => contentEntryId(entry),
   });
 
 const entryFields = ({ image }: SchemaContext) => ({
@@ -44,8 +43,7 @@ const writing = defineCollection({
       .object({
         ...entryFields(context),
         externalUrl: z.preprocess(empty, z.url().optional()),
-        canonicalUrl: z.preprocess(empty, z.url().optional()),
-        noindex: z.boolean().default(false),
+        ...writingSitemapSchema.shape,
       })
       .refine(featuredImageAlt, {
         message: 'featuredImageAlt is required when featuredImage is set',

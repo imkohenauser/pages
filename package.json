@@ -23,7 +23,8 @@
     "@astrojs/sitemap": "3.7.3",
     "@fontsource/line-seed-jp": "5.3.0",
     "@fontsource/michroma": "5.3.0",
-    "astro": "7.2.1"
+    "astro": "7.2.1",
+    "yaml": "2.9.0"
   },
   "devDependencies": {
     "@astrojs/check": "0.9.10",

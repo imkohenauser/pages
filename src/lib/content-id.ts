@@ -1,5 +1,9 @@
 export const reservedSlugs = ['writing', 'posts', 'projects'] as const;
 
+export function contentEntryId(entry: string) {
+  return entry.replaceAll('\\', '/').replace(/(?:\/index)?\.md$/, '');
+}
+
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 const kindLabel = {
