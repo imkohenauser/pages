@@ -1,6 +1,6 @@
 ---
 name: web-naming-conventions
-description: Choose, review, or safely rename identifiers, files, directories, assets, routes, and related names when naming is a primary part of a web-project task. Do not use merely because ordinary implementation introduces names.
+description: Choose, review, or safely rename web-project identifiers, paths, assets, routes, and public contracts. Use when the task is primarily about naming; do not invoke for ordinary implementation that merely introduces names.
 ---
 
 # Web Naming Conventions

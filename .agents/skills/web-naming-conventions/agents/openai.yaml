@@ -1,0 +1,7 @@
+interface:
+  display_name: "Web Naming Conventions"
+  short_description: "Choose consistent and safe names for web projects"
+  default_prompt: "Use $web-naming-conventions to review these web-project names and recommend safe, consistent alternatives."
+
+policy:
+  allow_implicit_invocation: true
