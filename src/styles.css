@@ -15,16 +15,40 @@
   --text-2xl: 1.5rem;
   --text-3xl: 2rem;
 
-  --color-text: #262626;
-  --color-text-muted: #525252;
-  --color-canvas: #fafafa;
-  --color-surface: #f5f5f5;
-  --color-border: #e5e5e5;
-  --color-border-strong: #d4d4d4;
-  --color-inverse: #262626;
-  --color-inverse-raised: #404040;
-  --color-text-inverse: #fafafa;
-  --color-text-inverse-muted: #e5e5e5;
+  --neutral-50: #fafafa;
+  --neutral-100: #f5f5f5;
+  --neutral-200: #e5e5e5;
+  --neutral-300: #d4d4d4;
+  --neutral-400: #a3a3a3;
+  --neutral-500: #737373;
+  --neutral-600: #525252;
+  --neutral-700: #404040;
+  --neutral-800: #262626;
+  --neutral-900: #171717;
+  --neutral-950: #0a0a0a;
+
+  --sky-50: #f3fafd;
+  --sky-100: #e6f4fb;
+  --sky-200: #c6e4f5;
+  --sky-300: #9dd0ef;
+  --sky-400: #62b2ea;
+  --sky-500: #3b9fe2;
+  --sky-600: #2389dc;
+  --sky-700: #1268c8;
+  --sky-800: #0f4fa8;
+  --sky-900: #0b3f8f;
+  --sky-950: #082f6b;
+
+  --color-text: var(--neutral-800);
+  --color-text-muted: var(--neutral-600);
+  --color-canvas: var(--neutral-50);
+  --color-surface: var(--neutral-100);
+  --color-border: var(--neutral-200);
+  --color-border-strong: var(--neutral-300);
+  --color-inverse: var(--neutral-800);
+  --color-inverse-raised: var(--neutral-700);
+  --color-text-inverse: var(--neutral-50);
+  --color-text-inverse-muted: var(--neutral-200);
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
