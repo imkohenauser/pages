@@ -16,15 +16,15 @@ const posts = (await getPosts()).slice(0, 10);
       <div>
         <h1>{site.name}</h1>
         <p>{site.bio}</p>
-        <a href={path('/writting/')}>Writting →</a>
+        <a href={path('/writing/')}>Writing →</a>
       </div>
       {site.avatar && (
         <img src={site.avatar} alt="" />
       )}
     </header>
 
-    <section aria-labelledby="writting-title">
-      <h2 id="writting-title">Writting</h2>
+    <section aria-labelledby="writing-title">
+      <h2 id="writing-title">Writing</h2>
       <List posts={posts} />
     </section>
 

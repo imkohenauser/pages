@@ -1,8 +1,5 @@
 ---
 import type { GetStaticPaths } from 'astro';
-import Header from '../../components/Header.astro';
-import List from '../../components/List.astro';
-import Base from '../../layouts/Base.astro';
 import { getPosts, type Post } from '../../lib/posts';
 import { path } from '../../lib/path';
 
@@ -13,25 +10,17 @@ interface Props {
   page: {
     data: Post[];
     currentPage: number;
-    lastPage: number;
-    url: { prev?: string; next?: string };
   };
 }
 
 const { page } = Astro.props;
----
+const destination = page.currentPage === 1
+  ? path('/writing/')
+  : path(`/writing/${page.currentPage}/`);
 
-<Base title="Writting" description="Writting">
-  <Header />
-  <main>
-    <h1>Writting</h1>
-    <List posts={page.data} />
-    {page.lastPage > 1 && (
-      <nav aria-label="Pagination">
-        <span>{page.url.prev && <a href={path(page.url.prev)}>← Prev</a>}</span>
-        <span>{page.currentPage} / {page.lastPage}</span>
-        <span>{page.url.next && <a href={path(page.url.next)}>Next →</a>}</span>
-      </nav>
-    )}
-  </main>
-</Base>
+if (!destination.startsWith('/')) {
+  throw new Error(`Expected an absolute redirect path, received: ${destination}`);
+}
+
+return Astro.redirect(destination, 301);
+---

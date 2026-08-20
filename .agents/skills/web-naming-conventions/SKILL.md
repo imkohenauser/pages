@@ -1,6 +1,6 @@
 ---
 name: web-naming-conventions
-description: Choose, review, or safely rename identifiers, files, directories, assets, routes, and related names in web projects. Use when implementing or reviewing naming, or when defining a project's naming conventions.
+description: Choose, review, or safely rename identifiers, files, directories, assets, routes, and related names when naming is a primary part of a web-project task. Do not use merely because ordinary implementation introduces names.
 ---
 
 # Web Naming Conventions
@@ -11,9 +11,10 @@ Choose names that communicate domain meaning and remain consistent with the proj
 
 1. Inspect the repository's explicit rules, tooling, nearby code, and established vocabulary.
 2. Identify whether the name is internal or a contract used by URLs, APIs, packages, analytics, tests, storage, or external consumers.
-3. Prefer, in order: explicit project rules; compatibility requirements; consistent local usage; repository-wide usage; the defaults in [references/conventions.md](references/conventions.md).
+3. Prefer, in order: explicit project rules; compatibility requirements; consistent local usage; repository-wide usage; the defaults in [references/conventions.md](references/conventions.md). Read the reference only when the repository does not settle the choice or the task reviews conventions across multiple naming surfaces.
 4. Recommend one best name. Mention alternatives only when they represent a meaningful semantic choice.
-5. For implementation requests, update all in-scope references and run relevant checks. For review requests, report findings without editing.
+5. For an implementation, update all in-scope references and run relevant checks. When changing an existing name, also read and follow [references/rename-safety.md](references/rename-safety.md).
+6. For a review, do not edit. For each material issue, report the current name and location, the problem, the recommended name, and any compatibility or migration risk.
 
 ## Constraints
 
@@ -21,6 +22,3 @@ Choose names that communicate domain meaning and remain consistent with the proj
 - Name the domain concept, role, result, or contract rather than its current implementation.
 - Do not normalize unrelated names or expand a rename beyond the requested scope.
 - Treat public names and dynamically constructed references as migration risks. Search for consumers before changing them.
-- Do not derive accessible text such as image `alt` text from filenames; name files and author accessibility text for their different purposes.
-
-Read [references/conventions.md](references/conventions.md) when the repository does not settle the choice or when reviewing conventions across multiple naming surfaces.

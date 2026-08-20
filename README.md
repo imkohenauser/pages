@@ -2,10 +2,17 @@
 
 Astro で構築する Markdown 投稿型の個人サイトです。
 
+## Requirements
+
+- Node.js 24.19.0
+- npm 11.19.0
+
+Volta は `package.json` の pin を自動的に使用します。その他のバージョンマネージャーは `.node-version` を使用できます。
+
 ## Commands
 
 ```sh
-npm install
+npm ci
 npm run dev
 npm run build
 npm run check

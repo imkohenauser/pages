@@ -1,0 +1,37 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Header from '../../components/Header.astro';
+import List from '../../components/List.astro';
+import Base from '../../layouts/Base.astro';
+import { getPosts, type Post } from '../../lib/posts';
+import { path } from '../../lib/path';
+
+export const getStaticPaths = (async ({ paginate }) =>
+  paginate(await getPosts(), { pageSize: 10 })) satisfies GetStaticPaths;
+
+interface Props {
+  page: {
+    data: Post[];
+    currentPage: number;
+    lastPage: number;
+    url: { prev?: string; next?: string };
+  };
+}
+
+const { page } = Astro.props;
+---
+
+<Base title="Writing" description="Writing">
+  <Header />
+  <main>
+    <h1>Writing</h1>
+    <List posts={page.data} />
+    {page.lastPage > 1 && (
+      <nav aria-label="Pagination">
+        <span>{page.url.prev && <a href={path(page.url.prev)}>← Prev</a>}</span>
+        <span>{page.currentPage} / {page.lastPage}</span>
+        <span>{page.url.next && <a href={path(page.url.next)}>Next →</a>}</span>
+      </nav>
+    )}
+  </main>
+</Base>
