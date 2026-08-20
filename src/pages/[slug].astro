@@ -1,0 +1,27 @@
+---
+import type { GetStaticPaths } from 'astro';
+import PostLayout from '../layouts/PostLayout.astro';
+import { getPosts, type Post } from '../lib/posts';
+
+export const getStaticPaths = (async () => {
+  const posts = (await getPosts()).filter((post) => !post.data.externalUrl);
+  return posts.map((post, index) => ({
+    params: { slug: post.id },
+    props: {
+      post,
+      older: posts[index + 1],
+      newer: posts[index - 1],
+    },
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  post: Post;
+  older?: Post;
+  newer?: Post;
+}
+
+const { post, older, newer } = Astro.props;
+---
+
+<PostLayout post={post} older={older} newer={newer} />

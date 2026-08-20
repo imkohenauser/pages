@@ -17,10 +17,12 @@ const posts = defineCollection({
       description: z.string(),
       publishedAt: z.coerce.date(),
       updatedAt: z.preprocess(empty, z.coerce.date().optional()),
-      tags: z.array(z.string()).default([]),
       featuredImage: z.preprocess(empty, image().optional()),
       featuredImageAlt: z.preprocess(empty, z.string().optional()),
       externalUrl: z.preprocess(empty, z.url().optional()),
+      lang: z.string().default('ja'),
+      canonicalUrl: z.preprocess(empty, z.url().optional()),
+      noindex: z.boolean().default(false),
       draft: z.boolean().default(false),
     })
     .refine((data) => !data.featuredImage || data.featuredImageAlt, {

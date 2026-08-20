@@ -1,0 +1,83 @@
+---
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import JsonLd from '../components/JsonLd.astro';
+import { path } from '../lib/path';
+import { postHref, type Post } from '../lib/posts';
+import {
+  blogPostingJsonLd,
+  postCanonicalUrl,
+  postImageAlt,
+  postImageUrl,
+  postModifiedAt,
+} from '../lib/seo';
+import Base from './Base.astro';
+
+interface Props {
+  post: Post;
+  older?: Post;
+  newer?: Post;
+}
+
+const { post, older, newer } = Astro.props;
+const { Content } = await render(post);
+const locale = post.data.lang === 'ja' ? 'ja-JP' : post.data.lang;
+const format = new Intl.DateTimeFormat(locale);
+const modifiedAt = postModifiedAt(post);
+const showModified = modifiedAt.valueOf() !== post.data.publishedAt.valueOf();
+---
+
+<Base
+  title={post.data.title}
+  description={post.data.description}
+  canonicalUrl={postCanonicalUrl(post)}
+  noindex={post.data.noindex}
+  type="article"
+  image={postImageUrl(post)}
+  imageAlt={postImageAlt(post)}
+  publishedTime={post.data.publishedAt}
+  modifiedTime={modifiedAt}
+  lang={post.data.lang}
+>
+  <JsonLd slot="head" data={blogPostingJsonLd(post)} />
+  <main>
+    <article>
+      <header>
+        <h1>{post.data.title}</h1>
+        <p>{post.data.description}</p>
+        <p>
+          <time datetime={post.data.publishedAt.toISOString()}>
+            {format.format(post.data.publishedAt)}
+          </time>
+          {showModified && (
+            <>
+              {' '}
+              <span>
+                (updated{' '}
+                <time datetime={modifiedAt.toISOString()}>
+                  {format.format(modifiedAt)}
+                </time>)
+              </span>
+            </>
+          )}
+        </p>
+      </header>
+
+      {post.data.featuredImage && (
+        <Image
+          src={post.data.featuredImage}
+          alt={post.data.featuredImageAlt ?? ''}
+        />
+      )}
+
+      <div>
+        <Content />
+      </div>
+    </article>
+
+    <nav aria-label="Posts">
+      <span>{older && <a href={path(postHref(older))}>← {older.data.title}</a>}</span>
+      <span>{newer && <a href={path(postHref(newer))}>{newer.data.title} →</a>}</span>
+    </nav>
+  </main>
+</Base>

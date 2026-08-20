@@ -1,0 +1,25 @@
+---
+import { path } from '../lib/path';
+import { absoluteUrl } from '../lib/seo';
+
+interface Props {
+  to: string;
+}
+
+const { to } = Astro.props;
+const href = path(to);
+---
+
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Redirecting</title>
+    <meta http-equiv="refresh" content={`0;url=${href}`} />
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href={absoluteUrl(to)} />
+  </head>
+  <body>
+    <a href={href}>Redirecting</a>
+  </body>
+</html>

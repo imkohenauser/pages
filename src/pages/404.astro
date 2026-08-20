@@ -2,7 +2,12 @@
 import Base from '../layouts/Base.astro';
 ---
 
-<Base title="404" description="Page not found">
+<Base
+  title="Page not found"
+  description="This page does not exist."
+  canonicalUrl={null}
+  noindex
+>
   <main>
     <h1>404</h1>
     <p>Page not found.</p>

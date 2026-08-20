@@ -1,15 +1,18 @@
 ---
 import Base from '../layouts/Base.astro';
 import Hero from '../components/home/Hero.astro';
+import JsonLd from '../components/JsonLd.astro';
 import ProjectsSection from '../components/home/ProjectsSection.astro';
 import WritingSection from '../components/home/WritingSection.astro';
 import { getPosts } from '../lib/posts';
 import { site } from '../data/site';
+import { homeJsonLd } from '../lib/seo';
 
 const posts = (await getPosts()).slice(0, 10);
 ---
 
 <Base description={site.bio}>
+  <JsonLd slot="head" data={homeJsonLd()} />
   <main>
     <Hero title={site.title} description={site.bio} />
     <WritingSection posts={posts} />

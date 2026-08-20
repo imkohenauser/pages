@@ -2,6 +2,7 @@
 import type { GetStaticPaths } from 'astro';
 import List from '../../components/List.astro';
 import Base from '../../layouts/Base.astro';
+import { site } from '../../data/site';
 import { getPosts, type Post } from '../../lib/posts';
 import { path } from '../../lib/path';
 
@@ -18,9 +19,14 @@ interface Props {
 }
 
 const { page } = Astro.props;
+const paged = page.currentPage > 1;
+const title = paged ? `Writing (page ${page.currentPage})` : 'Writing';
+const description = paged
+  ? `Writing by ${site.name}, page ${page.currentPage}.`
+  : `Writing by ${site.name}.`;
 ---
 
-<Base title="Writing" description="Writing">
+<Base title={title} description={description}>
   <main>
     <h1>Writing</h1>
     <List posts={page.data} />

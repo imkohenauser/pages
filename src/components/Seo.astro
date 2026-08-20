@@ -1,0 +1,73 @@
+---
+import { site } from '../data/site';
+import { path } from '../lib/path';
+import {
+  absoluteUrl,
+  documentTitle,
+  ogLocale,
+  toAbsoluteUrl,
+} from '../lib/seo';
+
+interface Props {
+  title?: string;
+  description: string;
+  canonical?: string;
+  noindex?: boolean;
+  type?: 'website' | 'article';
+  image?: string;
+  imageAlt?: string;
+  publishedTime?: Date;
+  modifiedTime?: Date;
+  lang?: string;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  noindex = false,
+  type = 'website',
+  image = absoluteUrl(site.ogImage),
+  imageAlt = site.ogImageAlt,
+  publishedTime,
+  modifiedTime,
+  lang = site.lang,
+} = Astro.props;
+
+const pageTitle = documentTitle(title);
+const imageUrl = toAbsoluteUrl(image);
+const locale = ogLocale(lang);
+---
+
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width" />
+<title>{pageTitle}</title>
+<meta name="description" content={description} />
+{noindex && <meta name="robots" content="noindex" />}
+{canonical && <link rel="canonical" href={canonical} />}
+<link rel="icon" href={path('/favicon.ico')} sizes="32x32 48x48" />
+<link rel="icon" href={path('/favicon.svg')} type="image/svg+xml" />
+<link rel="apple-touch-icon" href={path('/apple-touch-icon.png')} />
+<link rel="sitemap" href={path('/sitemap-index.xml')} />
+<link
+  rel="alternate"
+  type="application/rss+xml"
+  title={site.name}
+  href={absoluteUrl('/rss.xml')}
+/>
+<meta property="og:title" content={pageTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:type" content={type} />
+{canonical && <meta property="og:url" content={canonical} />}
+<meta property="og:image" content={imageUrl} />
+<meta property="og:image:alt" content={imageAlt} />
+<meta property="og:site_name" content={site.name} />
+{locale && <meta property="og:locale" content={locale} />}
+{type === 'article' && publishedTime && (
+  <meta property="article:published_time" content={publishedTime.toISOString()} />
+)}
+{type === 'article' && modifiedTime && (
+  <meta property="article:modified_time" content={modifiedTime.toISOString()} />
+)}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="generator" content={Astro.generator} />
