@@ -1,4 +1,4 @@
-# Agents
+# Guidance for AI Agents Working in This Repo
 
 ## Repository naming and verification
 

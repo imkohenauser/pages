@@ -1,4 +1,31 @@
+# Dependencies
 node_modules/
-dist/
+
+# Generated types
 .astro/
+
+# Build output
+dist/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
