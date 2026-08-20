@@ -1,0 +1,15 @@
+---
+import type { Post } from '../../lib/posts';
+import List from '../List.astro';
+
+interface Props {
+  posts: Post[];
+}
+
+const { posts } = Astro.props;
+---
+
+<section class="writing" aria-labelledby="writing-title">
+  <h2 id="writing-title">Writing</h2>
+  <List posts={posts} />
+</section>
