@@ -3,16 +3,16 @@ import type { GetStaticPaths } from 'astro';
 import List from '../../components/List.astro';
 import Base from '../../layouts/Base.astro';
 import { site } from '../../data/site';
-import { postListItem } from '../../lib/list';
-import { getPosts, type Post } from '../../lib/posts';
+import { writingListItem } from '../../lib/list';
+import { getWriting, type Writing } from '../../lib/writing';
 import { path } from '../../lib/path';
 
 export const getStaticPaths = (async ({ paginate }) =>
-  paginate(await getPosts(), { pageSize: 10 })) satisfies GetStaticPaths;
+  paginate(await getWriting(), { pageSize: 10 })) satisfies GetStaticPaths;
 
 interface Props {
   page: {
-    data: Post[];
+    data: Writing[];
     currentPage: number;
     lastPage: number;
     url: { prev?: string; next?: string };
@@ -30,7 +30,7 @@ const description = paged
 <Base title={title} description={description}>
   <main>
     <h1>Writing</h1>
-    <List class="writing" items={page.data.map(postListItem)} />
+    <List class="writing" items={page.data.map(writingListItem)} />
     {page.lastPage > 1 && (
       <nav aria-label="Pagination">
         <span>{page.url.prev && <a href={path(page.url.prev)}>← Prev</a>}</span>

@@ -1,7 +1,7 @@
 import { externalSource, type ExternalSource } from './external-source';
 import { path } from './path';
-import { postHref, type Post } from './posts';
 import type { Project } from './projects';
+import { writingHref, type Writing } from './writing';
 
 export type MarkImage = string | { src: string };
 
@@ -25,13 +25,13 @@ export type ListItem = {
   links?: ListLink[];
 };
 
-export function postListItem(post: Post): ListItem {
-  const external = Boolean(post.data.externalUrl);
-  const href = external ? postHref(post) : path(postHref(post));
+export function writingListItem(entry: Writing): ListItem {
+  const external = Boolean(entry.data.externalUrl);
+  const href = external ? writingHref(entry) : path(writingHref(entry));
 
   return {
-    title: post.data.title,
-    publishedAt: post.data.publishedAt,
+    title: entry.data.title,
+    publishedAt: entry.data.publishedAt,
     href,
     external,
   };

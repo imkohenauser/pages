@@ -20,7 +20,7 @@ npm run check
 
 ## Content
 
-投稿は `src/content/posts/<slug>/index.md` に置きます。同じディレクトリの画像は相対パスで参照できます。公開 URL は `/{slug}/` です（本番では `base` が前置されます）。`writing`、`posts`、`projects` は予約済みのためスラッグに使えません。
+投稿は `src/content/writing/<slug>/index.md` に置きます。同じディレクトリの画像は相対パスで参照できます。公開 URL は `/{slug}/` です（本番では `base` が前置されます）。`/posts/{slug}/` は互換のため `/{slug}/` へリダイレクトします。`writing`、`posts`、`projects` は予約済みのためスラッグに使えません。
 
 `externalUrl` がある投稿は外部リンクとして一覧にだけ表示され、投稿ページを生成しません。ホスト名から Medium / Zenn / GitHub を判定して一覧のマークを出します。
 

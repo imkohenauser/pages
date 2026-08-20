@@ -1,12 +1,12 @@
 ---
 import type { GetStaticPaths } from 'astro';
 import Redirect from '../../components/Redirect.astro';
-import { getPosts } from '../../lib/posts';
+import { getWriting } from '../../lib/writing';
 
 export const getStaticPaths = (async () => {
-  const posts = (await getPosts()).filter((post) => !post.data.externalUrl);
-  return posts.map((post) => ({
-    params: { slug: post.id },
+  const writing = (await getWriting()).filter((entry) => !entry.data.externalUrl);
+  return writing.map((entry) => ({
+    params: { slug: entry.id },
   }));
 }) satisfies GetStaticPaths;
 

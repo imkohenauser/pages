@@ -4,12 +4,12 @@ import Hero from '../components/home/Hero.astro';
 import JsonLd from '../components/JsonLd.astro';
 import ProjectsSection from '../components/home/ProjectsSection.astro';
 import WritingSection from '../components/home/WritingSection.astro';
-import { getPosts } from '../lib/posts';
+import { getWriting } from '../lib/writing';
 import { getProjects } from '../lib/projects';
 import { site } from '../data/site';
 import { homeJsonLd } from '../lib/seo';
 
-const posts = (await getPosts()).slice(0, 10);
+const writing = (await getWriting()).slice(0, 10);
 const projects = await getProjects();
 ---
 
@@ -17,7 +17,7 @@ const projects = await getProjects();
   <JsonLd slot="head" data={homeJsonLd()} />
   <main>
     <Hero title={site.title} description={site.bio} />
-    <WritingSection posts={posts} />
+    <WritingSection writing={writing} />
     <ProjectsSection projects={projects} />
   </main>
 </Base>

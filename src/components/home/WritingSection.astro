@@ -1,16 +1,16 @@
 ---
-import type { Post } from '../../lib/posts';
-import { postListItem } from '../../lib/list';
+import { writingListItem } from '../../lib/list';
 import List from '../List.astro';
+import type { Writing } from '../../lib/writing';
 
 interface Props {
-  posts: Post[];
+  writing: Writing[];
 }
 
-const { posts } = Astro.props;
+const { writing } = Astro.props;
 ---
 
 <section class="writing" aria-labelledby="writing-title">
   <h2 id="writing-title">Writing</h2>
-  <List class="writing" items={posts.map(postListItem)} />
+  <List class="writing" items={writing.map(writingListItem)} />
 </section>

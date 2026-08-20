@@ -37,8 +37,8 @@ const entryFields = ({ image }: SchemaContext) => ({
   draft: z.boolean().default(false),
 });
 
-const posts = defineCollection({
-  loader: markdownLoader('./src/content/posts'),
+const writing = defineCollection({
+  loader: markdownLoader('./src/content/writing'),
   schema: (context) =>
     z
       .object({
@@ -84,4 +84,4 @@ const projects = defineCollection({
       }),
 });
 
-export const collections = { posts, projects };
+export const collections = { writing, projects };

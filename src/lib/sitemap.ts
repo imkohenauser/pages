@@ -34,12 +34,12 @@ function fieldValue(frontmatter: string, key: string) {
   return parseYamlLineValue(match[1]);
 }
 
-function postFrontmatter(postsDir = './src/content/posts') {
-  return readdirSync(postsDir, { withFileTypes: true })
+function writingFrontmatter(writingDir = './src/content/writing') {
+  return readdirSync(writingDir, { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
     .flatMap((entry) => {
       try {
-        const text = readFileSync(join(postsDir, entry.name, 'index.md'), 'utf8');
+        const text = readFileSync(join(writingDir, entry.name, 'index.md'), 'utf8');
         const frontmatter = extractFrontmatter(text);
         return frontmatter === undefined ? [] : [{ slug: entry.name, frontmatter }];
       } catch {
@@ -57,7 +57,7 @@ function hasCanonicalUrl(frontmatter: string) {
   return value !== undefined && value !== null && value !== '';
 }
 
-const excludedSlugs = postFrontmatter()
+const excludedSlugs = writingFrontmatter()
   .filter(({ frontmatter }) => hasNoindex(frontmatter) || hasCanonicalUrl(frontmatter))
   .map(({ slug }) => slug);
 

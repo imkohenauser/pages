@@ -1,27 +1,27 @@
 ---
 import type { GetStaticPaths } from 'astro';
-import PostLayout from '../layouts/PostLayout.astro';
-import { getPosts, type Post } from '../lib/posts';
+import WritingLayout from '../layouts/WritingLayout.astro';
+import { getWriting, type Writing } from '../lib/writing';
 
 export const getStaticPaths = (async () => {
-  const posts = (await getPosts()).filter((post) => !post.data.externalUrl);
-  return posts.map((post, index) => ({
-    params: { slug: post.id },
+  const writing = (await getWriting()).filter((entry) => !entry.data.externalUrl);
+  return writing.map((entry, index) => ({
+    params: { slug: entry.id },
     props: {
-      post,
-      older: posts[index + 1],
-      newer: posts[index - 1],
+      writing: entry,
+      older: writing[index + 1],
+      newer: writing[index - 1],
     },
   }));
 }) satisfies GetStaticPaths;
 
 interface Props {
-  post: Post;
-  older?: Post;
-  newer?: Post;
+  writing: Writing;
+  older?: Writing;
+  newer?: Writing;
 }
 
-const { post, older, newer } = Astro.props;
+const { writing, older, newer } = Astro.props;
 ---
 
-<PostLayout post={post} older={older} newer={newer} />
+<WritingLayout writing={writing} older={older} newer={newer} />
