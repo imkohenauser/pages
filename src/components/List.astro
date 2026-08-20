@@ -21,7 +21,11 @@ const format = new Intl.DateTimeFormat('ja-JP');
         <time datetime={post.data.publishedAt.toISOString()}>
           {format.format(post.data.publishedAt)}
         </time>
-        <a href={href}>
+        <a
+          href={href}
+          target={external ? '_blank' : undefined}
+          rel={external ? 'noopener noreferrer' : undefined}
+        >
           {post.data.title}
         </a>
         {external && <span aria-label="External link">↗</span>}
