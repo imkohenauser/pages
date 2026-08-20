@@ -5,10 +5,12 @@ import JsonLd from '../components/JsonLd.astro';
 import ProjectsSection from '../components/home/ProjectsSection.astro';
 import WritingSection from '../components/home/WritingSection.astro';
 import { getPosts } from '../lib/posts';
+import { getProjects } from '../lib/projects';
 import { site } from '../data/site';
 import { homeJsonLd } from '../lib/seo';
 
 const posts = (await getPosts()).slice(0, 10);
+const projects = await getProjects();
 ---
 
 <Base description={site.bio}>
@@ -16,6 +18,6 @@ const posts = (await getPosts()).slice(0, 10);
   <main>
     <Hero title={site.title} description={site.bio} />
     <WritingSection posts={posts} />
-    <ProjectsSection />
+    <ProjectsSection projects={projects} />
   </main>
 </Base>

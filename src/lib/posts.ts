@@ -1,21 +1,12 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
+import { assertContentSlug } from './content-id';
 
 export type Post = CollectionEntry<'posts'>;
 
-export const reservedSlugs = ['writing', 'posts'] as const;
-
-const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+export { reservedSlugs } from './content-id';
 
 export function assertPostSlug(id: string) {
-  if (!slugPattern.test(id)) {
-    throw new Error(
-      `Post slug "${id}" must be a single lowercase ASCII kebab-case segment.`,
-    );
-  }
-
-  if ((reservedSlugs as readonly string[]).includes(id)) {
-    throw new Error(`Post slug "${id}" conflicts with a reserved route.`);
-  }
+  assertContentSlug(id, 'post');
 }
 
 export async function getPosts() {

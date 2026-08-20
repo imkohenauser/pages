@@ -1,5 +1,6 @@
 ---
 import type { Post } from '../../lib/posts';
+import { postListItem } from '../../lib/list';
 import List from '../List.astro';
 
 interface Props {
@@ -11,5 +12,5 @@ const { posts } = Astro.props;
 
 <section class="writing" aria-labelledby="writing-title">
   <h2 id="writing-title">Writing</h2>
-  <List posts={posts} />
+  <List class="writing" items={posts.map(postListItem)} />
 </section>

@@ -3,6 +3,7 @@ import type { GetStaticPaths } from 'astro';
 import List from '../../components/List.astro';
 import Base from '../../layouts/Base.astro';
 import { site } from '../../data/site';
+import { postListItem } from '../../lib/list';
 import { getPosts, type Post } from '../../lib/posts';
 import { path } from '../../lib/path';
 
@@ -29,7 +30,7 @@ const description = paged
 <Base title={title} description={description}>
   <main>
     <h1>Writing</h1>
-    <List posts={page.data} />
+    <List class="writing" items={page.data.map(postListItem)} />
     {page.lastPage > 1 && (
       <nav aria-label="Pagination">
         <span>{page.url.prev && <a href={path(page.url.prev)}>← Prev</a>}</span>

@@ -9,11 +9,3 @@ export const site = {
   ogImageAlt: 'Kohei Saito, or 廣円 (Kohen)',
   sameAs: ['https://imkohenauser.com/'],
 };
-
-export const projects = [
-  {
-    name: 'Sample Project 1',
-    text: 'Short project description.',
-    url: 'https://imkohenauser.com/',
-  },
-];

@@ -1,17 +1,16 @@
 ---
-import { projects } from '../../data/site';
+import type { Project } from '../../lib/projects';
+import { projectListItem } from '../../lib/list';
+import List from '../List.astro';
+
+interface Props {
+  projects: Project[];
+}
+
+const { projects } = Astro.props;
 ---
 
 <section class="projects" aria-labelledby="projects-title">
   <h2 id="projects-title">Projects</h2>
-  <ul>
-    {projects.map((project) => (
-      <li>
-        <h3>
-          <a href={project.url}>{project.name} ↗</a>
-        </h3>
-        <p>{project.text}</p>
-      </li>
-    ))}
-  </ul>
+  <List class="projects" items={projects.map(projectListItem)} />
 </section>
