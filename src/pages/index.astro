@@ -1,0 +1,45 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import List from '../components/List.astro';
+import { getPosts } from '../lib/posts';
+import { path } from '../lib/path';
+import { projects, site } from '../data/site';
+
+const posts = (await getPosts()).slice(0, 10);
+---
+
+<Base description={site.bio}>
+  <Header />
+  <main>
+    <header>
+      <div>
+        <h1>{site.name}</h1>
+        <p>{site.bio}</p>
+        <a href={path('/writting/')}>Writting →</a>
+      </div>
+      {site.avatar && (
+        <img src={site.avatar} alt="" />
+      )}
+    </header>
+
+    <section aria-labelledby="writting-title">
+      <h2 id="writting-title">Writting</h2>
+      <List posts={posts} />
+    </section>
+
+    <section aria-labelledby="projects-title">
+      <h2 id="projects-title">Projects</h2>
+      <ul>
+        {projects.map((project) => (
+          <li>
+            <h3>
+              <a href={project.url}>{project.name} ↗</a>
+            </h3>
+            <p>{project.text}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  </main>
+</Base>

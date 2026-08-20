@@ -1,0 +1,69 @@
+---
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+import Header from '../../components/Header.astro';
+import Base from '../../layouts/Base.astro';
+import { getPosts, type Post } from '../../lib/posts';
+import { path } from '../../lib/path';
+
+export const getStaticPaths = (async () => {
+  const posts = (await getPosts()).filter((post) => !post.data.externalUrl);
+  return posts.map((post, index) => ({
+    params: { slug: post.id },
+    props: {
+      post,
+      older: posts[index + 1],
+      newer: posts[index - 1],
+    },
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  post: Post;
+  older?: Post;
+  newer?: Post;
+}
+
+const { post, older, newer } = Astro.props;
+const { Content } = await render(post);
+const format = new Intl.DateTimeFormat('ja-JP');
+---
+
+<Base title={post.data.title} description={post.data.description}>
+  <Header />
+  <main>
+    <article>
+      <header>
+        <h1>{post.data.title}</h1>
+        <p>{post.data.description}</p>
+        <p>
+          <time datetime={post.data.publishedAt.toISOString()}>
+            {format.format(post.data.publishedAt)}
+          </time>
+        </p>
+        {post.data.tags.length > 0 && (
+          <ul aria-label="Tags">
+            {post.data.tags.map((tag) => <li>#{tag}</li>)}
+          </ul>
+        )}
+      </header>
+
+      {post.data.featuredImage && (
+        <Image
+          src={post.data.featuredImage}
+          alt={post.data.featuredImageAlt ?? ''}
+        />
+      )}
+
+      <div>
+        <Content />
+      </div>
+    </article>
+
+    <nav aria-label="Posts">
+      <span>{older && <a href={path(`/posts/${older.id}/`)}>← {older.data.title}</a>}</span>
+      <span>{newer && <a href={path(`/posts/${newer.id}/`)}>{newer.data.title} →</a>}</span>
+    </nav>
+  </main>
+</Base>

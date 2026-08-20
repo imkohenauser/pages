@@ -1,0 +1,31 @@
+---
+import type { Post } from '../lib/posts';
+import { postHref } from '../lib/posts';
+import { path } from '../lib/path';
+
+interface Props {
+  posts: Post[];
+}
+
+const { posts } = Astro.props;
+const format = new Intl.DateTimeFormat('ja-JP');
+---
+
+<ol>
+  {posts.map((post) => {
+    const external = Boolean(post.data.externalUrl);
+    const href = external ? postHref(post) : path(postHref(post));
+
+    return (
+      <li>
+        <time datetime={post.data.publishedAt.toISOString()}>
+          {format.format(post.data.publishedAt)}
+        </time>
+        <a href={href}>
+          {post.data.title}
+        </a>
+        {external && <span aria-label="External link">↗</span>}
+      </li>
+    );
+  })}
+</ol>
