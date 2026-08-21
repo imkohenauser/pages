@@ -6,6 +6,23 @@ export const site = {
   lang: 'ja',
   locale: 'ja_JP',
   ogImage: '/ogp.png',
-  ogImageAlt: 'Kohei Saito, or 廣円 (Kohen)',
+  ogImageAlt: 'Kohei Saito, or Kohen',
   sameAs: ['https://imkohenauser.com/'],
+  externalLinks: [
+    {
+      url: 'mailto:imkohenauser@gmail.com',
+      label: 'E-mail',
+      icon: '/icons/email.svg',
+    },
+    {
+      url: 'https://github.com/imkohenauser',
+      label: 'GitHub',
+      icon: '/icons/github.svg',
+    },
+    {
+      url: 'https://x.com/imkohenauser',
+      label: '@imkohenauser',
+      icon: '/icons/x.svg',
+    },
+  ],
 };
