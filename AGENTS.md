@@ -12,6 +12,17 @@
 - Match Astro-required route filenames and dynamic-segment syntax exactly.
 - After source or path changes, run `npm run check` and `npm run build`.
 
+## CSS and TypeScript conventions
+
+- Use vanilla CSS. Keep tokens, reset, base rules, and shared utilities in `src/styles.css`; keep component layout and appearance in scoped Astro `<style>` blocks.
+- Use semantic kebab-case blocks, `block__element`, and `block--modifier`. Do not add `l-`, `p-`, or `c-` prefixes.
+- Reserve classes for styling. TypeScript must not query or toggle presentation classes.
+- Prefer native elements and state attributes such as `hidden`, `open`, `disabled`, and `aria-expanded`; use `id` for explicit element relationships.
+- Use component-prefixed `data-*` attributes only for behavior without a native equivalent, and query targets from the component root rather than `document` where possible.
+- Keep one source of truth for state. Style native or custom state attributes directly instead of duplicating them with classes.
+- Narrow queried elements with `instanceof` checks; do not rely on unchecked casts or non-null assertions.
+- Use a custom element when an interaction is reusable, stateful, or owns multiple internal targets.
+
 ## UI, motion, and accessibility skills
 
 Use the skills under `.agents/skills/` according to the task, and read the selected skill's `SKILL.md` before changing code. Keep the existing component library, design tokens, density, and motion language unless the selected skill requires a specific value or interaction.
