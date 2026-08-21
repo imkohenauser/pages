@@ -1,5 +1,6 @@
+import type { ImageMetadata } from 'astro';
 import {
-  linkAriaLabel,
+  cardLinkAriaLabel,
   listActionLink,
   type ActionLinkVariant,
 } from './action-link';
@@ -14,9 +15,11 @@ export type ListItem = {
   publishedAt?: Date;
   href?: string;
   external?: boolean;
-  actionLink?: ActionLinkVariant;
+  actionLinkVariant?: ActionLinkVariant;
   actionLinkIconSrc?: string;
-  linkAriaLabel?: string;
+  ariaLabel?: string;
+  featuredImage?: ImageMetadata;
+  featuredImageAlt?: string;
 };
 
 function mapListItem(input: {
@@ -36,9 +39,9 @@ function mapListItem(input: {
     publishedAt: input.publishedAt,
     href: input.href,
     external,
-    actionLink: actionLink?.variant,
+    actionLinkVariant: actionLink?.variant,
     actionLinkIconSrc: actionLink?.iconSrc,
-    linkAriaLabel: linkAriaLabel(
+    ariaLabel: cardLinkAriaLabel(
       input.title,
       input.externalUrl,
       actionLink?.variant,
@@ -64,11 +67,15 @@ export function projectListItem(project: Project): ListItem {
   const externalUrl = project.data.externalUrl;
   const href = externalUrl ? externalUrl : path(projectHref(project));
 
-  return mapListItem({
-    title: project.data.title,
-    description: project.data.description,
-    href,
-    externalUrl,
-    externalIcon: project.data.externalIcon,
-  });
+  return {
+    ...mapListItem({
+      title: project.data.title,
+      description: project.data.description,
+      href,
+      externalUrl,
+      externalIcon: project.data.externalIcon,
+    }),
+    featuredImage: project.data.featuredImage,
+    featuredImageAlt: project.data.featuredImageAlt,
+  };
 }

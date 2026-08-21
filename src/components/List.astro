@@ -1,5 +1,5 @@
 ---
-import ActionLink from './ActionLink.astro';
+import ContentCard from './ContentCard.astro';
 import type { ListItem } from '../lib/list';
 
 interface Props {
@@ -10,42 +10,29 @@ interface Props {
 }
 
 const { items, class: className, variant, headingLevel } = Astro.props;
-const format = new Intl.DateTimeFormat('ja-JP');
-const Heading = `h${headingLevel}` as 'h2' | 'h3';
 ---
 
-<ol class:list={['content-list', `content-list--${variant}`, className]}>
-  {items.map((item) => {
-    return (
+<ol class:list={['content-list', className]}>
+  {
+    items.map((item) => (
       <li class="content-list__item">
-        {item.publishedAt && (
-          <time datetime={item.publishedAt.toISOString()}>
-            {format.format(item.publishedAt)}
-          </time>
-        )}
-        <Heading class="content-list__title">
-          {item.href ? (
-            <a
-              href={item.href}
-              target={item.external ? '_blank' : undefined}
-              rel={item.external ? 'noopener noreferrer' : undefined}
-              aria-label={item.linkAriaLabel}
-            >
-              {item.title}
-            </a>
-          ) : (
-            item.title
-          )}
-        </Heading>
-        {item.description && <p>{item.description}</p>}
-        {item.actionLink && (
-          <ActionLink
-            variant={item.actionLink}
-            iconSrc={item.actionLinkIconSrc}
-            decorative
-          />
-        )}
+        <ContentCard {...item} variant={variant} headingLevel={headingLevel} />
       </li>
-    );
-  })}
+    ))
+  }
 </ol>
+
+<style>
+  .content-list {
+    display: flex;
+    flex-flow: column;
+    gap: var(--space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .content-list__item {
+    width: 100%;
+  }
+</style>

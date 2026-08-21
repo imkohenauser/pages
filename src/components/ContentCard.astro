@@ -1,0 +1,258 @@
+---
+import { Image } from 'astro:assets';
+import ActionLink from './ActionLink.astro';
+import { formatIsoDate } from '../lib/date';
+import type { ListItem } from '../lib/list';
+
+interface Props extends ListItem {
+  variant: 'writing' | 'projects';
+  headingLevel: 2 | 3;
+}
+
+const {
+  variant,
+  title,
+  description,
+  publishedAt,
+  href,
+  external,
+  actionLinkVariant,
+  actionLinkIconSrc,
+  ariaLabel,
+  featuredImage,
+  headingLevel,
+} = Astro.props;
+const Heading = `h${headingLevel}` as 'h2' | 'h3';
+const isWriting = variant === 'writing';
+---
+
+{
+  isWriting ? (
+    <article class="content-card content-card--writing">
+      <div class="content-card__container">
+        <div class="content-card__text">
+          <Heading class="content-card__title">
+            {href ? (
+              <a
+                class="content-card__title-link"
+                href={href}
+                target={external ? '_blank' : undefined}
+                rel={external ? 'noopener noreferrer' : undefined}
+                aria-label={ariaLabel}
+              >
+                {title}
+              </a>
+            ) : (
+              title
+            )}
+          </Heading>
+          {description && (
+            <p class="content-card__description">{description}</p>
+          )}
+        </div>
+        <div class="content-card__meta">
+          {publishedAt && (
+            <time
+              class="content-card__date"
+              datetime={publishedAt.toISOString()}
+            >
+              {formatIsoDate(publishedAt)}
+            </time>
+          )}
+          {actionLinkVariant && (
+            <ActionLink
+              variant={actionLinkVariant}
+              iconSrc={actionLinkIconSrc}
+              decorative
+            />
+          )}
+        </div>
+      </div>
+    </article>
+  ) : (
+    <article
+      class:list={[
+        'content-card',
+        'content-card--project',
+        !featuredImage && 'content-card--no-thumbnail',
+      ]}
+    >
+      <div class="content-card__container">
+        {featuredImage && (
+          <div class="content-card__thumbnail">
+            <Image
+              src={featuredImage}
+              alt=""
+              class="content-card__image"
+              widths={[480, 640, 960]}
+              sizes="(min-width: 48rem) 18rem, 100vw"
+            />
+          </div>
+        )}
+        <div class="content-card__body">
+          <div class="content-card__text">
+            <Heading class="content-card__title">
+              {href ? (
+                <a
+                  class="content-card__title-link"
+                  href={href}
+                  target={external ? '_blank' : undefined}
+                  rel={external ? 'noopener noreferrer' : undefined}
+                  aria-label={ariaLabel}
+                >
+                  {title}
+                </a>
+              ) : (
+                title
+              )}
+            </Heading>
+            {description && (
+              <p class="content-card__description">{description}</p>
+            )}
+          </div>
+          {actionLinkVariant && (
+            <div class="content-card__meta">
+              <ActionLink
+                variant={actionLinkVariant}
+                iconSrc={actionLinkIconSrc}
+                tone="inverse"
+                decorative
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </article>
+  )
+}
+
+<style>
+  .content-card {
+    position: relative;
+    border-radius: var(--radius-card);
+  }
+
+  .content-card--writing {
+    --content-card-title: var(--color-text);
+    --content-card-muted: var(--color-text-muted);
+
+    border: 1px solid var(--color-border);
+    background: linear-gradient(
+      180deg,
+      var(--neutral-50) 0%,
+      var(--neutral-100) 100%
+    );
+  }
+
+  .content-card--project {
+    --content-card-title: var(--color-text-inverse);
+    --content-card-muted: var(--color-text-inverse-muted);
+
+    border: 1px solid var(--color-inverse-raised);
+    background: linear-gradient(
+      180deg,
+      var(--color-inverse) 0%,
+      var(--color-inverse-raised) 100%
+    );
+  }
+
+  .content-card__title-link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .content-card__title-link::after {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: var(--radius-card);
+    content: "";
+  }
+
+  .content-card__container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .content-card--writing .content-card__container {
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .content-card--project .content-card__container {
+    @media (min-width: 48rem) {
+      display: grid;
+      grid-template-columns: 3fr 5fr;
+      align-items: stretch;
+    }
+  }
+
+  .content-card--no-thumbnail .content-card__container {
+    @media (min-width: 48rem) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .content-card__text {
+    display: grid;
+    gap: var(--space-1);
+  }
+
+  .content-card__title {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--text-md);
+    font-weight: 700;
+    line-height: 1.5rem;
+    color: var(--content-card-title);
+
+    @media (min-width: 48rem) {
+      font-size: var(--text-lg);
+      line-height: 1.75rem;
+    }
+  }
+
+  .content-card__description {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: 1.25rem;
+    color: var(--content-card-muted);
+  }
+
+  .content-card__meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2);
+  }
+
+  .content-card__date {
+    margin-inline-end: auto;
+    font-size: var(--text-xs);
+    line-height: 1.25rem;
+    color: var(--content-card-muted);
+  }
+
+  .content-card__image {
+    width: 100%;
+    height: 10.625rem;
+    border-radius: var(--radius-image);
+    object-fit: cover;
+    outline: 1px solid oklch(1 0 0 / 0.1);
+    outline-offset: -1px;
+
+    @media (min-width: 48rem) {
+      height: 100%;
+    }
+  }
+
+  .content-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+
+    @media (min-width: 48rem) {
+      justify-content: space-between;
+    }
+  }
+</style>

@@ -64,7 +64,7 @@ export function listActionLink(
   };
 }
 
-export function linkAriaLabel(
+export function cardLinkAriaLabel(
   title: string,
   externalUrl: string | undefined,
   variant: ActionLinkVariant | undefined,

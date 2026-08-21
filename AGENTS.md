@@ -1,5 +1,9 @@
 # Guidance for AI Agents Working in This Repo
 
+## Scope
+
+- Change only what the user asked for. Do not add unsolicited styles, states, refactors, or related cleanup.
+
 ## Repository naming and verification
 
 - Name Astro components and layouts with `PascalCase.astro`, matching the established files under `src/components/` and `src/layouts/`.
@@ -16,6 +20,7 @@
 
 - Use vanilla CSS. Keep tokens, reset, base rules, and shared utilities in `src/styles.css`; keep component layout and appearance in scoped Astro `<style>` blocks.
 - Use semantic kebab-case blocks, `block__element`, and `block--modifier`. Do not add `l-`, `p-`, or `c-` prefixes.
+- Nest `@media` inside the selector it overrides so base and breakpoint rules stay together. Keep BEM elements and modifiers as top-level selectors.
 - Reserve classes for styling. TypeScript must not query or toggle presentation classes.
 - Prefer native elements and state attributes such as `hidden`, `open`, `disabled`, and `aria-expanded`; use `id` for explicit element relationships.
 - Use component-prefixed `data-*` attributes only for behavior without a native equivalent, and query targets from the component root rather than `document` where possible.
