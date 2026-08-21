@@ -1,6 +1,7 @@
 @use "sass:map";
 @use "functions" as *;
 
+// Values are unitless px and converted to rem in the mixins.
 $breakpoints: (
   md: 768,
 );
@@ -17,12 +18,14 @@ $breakpoints: (
   }
 }
 
+// Restrict hover-only motion to fine pointers so taps do not leave a false hover state.
 @mixin hover-fine {
   @media (hover: hover) and (pointer: fine) {
     @content;
   }
 }
 
+// Opt in to motion when the user has not requested reduced motion.
 @mixin motion-safe {
   @media (prefers-reduced-motion: no-preference) {
     @content;

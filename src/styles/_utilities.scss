@@ -1,5 +1,6 @@
 @use "mixins" as *;
 
+/* Hide visually without removing the content from the accessibility tree. */
 .visually-hidden,
 .skip-link:not(:focus-visible) {
   position: absolute;
@@ -13,6 +14,7 @@
   border: 0;
 }
 
+/* Reveal the skip link above page chrome when it receives keyboard focus. */
 .skip-link:focus-visible {
   position: fixed;
   inset-block-start: var(--space-2);
@@ -27,6 +29,7 @@
   display: none;
 
   @include md {
+    /* Restore the element's original display rather than assuming block. */
     display: revert;
   }
 }

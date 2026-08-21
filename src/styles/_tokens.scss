@@ -1,10 +1,13 @@
 @use "functions" as *;
 
 :root {
+  /* Fonts. Face variables are registered by Astro. */
   --font-sans: var(--font-line-seed-jp);
+  /* Latin display type with a Japanese fallback. */
   --font-display: var(--font-michroma), var(--font-line-seed-jp);
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 
+  /* Type scale */
   --text-xs: #{rem(12)};
   --text-sm: #{rem(14)};
   --text-md: #{rem(16)};
@@ -13,6 +16,7 @@
   --text-2xl: #{rem(24)};
   --text-3xl: #{rem(32)};
 
+  /* Palette */
   --neutral-50: #fafafa;
   --neutral-100: #f5f5f5;
   --neutral-200: #e5e5e5;
@@ -37,6 +41,7 @@
   --sky-900: #0b3f8f;
   --sky-950: #082f6b;
 
+  /* Semantic color */
   --color-text: var(--neutral-800);
   --color-text-muted: var(--neutral-600);
   --color-canvas: var(--neutral-50);
@@ -48,7 +53,9 @@
   --color-text-inverse: var(--neutral-50);
   --color-text-inverse-muted: var(--neutral-200);
 
+  /* Space */
   --space-1: #{rem(4)};
+  /* A dotted step name is escaped so the custom property is valid. */
   --space-1\.5: #{rem(6)};
   --space-2: #{rem(8)};
   --space-3: #{rem(12)};
@@ -62,6 +69,7 @@
   --space-20: #{rem(80)};
   --space-30: #{rem(120)};
 
+  /* Radius */
   --radius-1\.5: #{rem(6)};
   --radius-2: #{rem(8)};
   --radius-4: #{rem(16)};

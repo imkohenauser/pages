@@ -1,5 +1,6 @@
 @use "sass:math";
 
+// Treat unitless numbers as px. Conversion assumes a 16px root, matching the type scale.
 $root-font-size: 16px !default;
 
 @function rem($value) {

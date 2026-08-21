@@ -9,6 +9,7 @@ body {
   margin: 0;
 }
 
+/* Match form controls to surrounding type instead of UA fonts. */
 button,
 input,
 select,
@@ -17,6 +18,7 @@ textarea {
   font: inherit;
 }
 
+/* Avoid an inline baseline gap and horizontal overflow. */
 img,
 picture {
   display: block;
