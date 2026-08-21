@@ -127,7 +127,7 @@ const isWriting = variant === 'writing';
 }
 
 <style lang="scss">
-  @use "functions" as *;
+  @use "tools" as *;
 
   .content-card {
     position: relative;
@@ -181,7 +181,7 @@ const isWriting = variant === 'writing';
   }
 
   .content-card--project .content-card__container {
-    @media (min-width: rem(768)) {
+    @include md {
       display: grid;
       grid-template-columns: 3fr 5fr;
       align-items: stretch;
@@ -189,7 +189,7 @@ const isWriting = variant === 'writing';
   }
 
   .content-card--no-thumbnail .content-card__container {
-    @media (min-width: rem(768)) {
+    @include md {
       grid-template-columns: 1fr;
     }
   }
@@ -206,7 +206,7 @@ const isWriting = variant === 'writing';
     line-height: rem(24);
     color: var(--content-card-title);
 
-    @media (min-width: rem(768)) {
+    @include md {
       font-size: var(--text-lg);
       line-height: rem(28);
     }
@@ -240,7 +240,7 @@ const isWriting = variant === 'writing';
     outline: 1px solid oklch(1 0 0 / 0.1);
     outline-offset: -1px;
 
-    @media (min-width: rem(768)) {
+    @include md {
       height: 100%;
     }
   }
@@ -249,7 +249,7 @@ const isWriting = variant === 'writing';
     display: flex;
     flex-direction: column;
 
-    @media (min-width: rem(768)) {
+    @include md {
       justify-content: space-between;
     }
   }

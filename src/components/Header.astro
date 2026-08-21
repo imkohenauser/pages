@@ -28,7 +28,7 @@ import Icon from './Icon.astro';
 </header>
 
 <style lang="scss">
-  @use "functions" as *;
+  @use "tools" as *;
 
   .site-header__links {
     display: flex;
@@ -54,7 +54,7 @@ import Icon from './Icon.astro';
     white-space: nowrap;
     border: 0;
 
-    @media (min-width: rem(768)) {
+    @include md {
       position: static;
       width: auto;
       height: auto;

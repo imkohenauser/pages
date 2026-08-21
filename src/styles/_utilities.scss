@@ -1,3 +1,5 @@
+@use "mixins" as *;
+
 .visually-hidden,
 .skip-link:not(:focus-visible) {
   position: absolute;
