@@ -5,24 +5,27 @@ import { itemSource, type ListItem } from '../lib/list';
 interface Props {
   items: ListItem[];
   class?: string;
+  variant: 'writing' | 'projects';
+  headingLevel: 2 | 3;
 }
 
-const { items, class: className } = Astro.props;
+const { items, class: className, variant, headingLevel } = Astro.props;
 const format = new Intl.DateTimeFormat('ja-JP');
+const Heading = `h${headingLevel}` as 'h2' | 'h3';
 ---
 
-<ol class={className}>
+<ol class:list={['content-list', `content-list--${variant}`, className]}>
   {items.map((item) => {
     const source = itemSource(item);
 
     return (
-      <li>
+      <li class="content-list__item">
         {item.publishedAt && (
           <time datetime={item.publishedAt.toISOString()}>
             {format.format(item.publishedAt)}
           </time>
         )}
-        <h3>
+        <Heading class="content-list__title">
           {item.href ? (
             <a
               href={item.href}
@@ -32,7 +35,7 @@ const format = new Intl.DateTimeFormat('ja-JP');
               {item.title}
               {source && (
                 <>
-                  <span class="source" aria-hidden="true">
+                  <span class="content-list__source" aria-hidden="true">
                     <SourceMark source={source.id} />
                     <span translate="no">{source.label}</span>
                     ↗
@@ -46,10 +49,10 @@ const format = new Intl.DateTimeFormat('ja-JP');
           ) : (
             item.title
           )}
-        </h3>
+        </Heading>
         {item.description && <p>{item.description}</p>}
         {item.links && item.links.length > 0 && (
-          <ul class="links">
+          <ul class="content-list__links">
             {item.links.map((link) => (
               <li>
                 <a
@@ -72,29 +75,17 @@ const format = new Intl.DateTimeFormat('ja-JP');
 </ol>
 
 <style>
-  .visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  h3 {
+  .content-list__title {
     margin: 0;
   }
 
-  .writing h3 {
+  .content-list--writing .content-list__title {
     display: inline;
     font: inherit;
   }
 
-  .source,
-  .links a {
+  .content-list__source,
+  .content-list__links a {
     display: inline-flex;
     align-items: center;
     gap: var(--space-1);
@@ -105,11 +96,11 @@ const format = new Intl.DateTimeFormat('ja-JP');
     position: relative;
   }
 
-  .source {
+  .content-list__source {
     margin-inline-start: var(--space-2);
   }
 
-  .links {
+  .content-list__links {
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-2) var(--space-4);

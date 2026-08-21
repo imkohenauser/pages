@@ -28,15 +28,20 @@ const description = paged
 ---
 
 <Base title={title} description={description}>
-  <main>
-    <h1>Writing</h1>
-    <List class="writing" items={page.data.map(writingListItem)} />
+  <section class="writing" aria-labelledby="writing-title">
+    <h1 id="writing-title" class="writing__title">Writing</h1>
+    <List
+      class="writing__list"
+      variant="writing"
+      headingLevel={2}
+      items={page.data.map(writingListItem)}
+    />
     {page.lastPage > 1 && (
-      <nav aria-label="Pagination">
+      <nav class="writing__pagination" aria-label="Pagination">
         <span>{page.url.prev && <a href={path(page.url.prev)}>← Prev</a>}</span>
         <span>{page.currentPage} / {page.lastPage}</span>
         <span>{page.url.next && <a href={path(page.url.next)}>Next →</a>}</span>
       </nav>
     )}
-  </main>
+  </section>
 </Base>

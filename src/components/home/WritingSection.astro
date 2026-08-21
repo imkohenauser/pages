@@ -11,6 +11,11 @@ const { writing } = Astro.props;
 ---
 
 <section class="writing" aria-labelledby="writing-title">
-  <h2 id="writing-title">Writing</h2>
-  <List class="writing" items={writing.map(writingListItem)} />
+  <h2 id="writing-title" class="writing__title">Writing</h2>
+  <List
+    class="writing__list"
+    variant="writing"
+    headingLevel={3}
+    items={writing.map(writingListItem)}
+  />
 </section>

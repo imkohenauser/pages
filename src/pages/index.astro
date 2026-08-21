@@ -15,9 +15,7 @@ const projects = await getProjects();
 
 <Base description={site.bio}>
   <JsonLd slot="head" data={homeJsonLd()} />
-  <main>
-    <Hero title={site.title} description={site.bio} />
-    <WritingSection writing={writing} />
-    <ProjectsSection projects={projects} />
-  </main>
+  <Hero title={site.title} description={site.bio} />
+  <WritingSection writing={writing} />
+  <ProjectsSection projects={projects} />
 </Base>

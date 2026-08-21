@@ -53,8 +53,13 @@ const {
     <slot name="head" />
   </head>
   <body id="top">
-    <Header />
-    <slot />
-    <Footer />
+    <a class="skip-link" href="#main-content">Skip to content</a>
+    <div class="site-layout">
+      <Header />
+      <main id="main-content" class="site-main">
+        <slot />
+      </main>
+      <Footer />
+    </div>
   </body>
 </html>

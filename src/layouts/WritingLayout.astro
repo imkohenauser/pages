@@ -40,44 +40,42 @@ const showModified = modifiedAt.valueOf() !== writing.data.publishedAt.valueOf()
   lang={writing.data.lang}
 >
   <JsonLd slot="head" data={writingJsonLd(writing)} />
-  <main>
-    <article>
-      <header>
-        <h1>{writing.data.title}</h1>
-        <p>{writing.data.description}</p>
-        <p>
-          <time datetime={writing.data.publishedAt.toISOString()}>
-            {format.format(writing.data.publishedAt)}
-          </time>
-          {showModified && (
-            <>
-              {' '}
-              <span>
-                (updated{' '}
-                <time datetime={modifiedAt.toISOString()}>
-                  {format.format(modifiedAt)}
-                </time>)
-              </span>
-            </>
-          )}
-        </p>
-      </header>
+  <article>
+    <header>
+      <h1>{writing.data.title}</h1>
+      <p>{writing.data.description}</p>
+      <p>
+        <time datetime={writing.data.publishedAt.toISOString()}>
+          {format.format(writing.data.publishedAt)}
+        </time>
+        {showModified && (
+          <>
+            {' '}
+            <span>
+              (updated{' '}
+              <time datetime={modifiedAt.toISOString()}>
+                {format.format(modifiedAt)}
+              </time>)
+            </span>
+          </>
+        )}
+      </p>
+    </header>
 
-      {writing.data.featuredImage && (
-        <Image
-          src={writing.data.featuredImage}
-          alt={writing.data.featuredImageAlt ?? ''}
-        />
-      )}
+    {writing.data.featuredImage && (
+      <Image
+        src={writing.data.featuredImage}
+        alt={writing.data.featuredImageAlt ?? ''}
+      />
+    )}
 
-      <div>
-        <Content />
-      </div>
-    </article>
+    <div>
+      <Content />
+    </div>
+  </article>
 
-    <nav aria-label="Writing">
-      <span>{older && <a href={path(writingHref(older))}>← {older.data.title}</a>}</span>
-      <span>{newer && <a href={path(writingHref(newer))}>{newer.data.title} →</a>}</span>
-    </nav>
-  </main>
+  <nav aria-label="Writing">
+    <span>{older && <a href={path(writingHref(older))}>← {older.data.title}</a>}</span>
+    <span>{newer && <a href={path(writingHref(newer))}>{newer.data.title} →</a>}</span>
+  </nav>
 </Base>
