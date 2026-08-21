@@ -126,7 +126,7 @@ const isWriting = variant === 'writing';
   )
 }
 
-<style>
+<style lang="scss">
   .content-card {
     position: relative;
     border-radius: var(--radius-card);
@@ -159,14 +159,14 @@ const isWriting = variant === 'writing';
   .content-card__title-link {
     color: inherit;
     text-decoration: none;
-  }
 
-  .content-card__title-link::after {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    border-radius: var(--radius-card);
-    content: "";
+    &::after {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      border-radius: var(--radius-card);
+      content: "";
+    }
   }
 
   .content-card__container {

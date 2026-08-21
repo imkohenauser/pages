@@ -16,9 +16,10 @@
 - Match Astro-required route filenames and dynamic-segment syntax exactly.
 - After source or path changes, run `npm run check` and `npm run build`.
 
-## CSS and TypeScript conventions
+## SCSS and TypeScript conventions
 
-- Use vanilla CSS. Keep tokens, reset, base rules, and shared utilities in `src/styles.css`; keep component layout and appearance in scoped Astro `<style>` blocks.
+- Use SCSS. Keep tokens, reset, base rules, and shared utilities in partials under `src/styles/`, composed by `src/styles.scss`; keep component layout and appearance in scoped Astro `<style lang="scss">` blocks.
+- Keep design tokens as CSS custom properties so they remain available at runtime. Use Sass features for organization and authoring rather than duplicating runtime tokens.
 - Use semantic kebab-case blocks, `block__element`, and `block--modifier`. Do not add `l-`, `p-`, or `c-` prefixes.
 - Nest `@media` inside the selector it overrides so base and breakpoint rules stay together. Keep BEM elements and modifiers as top-level selectors.
 - Reserve classes for styling. TypeScript must not query or toggle presentation classes.
