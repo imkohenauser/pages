@@ -28,6 +28,8 @@ import Icon from './Icon.astro';
 </header>
 
 <style lang="scss">
+  @use "functions" as *;
+
   .site-header__links {
     display: flex;
     margin: 0;
@@ -37,8 +39,8 @@ import Icon from './Icon.astro';
 
   .site-header :global(.site-header__icon) {
     flex-shrink: 0;
-    width: 1.5rem;
-    height: 1.5rem;
+    width: rem(24);
+    height: rem(24);
   }
 
   .site-header__label {
@@ -52,7 +54,7 @@ import Icon from './Icon.astro';
     white-space: nowrap;
     border: 0;
 
-    @media (min-width: 48rem) {
+    @media (min-width: rem(768)) {
       position: static;
       width: auto;
       height: auto;

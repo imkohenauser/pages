@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import sitemap from '@astrojs/sitemap';
 import { defineConfig, fontProviders } from 'astro/config';
 import { includeInSitemap } from './src/lib/sitemap';
@@ -6,6 +7,15 @@ export default defineConfig({
   site: 'https://imkohenauser.github.io',
   base: '/pages',
   trailingSlash: 'always',
+  vite: {
+    css: {
+      preprocessorOptions: {
+        scss: {
+          loadPaths: [fileURLToPath(new URL('./src/styles', import.meta.url))],
+        },
+      },
+    },
+  },
   fonts: [
     {
       provider: fontProviders.npm({ remote: false }),

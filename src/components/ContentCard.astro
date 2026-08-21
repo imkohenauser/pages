@@ -127,6 +127,8 @@ const isWriting = variant === 'writing';
 }
 
 <style lang="scss">
+  @use "functions" as *;
+
   .content-card {
     position: relative;
     border-radius: var(--radius-card);
@@ -180,7 +182,7 @@ const isWriting = variant === 'writing';
   }
 
   .content-card--project .content-card__container {
-    @media (min-width: 48rem) {
+    @media (min-width: rem(768)) {
       display: grid;
       grid-template-columns: 3fr 5fr;
       align-items: stretch;
@@ -188,7 +190,7 @@ const isWriting = variant === 'writing';
   }
 
   .content-card--no-thumbnail .content-card__container {
-    @media (min-width: 48rem) {
+    @media (min-width: rem(768)) {
       grid-template-columns: 1fr;
     }
   }
@@ -203,19 +205,19 @@ const isWriting = variant === 'writing';
     font-family: var(--font-sans);
     font-size: var(--text-md);
     font-weight: 700;
-    line-height: 1.5rem;
+    line-height: rem(24);
     color: var(--content-card-title);
 
-    @media (min-width: 48rem) {
+    @media (min-width: rem(768)) {
       font-size: var(--text-lg);
-      line-height: 1.75rem;
+      line-height: rem(28);
     }
   }
 
   .content-card__description {
     margin: 0;
     font-size: var(--text-sm);
-    line-height: 1.25rem;
+    line-height: rem(20);
     color: var(--content-card-muted);
   }
 
@@ -229,19 +231,19 @@ const isWriting = variant === 'writing';
   .content-card__date {
     margin-inline-end: auto;
     font-size: var(--text-xs);
-    line-height: 1.25rem;
+    line-height: rem(20);
     color: var(--content-card-muted);
   }
 
   .content-card__image {
     width: 100%;
-    height: 10.625rem;
+    height: rem(170);
     border-radius: var(--radius-image);
     object-fit: cover;
     outline: 1px solid oklch(1 0 0 / 0.1);
     outline-offset: -1px;
 
-    @media (min-width: 48rem) {
+    @media (min-width: rem(768)) {
       height: 100%;
     }
   }
@@ -251,7 +253,7 @@ const isWriting = variant === 'writing';
     flex-direction: column;
     gap: var(--space-1);
 
-    @media (min-width: 48rem) {
+    @media (min-width: rem(768)) {
       justify-content: space-between;
     }
   }
