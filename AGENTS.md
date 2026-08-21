@@ -29,6 +29,14 @@
 - Narrow queried elements with `instanceof` checks; do not rely on unchecked casts or non-null assertions.
 - Use a custom element when an interaction is reusable, stateful, or owns multiple internal targets.
 
+## Comments
+
+Write comments in English. Prefer why over what. Keep them concise and factual. Use complete sentences for behavior, reasoning, constraints, or workarounds. Do not comment self-explanatory code. Update or remove comments when the related code changes. Place comments immediately above the code they describe. Avoid decorative separators. Prefer descriptive names over comments.
+
+- CSS / Sass: use `/* ... */` for comments that should remain in compiled CSS. Use `//` only for Sass-specific notes that should not appear in the output. Short section labels are fine. Explain non-obvious values, workarounds, layout constraints, and intentional overrides.
+- TypeScript: use `//` for implementation notes. Use JSDoc (`/** ... */`) for exported APIs only when it adds information beyond the name and types.
+- Astro: use `//` in frontmatter and `<script>`, `<!-- ... -->` for markup notes, and `/* ... */` in `<style>`. Do not leave implementation notes in rendered HTML.
+
 ## UI, motion, and accessibility skills
 
 Use the skills under `.agents/skills/` according to the task, and read the selected skill's `SKILL.md` before changing code. Keep the existing component library, design tokens, density, and motion language unless the selected skill requires a specific value or interaction.
