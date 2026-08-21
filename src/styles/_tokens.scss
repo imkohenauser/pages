@@ -49,11 +49,20 @@
   --color-text-inverse-muted: var(--neutral-200);
 
   --space-1: #{rem(4)};
+  --space-1\.5: #{rem(6)};
   --space-2: #{rem(8)};
   --space-3: #{rem(12)};
   --space-4: #{rem(16)};
+  --space-5: #{rem(20)};
+  --space-6: #{rem(24)};
+  --space-8: #{rem(32)};
+  --space-10: #{rem(40)};
+  --space-12: #{rem(48)};
+  --space-16: #{rem(64)};
+  --space-20: #{rem(80)};
+  --space-30: #{rem(120)};
 
-  --radius-image: #{rem(6)};
-  --radius-control: #{rem(8)};
-  --radius-card: #{rem(16)};
+  --radius-1\.5: #{rem(6)};
+  --radius-2: #{rem(8)};
+  --radius-4: #{rem(16)};
 }

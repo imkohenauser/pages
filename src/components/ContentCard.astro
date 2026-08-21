@@ -131,7 +131,7 @@ const isWriting = variant === 'writing';
 
   .content-card {
     position: relative;
-    border-radius: var(--radius-card);
+    border-radius: var(--radius-4);
   }
 
   .content-card--writing {
@@ -166,7 +166,7 @@ const isWriting = variant === 'writing';
       position: absolute;
       inset: 0;
       z-index: 1;
-      border-radius: var(--radius-card);
+      border-radius: var(--radius-4);
       content: "";
     }
   }
@@ -178,7 +178,6 @@ const isWriting = variant === 'writing';
 
   .content-card--writing .content-card__container {
     justify-content: space-between;
-    gap: var(--space-4);
   }
 
   .content-card--project .content-card__container {
@@ -197,7 +196,6 @@ const isWriting = variant === 'writing';
 
   .content-card__text {
     display: grid;
-    gap: var(--space-1);
   }
 
   .content-card__title {
@@ -225,7 +223,6 @@ const isWriting = variant === 'writing';
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: var(--space-2);
   }
 
   .content-card__date {
@@ -238,7 +235,7 @@ const isWriting = variant === 'writing';
   .content-card__image {
     width: 100%;
     height: rem(170);
-    border-radius: var(--radius-image);
+    border-radius: var(--radius-2);
     object-fit: cover;
     outline: 1px solid oklch(1 0 0 / 0.1);
     outline-offset: -1px;
@@ -251,7 +248,6 @@ const isWriting = variant === 'writing';
   .content-card__body {
     display: flex;
     flex-direction: column;
-    gap: var(--space-1);
 
     @media (min-width: rem(768)) {
       justify-content: space-between;
