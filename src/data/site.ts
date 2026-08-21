@@ -1,3 +1,5 @@
+import type { HeaderIconName } from '../lib/icon';
+
 export const site = {
   name: 'Kohei Saito, or 廣円 (Kohen)',
   shortName: 'Kohei Saito',
@@ -12,17 +14,17 @@ export const site = {
     {
       url: 'mailto:imkohenauser@gmail.com',
       label: 'E-mail',
-      icon: '/icons/email.svg',
+      icon: 'email',
     },
     {
       url: 'https://github.com/imkohenauser',
       label: 'GitHub',
-      icon: '/icons/github.svg',
+      icon: 'github',
     },
     {
       url: 'https://x.com/imkohenauser',
       label: '@imkohenauser',
-      icon: '/icons/x.svg',
+      icon: 'x',
     },
-  ],
+  ] satisfies { url: string; label: string; icon: HeaderIconName }[],
 };

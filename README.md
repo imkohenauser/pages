@@ -22,9 +22,9 @@ npm run check
 
 投稿は `src/content/writing/<slug>/index.md` に置きます。同じディレクトリの画像は相対パスで参照できます。公開 URL は `/{slug}/` です（本番では `base` が前置されます）。`/posts/{slug}/` は互換のため `/{slug}/` へリダイレクトします。`writing`、`posts`、`projects` は予約済みのためスラッグに使えません。
 
-`externalUrl` がある投稿は外部リンクとして一覧にだけ表示され、投稿ページを生成しません。ホスト名から Medium / Zenn / GitHub を判定して一覧のマークを出します。
+`externalUrl` がある投稿は外部リンクとして一覧にだけ表示され、投稿ページを生成しません。ホスト名から Medium / Zenn / GitHub を判定して action-link の表示を切り替えます。
 
-プロジェクトは `src/content/projects/<slug>/index.md` に置きます。詳細ページと `/projects` はまだ生成しません。`githubUrl` と `officialSiteUrl` のいずれか（または両方）を設定します。`officialSiteIcon` はリモート URL、またはエントリ隣の `./icon.svg` のような相対パスです。
+プロジェクトは `src/content/projects/<slug>/index.md` に置きます。詳細ページと `/projects` はまだ生成しません。`externalUrl` で外部リンク先を指定します。ホスト名が Medium / Zenn / GitHub 以外でカスタムアイコンを出す場合は `externalIcon` にリモート URL、またはエントリ隣の `./icon.svg` のような相対パスを設定します。
 
 ```yaml
 ---
@@ -35,6 +35,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl:
+externalIcon:
 lang: ja
 canonicalUrl:
 noindex: false
@@ -50,9 +51,8 @@ publishedAt: 2026-08-18
 updatedAt:
 featuredImage:
 featuredImageAlt:
-githubUrl: https://github.com/example/project
-officialSiteUrl: https://example.com/
-officialSiteIcon: ./icon.svg
+externalUrl: https://example.com/
+externalIcon: ./icon.svg
 lang: en
 draft: false
 ---

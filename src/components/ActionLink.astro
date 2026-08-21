@@ -1,0 +1,149 @@
+---
+import type { ActionLinkVariant } from '../lib/action-link';
+import { path } from '../lib/path';
+import Icon from './Icon.astro';
+
+interface Props {
+  variant: ActionLinkVariant;
+  iconSrc?: string;
+  decorative?: boolean;
+  tone?: 'default' | 'inverse';
+}
+
+const { variant, iconSrc, decorative = false, tone = 'default' } = Astro.props;
+
+const mediumLogo = path('/logo/medium.svg');
+const zennLogo = path('/logo/zenn.svg');
+---
+
+<span
+  class:list={['action-link', tone === 'inverse' && 'action-link--inverse']}
+  aria-hidden={decorative ? 'true' : undefined}
+>
+  {
+    variant === 'read-article' && (
+      <>
+        <span class="action-link__label">Read article</span>
+        <span class="action-link__icon">
+          <Icon name="arrow-right" />
+        </span>
+      </>
+    )
+  }
+  {
+    variant === 'medium' && (
+      <>
+        <img
+          class="action-link__logo"
+          src={mediumLogo}
+          alt=""
+          width="64"
+          height="14"
+        />
+        <span class="action-link__icon">
+          <Icon name="arrow-top-right" />
+        </span>
+      </>
+    )
+  }
+  {
+    variant === 'zenn' && (
+      <>
+        <img class="action-link__logo" src={zennLogo} alt="" width="64" height="14" />
+        <span class="action-link__icon">
+          <Icon name="arrow-top-right" />
+        </span>
+      </>
+    )
+  }
+  {
+    variant === 'github' && (
+      <>
+        <span class="action-link__icon">
+          <Icon name="github" />
+        </span>
+        <span class="action-link__label" translate="no">GitHub</span>
+        <span class="action-link__icon">
+          <Icon name="arrow-top-right" />
+        </span>
+      </>
+    )
+  }
+  {
+    variant === 'official-site' && iconSrc && (
+      <>
+        <img
+          class="action-link__mark"
+          src={iconSrc}
+          alt=""
+          width="16"
+          height="16"
+        />
+        <span class="action-link__label">Official site</span>
+        <span class="action-link__icon">
+          <Icon name="arrow-top-right" />
+        </span>
+      </>
+    )
+  }
+  {
+    variant === 'page-top' && (
+      <>
+        <span class="action-link__label">Page top</span>
+        <span class="action-link__icon">
+          <Icon name="arrow-top" />
+        </span>
+      </>
+    )
+  }
+</span>
+
+<style>
+  .action-link {
+    --action-link-label: var(--color-text);
+    --action-link-icon: var(--color-text-muted);
+
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: var(--space-1) 0.375rem;
+    border-radius: var(--radius-control);
+  }
+
+  .action-link--inverse {
+    --action-link-label: var(--color-text-inverse);
+    --action-link-icon: var(--color-text-inverse-muted);
+  }
+
+  .action-link__label {
+    font-family: var(--font-display);
+    font-size: var(--text-xs);
+    line-height: 1.25rem;
+    color: var(--action-link-label);
+    white-space: nowrap;
+  }
+
+  .action-link__icon {
+    display: grid;
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    color: var(--action-link-icon);
+  }
+
+  .action-link__logo {
+    flex-shrink: 0;
+    width: 4rem;
+    height: 0.875rem;
+    object-fit: contain;
+    object-position: left center;
+  }
+
+  .action-link__mark {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.1875rem;
+    object-fit: cover;
+  }
+</style>

@@ -1,13 +1,12 @@
-import type { ExternalSource } from './external-source';
+import {
+  linkAriaLabel,
+  listActionLink,
+  type ActionLinkVariant,
+} from './action-link';
 import { path } from './path';
 import type { Project } from './projects';
+import { projectHref } from './projects';
 import { writingHref, type Writing } from './writing';
-
-export type ListLink = {
-  href: string;
-  label: string;
-  source: ExternalSource;
-};
 
 export type ListItem = {
   title: string;
@@ -15,43 +14,61 @@ export type ListItem = {
   publishedAt?: Date;
   href?: string;
   external?: boolean;
-  links?: ListLink[];
+  actionLink?: ActionLinkVariant;
+  actionLinkIconSrc?: string;
+  linkAriaLabel?: string;
 };
 
-export function writingListItem(entry: Writing): ListItem {
-  const external = Boolean(entry.data.externalUrl);
-  const href = external ? writingHref(entry) : path(writingHref(entry));
+function mapListItem(input: {
+  title: string;
+  description?: string;
+  publishedAt?: Date;
+  href?: string;
+  externalUrl?: string;
+  externalIcon?: string | { src: string };
+}) {
+  const external = Boolean(input.externalUrl);
+  const actionLink = listActionLink(input.externalUrl, input.externalIcon);
 
   return {
+    title: input.title,
+    description: input.description,
+    publishedAt: input.publishedAt,
+    href: input.href,
+    external,
+    actionLink: actionLink?.variant,
+    actionLinkIconSrc: actionLink?.iconSrc,
+    linkAriaLabel: linkAriaLabel(
+      input.title,
+      input.externalUrl,
+      actionLink?.variant,
+    ),
+  } satisfies ListItem;
+}
+
+export function writingListItem(entry: Writing): ListItem {
+  const externalUrl = entry.data.externalUrl;
+  const href = externalUrl ? externalUrl : path(writingHref(entry));
+
+  return mapListItem({
     title: entry.data.title,
+    description: entry.data.description,
     publishedAt: entry.data.publishedAt,
     href,
-    external,
-  };
+    externalUrl,
+    externalIcon: entry.data.externalIcon,
+  });
 }
 
 export function projectListItem(project: Project): ListItem {
-  const links: ListLink[] = [];
+  const externalUrl = project.data.externalUrl;
+  const href = externalUrl ? externalUrl : path(projectHref(project));
 
-  if (project.data.officialSiteUrl) {
-    links.push({
-      href: project.data.officialSiteUrl,
-      label: 'Official site',
-      source: 'site',
-    });
-  }
-
-  if (project.data.githubUrl) {
-    links.push({
-      href: project.data.githubUrl,
-      label: 'GitHub',
-      source: 'github',
-    });
-  }
-
-  return {
+  return mapListItem({
     title: project.data.title,
     description: project.data.description,
-    links,
-  };
+    href,
+    externalUrl,
+    externalIcon: project.data.externalIcon,
+  });
 }

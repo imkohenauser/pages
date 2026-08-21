@@ -5,9 +5,8 @@ publishedAt: 2026-08-18
 updatedAt:
 featuredImage:
 featuredImageAlt:
-githubUrl: https://github.com/imkohenauser/mtp
-officialSiteUrl: https://mappingtheprompt.com/
-officialSiteIcon: ./icon.svg
+externalUrl: https://mappingtheprompt.com/
+externalIcon: ./icon.svg
 lang: en
 draft: false
 ---

@@ -1,6 +1,7 @@
 ---
 import { site } from '../data/site';
 import { path } from '../lib/path';
+import Icon from './Icon.astro';
 ---
 
 <header class="site-header">
@@ -16,13 +17,7 @@ import { path } from '../lib/path';
               target="_blank"
               rel="noopener noreferrer"
             >
-              <img
-                class="site-header__icon"
-                src={path(link.icon)}
-                alt=""
-                width="24"
-                height="24"
-              />
+              <Icon name={link.icon} class="site-header__icon" />
               <span class="site-header__label">{link.label}</span>
             </a>
           </li>
@@ -38,6 +33,12 @@ import { path } from '../lib/path';
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+
+  .site-header :global(.site-header__icon) {
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
   }
 
   .site-header__label {

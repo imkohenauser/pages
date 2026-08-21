@@ -101,8 +101,7 @@ picture {
 }
 
 h1,
-h2,
-h3 {
+h2 {
   font-family: var(--font-display);
   font-weight: 400;
 }

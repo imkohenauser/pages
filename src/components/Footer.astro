@@ -1,8 +1,19 @@
 ---
 import { site } from '../data/site';
+import ActionLink from './ActionLink.astro';
 ---
 
 <footer class="site-footer">
   <small class="site-footer__copyright">© {new Date().getFullYear()} {site.shortName}.</small>
-  <a href="#top" class="site-footer__page-top">Page top</a>
+  <a href="#top" class="site-footer__page-top" aria-label="Page top">
+    <ActionLink variant="page-top" decorative />
+  </a>
 </footer>
+
+<style>
+  .site-footer__page-top {
+    display: inline-flex;
+    color: inherit;
+    text-decoration: none;
+  }
+</style>

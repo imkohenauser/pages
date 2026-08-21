@@ -1,4 +1,5 @@
 ---
+import ActionLink from './ActionLink.astro';
 import type { ListItem } from '../lib/list';
 
 interface Props {
@@ -28,32 +29,21 @@ const Heading = `h${headingLevel}` as 'h2' | 'h3';
               href={item.href}
               target={item.external ? '_blank' : undefined}
               rel={item.external ? 'noopener noreferrer' : undefined}
+              aria-label={item.linkAriaLabel}
             >
               {item.title}
-              {item.external && (
-                <span class="visually-hidden">(opens in a new tab)</span>
-              )}
             </a>
           ) : (
             item.title
           )}
         </Heading>
         {item.description && <p>{item.description}</p>}
-        {item.links && item.links.length > 0 && (
-          <ul class="content-list__links">
-            {item.links.map((link) => (
-              <li>
-                <a
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <span translate="no">{link.label}</span>
-                  <span class="visually-hidden">(opens in a new tab)</span>
-                </a>
-              </li>
-            ))}
-          </ul>
+        {item.actionLink && (
+          <ActionLink
+            variant={item.actionLink}
+            iconSrc={item.actionLinkIconSrc}
+            decorative
+          />
         )}
       </li>
     );

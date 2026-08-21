@@ -7,6 +7,10 @@ export function assertProjectSlug(id: string) {
   assertContentSlug(id, 'project');
 }
 
+export function projectHref(project: Project) {
+  return project.data.externalUrl ?? `/${project.id}/`;
+}
+
 export async function getProjects() {
   const projects = await getCollection('projects', ({ data }) => !data.draft);
   for (const project of projects) {

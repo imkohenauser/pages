@@ -9,14 +9,20 @@ const featuredImageAlt = (data: {
   featuredImageAlt?: string;
 }) => !data.featuredImage || Boolean(data.featuredImageAlt);
 
-function isGitHubUrl(value: string) {
-  try {
-    const host = new URL(value).hostname.replace(/^www\./, '');
-    return host === 'github.com';
-  } catch {
-    return false;
-  }
-}
+const externalFields = ({ image }: SchemaContext) => ({
+  externalUrl: z.preprocess(empty, z.url().optional()),
+  externalIcon: z.preprocess(
+    empty,
+    z.union([z.url(), image()]).optional(),
+  ),
+});
+
+const externalIconRefine = {
+  refine: (data: { externalUrl?: string; externalIcon?: unknown }) =>
+    !data.externalIcon || Boolean(data.externalUrl),
+  message: 'externalUrl is required when externalIcon is set',
+  path: ['externalUrl'] as const,
+};
 
 const markdownLoader = (base: string) =>
   glob({
@@ -42,12 +48,16 @@ const writing = defineCollection({
     z
       .object({
         ...entryFields(context),
-        externalUrl: z.preprocess(empty, z.url().optional()),
+        ...externalFields(context),
         ...writingSitemapSchema.shape,
       })
       .refine(featuredImageAlt, {
         message: 'featuredImageAlt is required when featuredImage is set',
         path: ['featuredImageAlt'],
+      })
+      .refine(externalIconRefine.refine, {
+        message: externalIconRefine.message,
+        path: ['externalUrl'],
       }),
 });
 
@@ -57,28 +67,15 @@ const projects = defineCollection({
     z
       .object({
         ...entryFields(context),
-        githubUrl: z.preprocess(empty, z.url().optional()),
-        officialSiteUrl: z.preprocess(empty, z.url().optional()),
-        officialSiteIcon: z.preprocess(
-          empty,
-          z.union([z.url(), context.image()]).optional(),
-        ),
+        ...externalFields(context),
       })
       .refine(featuredImageAlt, {
         message: 'featuredImageAlt is required when featuredImage is set',
         path: ['featuredImageAlt'],
       })
-      .refine((data) => data.githubUrl || data.officialSiteUrl, {
-        message: 'Set githubUrl or officialSiteUrl',
-        path: ['githubUrl'],
-      })
-      .refine((data) => !data.githubUrl || isGitHubUrl(data.githubUrl), {
-        message: 'githubUrl must be a github.com URL',
-        path: ['githubUrl'],
-      })
-      .refine((data) => !data.officialSiteIcon || data.officialSiteUrl, {
-        message: 'officialSiteUrl is required when officialSiteIcon is set',
-        path: ['officialSiteUrl'],
+      .refine(externalIconRefine.refine, {
+        message: externalIconRefine.message,
+        path: ['externalUrl'],
       }),
 });
 

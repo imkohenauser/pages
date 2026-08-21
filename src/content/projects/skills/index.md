@@ -5,9 +5,8 @@ publishedAt: 2026-06-06
 updatedAt:
 featuredImage:
 featuredImageAlt:
-githubUrl: https://github.com/imkohenauser/skills
-officialSiteUrl:
-officialSiteIcon:
+externalUrl: https://github.com/imkohenauser/skills
+externalIcon:
 lang: en
 draft: false
 ---
