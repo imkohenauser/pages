@@ -22,3 +22,17 @@
   background: var(--color-inverse);
   color: var(--color-text-inverse);
 }
+
+.hidden-mobile {
+  display: none;
+
+  @include md {
+    display: revert;
+  }
+}
+
+.hidden-desktop {
+  @include md {
+    display: none;
+  }
+}
