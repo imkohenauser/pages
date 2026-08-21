@@ -1,20 +1,13 @@
-import { externalSource, type ExternalSource } from './external-source';
+import type { ExternalSource } from './external-source';
 import { path } from './path';
 import type { Project } from './projects';
 import { writingHref, type Writing } from './writing';
-
-export type MarkImage = string | { src: string };
 
 export type ListLink = {
   href: string;
   label: string;
   source: ExternalSource;
-  icon?: MarkImage;
 };
-
-export function markSrc(icon: MarkImage) {
-  return typeof icon === 'string' ? icon : icon.src;
-}
 
 export type ListItem = {
   title: string;
@@ -45,7 +38,6 @@ export function projectListItem(project: Project): ListItem {
       href: project.data.officialSiteUrl,
       label: 'Official site',
       source: 'site',
-      icon: project.data.officialSiteIcon,
     });
   }
 
@@ -62,12 +54,4 @@ export function projectListItem(project: Project): ListItem {
     description: project.data.description,
     links,
   };
-}
-
-export function itemSource(item: ListItem) {
-  if (!item.href || !item.external) {
-    return undefined;
-  }
-
-  return externalSource(item.href);
 }

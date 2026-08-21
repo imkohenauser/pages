@@ -1,6 +1,5 @@
 ---
-import SourceMark from './SourceMark.astro';
-import { itemSource, type ListItem } from '../lib/list';
+import type { ListItem } from '../lib/list';
 
 interface Props {
   items: ListItem[];
@@ -16,8 +15,6 @@ const Heading = `h${headingLevel}` as 'h2' | 'h3';
 
 <ol class:list={['content-list', `content-list--${variant}`, className]}>
   {items.map((item) => {
-    const source = itemSource(item);
-
     return (
       <li class="content-list__item">
         {item.publishedAt && (
@@ -33,17 +30,8 @@ const Heading = `h${headingLevel}` as 'h2' | 'h3';
               rel={item.external ? 'noopener noreferrer' : undefined}
             >
               {item.title}
-              {source && (
-                <>
-                  <span class="content-list__source" aria-hidden="true">
-                    <SourceMark source={source.id} />
-                    <span translate="no">{source.label}</span>
-                    ↗
-                  </span>
-                  <span class="visually-hidden">
-                    ({source.label}, opens in a new tab)
-                  </span>
-                </>
+              {item.external && (
+                <span class="visually-hidden">(opens in a new tab)</span>
               )}
             </a>
           ) : (
@@ -60,9 +48,7 @@ const Heading = `h${headingLevel}` as 'h2' | 'h3';
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <SourceMark source={link.source} icon={link.icon} />
                   <span translate="no">{link.label}</span>
-                  <span aria-hidden="true">↗</span>
                   <span class="visually-hidden">(opens in a new tab)</span>
                 </a>
               </li>
@@ -73,44 +59,3 @@ const Heading = `h${headingLevel}` as 'h2' | 'h3';
     );
   })}
 </ol>
-
-<style>
-  .content-list__title {
-    margin: 0;
-  }
-
-  .content-list--writing .content-list__title {
-    display: inline;
-    font: inherit;
-  }
-
-  .content-list__source,
-  .content-list__links a {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-1);
-    min-height: 1.5rem;
-  }
-
-  a {
-    position: relative;
-  }
-
-  .content-list__source {
-    margin-inline-start: var(--space-2);
-  }
-
-  .content-list__links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2) var(--space-4);
-    margin: var(--space-2) 0 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  p {
-    margin: var(--space-2) 0 0;
-    color: var(--color-text-muted);
-  }
-</style>
