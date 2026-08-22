@@ -5,14 +5,13 @@ import Icon from './Icon.astro';
 ---
 
 <header class="site-header">
-  <div class="site-header__inner">
-    <a class="site-header__brand" href={path('/')}>{site.name}</a>
-    <nav class="site-header__nav" aria-label="External links">
+  <div>
+    <a href={path('/')}>{site.name}</a>
+    <nav aria-label="External links">
       <ul class="site-header__links">
         {site.externalLinks.map((link) => (
-          <li class="site-header__item">
+          <li>
             <a
-              class="site-header__link"
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"

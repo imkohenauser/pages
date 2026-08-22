@@ -8,7 +8,7 @@ interface Props {
 const { avatarSrc = path('/avatar.png') } = Astro.props;
 ---
 
-<div class="arch-scene" aria-hidden="true">
+<div aria-hidden="true">
   <img src={avatarSrc} alt="" width="1000" height="1000" />
   <slot />
 </div>

@@ -10,10 +10,9 @@ interface Props {
 const { projects } = Astro.props;
 ---
 
-<section class="projects" aria-labelledby="projects-title">
-  <h2 id="projects-title" class="projects__title">Projects</h2>
+<section aria-labelledby="projects-title">
+  <h2 id="projects-title">Projects</h2>
   <List
-    class="projects__list"
     variant="projects"
     headingLevel={3}
     items={projects.map(projectListItem)}
