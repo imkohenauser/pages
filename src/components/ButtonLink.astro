@@ -1,4 +1,6 @@
 ---
+import Icon from './Icon.astro';
+
 interface Props {
   href: string;
   ariaLabel?: string;
@@ -7,13 +9,385 @@ interface Props {
 const { href, ariaLabel } = Astro.props;
 ---
 
-<a class="button-link" href={href} aria-label={ariaLabel}>
-  <slot>View all</slot>
-</a>
+<button-link-interaction>
+  <a class="button-link" href={href} aria-label={ariaLabel}>
+    <span class="button-link__label"><slot>View all</slot></span>
+    <span class="button-link__icon">
+      <Icon name="arrow-right" />
+    </span>
+  </a>
+</button-link-interaction>
 
-<style>
-.button-link {
-  user-select: none;
-  touch-action: manipulation;
-}
+<style lang="scss">
+  @use "tools" as *;
+
+  button-link-interaction {
+    display: inline-flex;
+  }
+
+  .button-link {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-width: rem(138);
+    min-height: rem(42);
+    padding: var(--space-2) var(--space-4) var(--space-2) var(--space-5);
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    line-height: rem(24);
+    color: var(--color-text-inverse);
+    text-decoration: none;
+    text-shadow:
+      0 rem(1) rem(1) rgb(0 0 0 / 9%),
+      0 rem(2) rem(1) rgb(0 0 0 / 5%);
+    user-select: none;
+    touch-action: manipulation;
+    background: linear-gradient(
+      180deg,
+      var(--sky-900) 0%,
+      var(--sky-800) 15%,
+      var(--sky-700) 30%,
+      var(--sky-500) 60%,
+      var(--sky-400) 75%,
+      var(--sky-200) 100%
+    );
+    background-position: center top;
+    background-size: 100% 125%;
+    border: rem(1) solid var(--color-border-strong);
+    border-radius: var(--radius-4);
+    box-shadow:
+      0 rem(1) rem(1) rgb(0 0 0 / 10%),
+      0 rem(4) rem(2) rgb(0 0 0 / 9%),
+      0 rem(9) rem(2.5) rgb(0 0 0 / 5%),
+      0 rem(15) rem(3) rgb(0 0 0 / 1%);
+    -webkit-tap-highlight-color: transparent;
+
+    &::before,
+    &::after {
+      position: absolute;
+      pointer-events: none;
+      content: "";
+    }
+
+    &::before {
+      z-index: 0;
+      inset: rem(-1) rem(-1) auto;
+      height: rem(20);
+      background: linear-gradient(
+        180deg,
+        rgb(255 255 255 / 80%),
+        rgb(255 255 255 / 20%)
+      );
+      border-radius: rem(20);
+    }
+
+    &::after {
+      z-index: 2;
+      top: rem(-10);
+      bottom: rem(-10);
+      left: rem(-88);
+      width: rem(92);
+      opacity: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgb(255 255 255 / 16%) 28%,
+        rgb(255 255 255 / 58%) 50%,
+        rgb(255 255 255 / 18%) 72%,
+        transparent 100%
+      );
+      border-radius: 45%;
+      filter: blur(rem(3));
+      mix-blend-mode: screen;
+      transform: translateX(0);
+    }
+
+    &:focus-visible {
+      outline: rem(3) solid var(--sky-400);
+      outline-offset: rem(3);
+    }
+
+    @include motion-safe {
+      transition:
+        filter 50ms ease-out,
+        transform 80ms ease-out,
+        box-shadow 180ms ease-out;
+    }
+  }
+
+  button-link-interaction[data-button-link-scanning] .button-link::after {
+    @include motion-safe {
+      animation: button-link-scan 200ms linear;
+    }
+  }
+
+  button-link-interaction[data-button-link-scanning] .button-link {
+    @include motion-safe {
+      animation: button-link-surface-scan 200ms linear;
+    }
+  }
+
+  button-link-interaction[data-button-link-pressed] .button-link {
+    filter: brightness(0.94);
+    box-shadow:
+      0 rem(1) rem(1) rgb(0 0 0 / 10%),
+      0 rem(2) rem(1) rgb(0 0 0 / 8%);
+
+    @include motion-safe {
+      transform: translateY(rem(1)) scale(0.97);
+      transition-duration: 50ms;
+    }
+  }
+
+  button-link-interaction[data-button-link-afterglow] .button-link {
+    box-shadow:
+      0 rem(1) rem(1) rgb(0 0 0 / 10%),
+      0 rem(4) rem(2) rgb(0 0 0 / 9%),
+      0 rem(9) rem(2.5) rgb(0 0 0 / 5%),
+      0 rem(15) rem(3) rgb(0 0 0 / 1%),
+      inset 0 0 0 rem(1) rgb(255 255 255 / 55%),
+      inset 0 0 rem(9) rgb(255 255 255 / 34%);
+
+    @include motion-safe {
+      animation: button-link-afterglow 300ms ease-out;
+    }
+  }
+
+  .button-link__label,
+  .button-link__icon {
+    position: relative;
+    z-index: 1;
+
+    @include motion-safe {
+      transition: opacity 80ms ease-out;
+    }
+  }
+
+  button-link-interaction[data-button-link-pressed] .button-link__label,
+  button-link-interaction[data-button-link-pressed] .button-link__icon {
+    opacity: 0.92;
+  }
+
+  button-link-interaction[data-button-link-scanning] .button-link__label {
+    @include motion-safe {
+      animation: button-link-label-scan 200ms linear;
+    }
+  }
+
+  button-link-interaction[data-button-link-scanning] .button-link__icon {
+    @include motion-safe {
+      animation: button-link-icon-scan 200ms linear;
+    }
+  }
+
+  .button-link__label {
+    white-space: nowrap;
+  }
+
+  .button-link__icon {
+    display: grid;
+    flex-shrink: 0;
+    width: rem(16);
+    height: rem(16);
+    filter: drop-shadow(0 rem(1) rem(0.5) rgb(0 0 0 / 9%));
+  }
+
+  @keyframes button-link-scan {
+    0% {
+      opacity: 0;
+      transform: translateX(0);
+    }
+
+    28% {
+      opacity: 0.82;
+    }
+
+    100% {
+      opacity: 0;
+      transform: translateX(rem(318));
+    }
+  }
+
+  @keyframes button-link-surface-scan {
+    0%,
+    100% {
+      background-position: center top;
+      filter: brightness(1);
+    }
+
+    48% {
+      background-position: center 12%;
+      filter: brightness(1.06);
+    }
+  }
+
+  @keyframes button-link-label-scan {
+    0%,
+    100% {
+      text-shadow:
+        0 rem(1) rem(1) rgb(0 0 0 / 9%),
+        0 rem(2) rem(1) rgb(0 0 0 / 5%);
+    }
+
+    48% {
+      text-shadow:
+        0 0 rem(5) rgb(255 255 255 / 80%),
+        0 rem(1) rem(1) rgb(0 0 0 / 9%);
+    }
+  }
+
+  @keyframes button-link-icon-scan {
+    0%,
+    100% {
+      filter: drop-shadow(0 rem(1) rem(0.5) rgb(0 0 0 / 9%));
+    }
+
+    48% {
+      filter:
+        drop-shadow(0 0 rem(4) rgb(255 255 255 / 90%))
+        drop-shadow(0 rem(1) rem(0.5) rgb(0 0 0 / 9%));
+    }
+  }
+
+  @keyframes button-link-afterglow {
+    0% {
+      box-shadow:
+        0 rem(1) rem(1) rgb(0 0 0 / 10%),
+        0 rem(4) rem(2) rgb(0 0 0 / 9%),
+        0 rem(9) rem(2.5) rgb(0 0 0 / 5%),
+        0 rem(15) rem(3) rgb(0 0 0 / 1%),
+        inset 0 0 0 rem(1) rgb(255 255 255 / 65%),
+        inset 0 0 rem(11) rgb(255 255 255 / 42%);
+    }
+
+    100% {
+      box-shadow:
+        0 rem(1) rem(1) rgb(0 0 0 / 10%),
+        0 rem(4) rem(2) rgb(0 0 0 / 9%),
+        0 rem(9) rem(2.5) rgb(0 0 0 / 5%),
+        0 rem(15) rem(3) rgb(0 0 0 / 1%),
+        inset 0 0 0 rem(1) transparent,
+        inset 0 0 rem(9) transparent;
+    }
+  }
 </style>
+
+<script>
+  class ButtonLinkInteraction extends HTMLElement {
+    private abortController?: AbortController;
+    private scanTimer?: number;
+    private scanResetTimer?: number;
+    private afterglowTimer?: number;
+    private scanReady = true;
+
+    connectedCallback() {
+      if (this.abortController) return;
+
+      const link = this.querySelector('a');
+      if (!(link instanceof HTMLAnchorElement)) return;
+
+      this.abortController = new AbortController();
+      const { signal } = this.abortController;
+
+      link.addEventListener('pointerenter', this.handlePointerEnter, { signal });
+      link.addEventListener('pointerleave', this.handlePointerLeave, { signal });
+      link.addEventListener('pointerdown', this.handlePointerDown, { signal });
+      link.addEventListener('pointerup', this.handlePointerUp, { signal });
+      link.addEventListener('pointercancel', this.handlePointerCancel, { signal });
+      link.addEventListener('keydown', this.handleKeyDown, { signal });
+      link.addEventListener('keyup', this.handleKeyUp, { signal });
+      link.addEventListener('blur', this.handleBlur, { signal });
+    }
+
+    disconnectedCallback() {
+      this.abortController?.abort();
+      this.abortController = undefined;
+      this.clearTimers();
+    }
+
+    private handlePointerEnter = () => {
+      window.clearTimeout(this.scanResetTimer);
+
+      if (
+        !this.scanReady ||
+        !window.matchMedia('(hover: hover) and (pointer: fine)').matches ||
+        !window.matchMedia('(prefers-reduced-motion: no-preference)').matches
+      ) {
+        return;
+      }
+
+      this.scanReady = false;
+      this.toggleAttribute('data-button-link-scanning', true);
+      window.clearTimeout(this.scanTimer);
+      this.scanTimer = window.setTimeout(() => {
+        this.removeAttribute('data-button-link-scanning');
+      }, 200);
+    };
+
+    private handlePointerLeave = () => {
+      window.clearTimeout(this.scanResetTimer);
+      this.scanResetTimer = window.setTimeout(() => {
+        this.scanReady = true;
+      }, 400);
+      this.finishPress(false);
+    };
+
+    private handlePointerDown = (event: PointerEvent) => {
+      if (event.pointerType === 'mouse' && event.button !== 0) return;
+      window.clearTimeout(this.scanTimer);
+      this.removeAttribute('data-button-link-scanning');
+      this.removeAttribute('data-button-link-afterglow');
+      this.toggleAttribute('data-button-link-pressed', true);
+    };
+
+    private handlePointerUp = () => {
+      this.finishPress(true);
+    };
+
+    private handlePointerCancel = () => {
+      this.finishPress(false);
+    };
+
+    private handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Enter' || event.repeat) return;
+      this.removeAttribute('data-button-link-afterglow');
+      this.toggleAttribute('data-button-link-pressed', true);
+    };
+
+    private handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key !== 'Enter') return;
+      this.finishPress(true);
+    };
+
+    private handleBlur = () => {
+      this.finishPress(false);
+    };
+
+    private finishPress(showAfterglow: boolean) {
+      if (!this.hasAttribute('data-button-link-pressed')) return;
+
+      this.removeAttribute('data-button-link-pressed');
+      if (!showAfterglow) return;
+
+      this.toggleAttribute('data-button-link-afterglow', true);
+      window.clearTimeout(this.afterglowTimer);
+      this.afterglowTimer = window.setTimeout(() => {
+        this.removeAttribute('data-button-link-afterglow');
+      }, 300);
+    }
+
+    private clearTimers() {
+      window.clearTimeout(this.scanTimer);
+      window.clearTimeout(this.scanResetTimer);
+      window.clearTimeout(this.afterglowTimer);
+    }
+  }
+
+  if (!customElements.get('button-link-interaction')) {
+    customElements.define('button-link-interaction', ButtonLinkInteraction);
+  }
+</script>

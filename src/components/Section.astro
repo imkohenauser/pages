@@ -42,4 +42,15 @@ const hasFooter = Astro.slots.has('footer');
   .section {
     padding: 0 var(--space-2) var(--space-2);
   }
+
+  .section__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: var(--space-4);
+
+    @include md {
+      padding-top: var(--space-2);
+    }
+  }
 </style>
