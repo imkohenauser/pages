@@ -2,7 +2,10 @@ html {
   background: var(--color-canvas);
   color: var(--color-text);
   font-family: var(--font-sans);
+  font-kerning: normal;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Display font is loaded at weight 400 only. */
