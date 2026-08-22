@@ -53,3 +53,4 @@ Read the selected `.agents/skills/*/SKILL.md` before using a skill. Apply review
 - Use `review-animations` only when the user explicitly asks for a dedicated review of existing animation or motion code. Its automatic invocation is disabled; it reports findings and a `Block` or `Approve` verdict without implementing changes.
 - Use `web-naming-conventions` when choosing, reviewing, or changing names is the primary task. Do not invoke it for ordinary implementation that merely introduces names; repository-specific path rules above take precedence.
 - Use `commit-ja` only when the user explicitly invokes `$commit-ja` or `/commit-ja`. It proposes Japanese Conventional Commit text from staged changes without changing files, the index, or Git history.
+- Use `tidy-css` only when the user explicitly asks to tidy, clean up, or normalize selected CSS. Do not invoke it for ordinary style implementation.

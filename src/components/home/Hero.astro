@@ -8,10 +8,8 @@ const { title, description } = Astro.props;
 ---
 
 <section class="hero">
-  <div>
-    <h1 class="hero-title">{title}</h1>
-  </div>
-  <div>
+  <h1 class="hero-title">{title}</h1>
+  <div class="hero-description">
     <p class="text-body">{description}</p>
   </div>
   <slot />
@@ -22,5 +20,21 @@ const { title, description } = Astro.props;
 
   .hero-title {
     margin: 0;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-2xl);
+    line-height: rem(32);
+    /* -0.36px at 24px and -0.48px at 32px. */
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+
+    @include md {
+      font-size: var(--text-3xl);
+      line-height: rem(40);
+      text-align: center;
+    }
+  }
+
+  .hero-description {
+    padding: var(--space-4) var(--space-3);
   }
 </style>
