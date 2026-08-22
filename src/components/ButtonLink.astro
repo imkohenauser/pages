@@ -138,7 +138,7 @@ const { href, ariaLabel } = Astro.props;
 
     @include motion-safe {
       transform: translateY(rem(1)) scale(0.97);
-      transition-duration: 50ms;
+      transition-duration: 120ms;
     }
   }
 
@@ -193,8 +193,10 @@ const { href, ariaLabel } = Astro.props;
     filter: drop-shadow(0 rem(1) rem(0.5) rgb(0 0 0 / 9%));
   }
 
+  // A fixed irregular cadence reads as a designed fault rather than random noise.
   @keyframes button-link-blinky {
     0%,
+    78%,
     100% {
       background: linear-gradient(
         180deg,
@@ -208,7 +210,8 @@ const { href, ariaLabel } = Astro.props;
       box-shadow: var(--button-link-inner-edge), var(--button-link-outer-shadow);
     }
 
-    25% {
+    9%,
+    31% {
       background: linear-gradient(
         180deg,
         var(--sky-950) 0%,
@@ -223,7 +226,19 @@ const { href, ariaLabel } = Astro.props;
         inset 0 0 rem(8) rgb(8 47 107 / 28%);
     }
 
-    50% {
+    20% {
+      background: linear-gradient(
+        180deg,
+        var(--sky-900) 0%,
+        var(--sky-800) 25%,
+        var(--sky-700) 50%,
+        var(--sky-600) 75%,
+        var(--sky-400) 100%
+      );
+      box-shadow: var(--button-link-inner-edge), var(--button-link-outer-shadow);
+    }
+
+    47% {
       background: linear-gradient(
         180deg,
         var(--sky-700) 0%,
@@ -240,7 +255,7 @@ const { href, ariaLabel } = Astro.props;
         inset 0 0 rem(10) rgb(255 255 255 / 36%);
     }
 
-    75% {
+    63% {
       background: linear-gradient(
         180deg,
         var(--sky-900) 0%,
@@ -255,25 +270,33 @@ const { href, ariaLabel } = Astro.props;
 
   @keyframes button-link-gloss-blinky {
     0%,
+    82%,
     100% {
       opacity: 1;
     }
 
-    25% {
-      opacity: 0.46;
+    13%,
+    35% {
+      opacity: 0.38;
     }
 
-    50% {
+    24% {
+      opacity: 0.76;
+    }
+
+    51% {
       opacity: 1;
     }
 
-    75% {
+    67% {
       opacity: 0.68;
     }
   }
 
   @keyframes button-link-label-blinky {
     0%,
+    29%,
+    59%,
     100% {
       opacity: 1;
       text-shadow:
@@ -281,46 +304,50 @@ const { href, ariaLabel } = Astro.props;
         0 rem(2) rem(1) rgb(0 0 0 / 5%);
     }
 
-    25% {
-      opacity: 0.9;
+    35% {
+      opacity: 0.86;
       text-shadow: 0 rem(1) rem(1) rgb(0 0 0 / 14%);
     }
 
-    50% {
+    43% {
+      opacity: 1;
+      text-shadow:
+        0 rem(1) rem(1) rgb(0 0 0 / 9%),
+        0 rem(2) rem(1) rgb(0 0 0 / 5%);
+    }
+
+    51% {
       opacity: 1;
       text-shadow:
         0 0 rem(5) rgb(255 255 255 / 82%),
         0 rem(1) rem(1) rgb(0 0 0 / 7%);
     }
-
-    75% {
-      opacity: 0.94;
-      text-shadow: 0 rem(1) rem(1) rgb(0 0 0 / 11%);
-    }
   }
 
   @keyframes button-link-icon-blinky {
     0%,
+    38%,
+    67%,
     100% {
       opacity: 1;
+      transform: translateX(0);
       filter: drop-shadow(0 rem(1) rem(0.5) rgb(0 0 0 / 9%));
     }
 
-    25% {
+    47% {
       opacity: 0.9;
+      transform: translateX(rem(-1));
       filter: drop-shadow(0 rem(1) rem(0.5) rgb(0 0 0 / 14%));
     }
 
-    50% {
+    55% {
       opacity: 1;
+      transform: translateX(rem(1));
       filter:
         drop-shadow(0 0 rem(4) rgb(255 255 255 / 90%))
+        drop-shadow(#{rem(-2)} 0 rem(1) rgb(255 255 255 / 58%))
+        drop-shadow(#{rem(-4)} 0 rem(2) rgb(198 228 245 / 32%))
         drop-shadow(0 rem(1) rem(0.5) rgb(0 0 0 / 9%));
-    }
-
-    75% {
-      opacity: 0.94;
-      filter: drop-shadow(0 rem(1) rem(0.5) rgb(0 0 0 / 11%));
     }
   }
 
