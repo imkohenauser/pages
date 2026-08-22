@@ -1,0 +1,7 @@
+interface:
+  display_name: "Review Accessibility"
+  short_description: "Review interface barriers and accessibility impact"
+  default_prompt: "Use $review-accessibility to review this interface for accessibility barriers."
+
+policy:
+  allow_implicit_invocation: false
