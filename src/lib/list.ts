@@ -20,6 +20,7 @@ export type ListItem = {
   ariaLabel?: string;
   featuredImage?: ImageMetadata;
   featuredImageAlt?: string;
+  lang?: string;
 };
 
 function mapListItem(input: {
@@ -29,6 +30,7 @@ function mapListItem(input: {
   href?: string;
   externalUrl?: string;
   externalIcon?: string | { src: string };
+  lang?: string;
 }) {
   const external = Boolean(input.externalUrl);
   const actionLink = listActionLink(input.externalUrl, input.externalIcon);
@@ -45,7 +47,9 @@ function mapListItem(input: {
       input.title,
       input.externalUrl,
       actionLink?.variant,
+      input.lang,
     ),
+    lang: input.lang,
   } satisfies ListItem;
 }
 
@@ -60,6 +64,7 @@ export function writingListItem(entry: Writing): ListItem {
     href,
     externalUrl,
     externalIcon: entry.data.externalIcon,
+    lang: entry.data.lang,
   });
 }
 
@@ -74,6 +79,7 @@ export function projectListItem(project: Project): ListItem {
       href,
       externalUrl,
       externalIcon: project.data.externalIcon,
+      lang: project.data.lang,
     }),
     featuredImage: project.data.featuredImage,
     featuredImageAlt: project.data.featuredImageAlt,

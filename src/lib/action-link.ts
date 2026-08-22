@@ -68,21 +68,41 @@ export function cardLinkAriaLabel(
   title: string,
   externalUrl: string | undefined,
   variant: ActionLinkVariant | undefined,
+  lang?: string,
 ) {
   if (!externalUrl) {
     return undefined;
   }
 
+  const ja = lang?.split(/[-_]/)[0]?.toLowerCase() === 'ja';
+  let suffix: string;
+
   switch (variant) {
     case 'medium':
-      return `${title} (Read on Medium, opens in a new tab)`;
+      suffix = ja
+        ? 'Mediumで読む、新しいタブで開きます'
+        : 'Read on Medium, opens in a new tab';
+      break;
     case 'zenn':
-      return `${title} (Read on Zenn, opens in a new tab)`;
+      suffix = ja
+        ? 'Zennで読む、新しいタブで開きます'
+        : 'Read on Zenn, opens in a new tab';
+      break;
     case 'github':
-      return `${title} (GitHub, opens in a new tab)`;
+      suffix = ja
+        ? 'GitHub、新しいタブで開きます'
+        : 'GitHub, opens in a new tab';
+      break;
     case 'official-site':
-      return `${title} (Official site, opens in a new tab)`;
+      suffix = ja
+        ? '公式サイト、新しいタブで開きます'
+        : 'Official site, opens in a new tab';
+      break;
     default:
-      return `${title} (opens in a new tab)`;
+      suffix = ja
+        ? '新しいタブで開きます'
+        : 'opens in a new tab';
   }
+
+  return ja ? `${title}（${suffix}）` : `${title} (${suffix})`;
 }

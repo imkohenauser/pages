@@ -6,6 +6,7 @@
   margin: 0;
   font-size: var(--text-sm);
   line-height: rem(24);
+  text-wrap: balance;
 
   @include md {
     font-size: var(--text-md);

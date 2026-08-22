@@ -54,8 +54,8 @@
   --color-text-inverse-muted: var(--neutral-200);
 
   /* Space */
+  --space-\.5: #{rem(2)};
   --space-1: #{rem(4)};
-  /* A dotted step name is escaped so the custom property is valid. */
   --space-1\.5: #{rem(6)};
   --space-2: #{rem(8)};
   --space-3: #{rem(12)};
