@@ -3,6 +3,7 @@
 ## Scope
 
 - Change only what the user asked for. Do not add unsolicited styles, states, refactors, or related cleanup.
+- Keep generated QA reports, screenshots, logs, and local machine paths out of the repository; write working files only to ignored `temp/` unless the user explicitly asks to keep them.
 
 ## Repository naming and verification
 
