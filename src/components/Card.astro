@@ -28,13 +28,13 @@ const isWriting = variant === 'writing';
 
 {
   isWriting ? (
-    <article class="content-card content-card--writing">
-      <div class="content-card__container">
-        <div class="content-card__text">
-          <Heading class="content-card__title">
+    <article class="card card--writing">
+      <div class="card__container">
+        <div class="card__text">
+          <Heading class="card__title">
             {href ? (
               <a
-                class="content-card__title-link"
+                class="card__title-link"
                 href={href}
                 target={external ? '_blank' : undefined}
                 rel={external ? 'noopener noreferrer' : undefined}
@@ -47,13 +47,13 @@ const isWriting = variant === 'writing';
             )}
           </Heading>
           {description && (
-            <p class="content-card__description">{description}</p>
+            <p class="card__description">{description}</p>
           )}
         </div>
-        <div class="content-card__meta">
+        <div class="card__meta">
           {publishedAt && (
             <time
-              class="content-card__date"
+              class="card__date"
               datetime={publishedAt.toISOString()}
             >
               {formatIsoDate(publishedAt)}
@@ -72,29 +72,29 @@ const isWriting = variant === 'writing';
   ) : (
     <article
       class:list={[
-        'content-card',
-        'content-card--project',
-        !featuredImage && 'content-card--no-thumbnail',
+        'card',
+        'card--project',
+        !featuredImage && 'card--no-thumbnail',
       ]}
     >
-      <div class="content-card__container">
+      <div class="card__container">
         {featuredImage && (
           <div>
             <Image
               src={featuredImage}
               alt=""
-              class="content-card__image"
+              class="card__image"
               widths={[480, 640, 960]}
               sizes="(min-width: 48rem) 18rem, 100vw"
             />
           </div>
         )}
-        <div class="content-card__body">
-          <div class="content-card__text">
-            <Heading class="content-card__title">
+        <div class="card__body">
+          <div class="card__text">
+            <Heading class="card__title">
               {href ? (
                 <a
-                  class="content-card__title-link"
+                  class="card__title-link"
                   href={href}
                   target={external ? '_blank' : undefined}
                   rel={external ? 'noopener noreferrer' : undefined}
@@ -107,11 +107,11 @@ const isWriting = variant === 'writing';
               )}
             </Heading>
             {description && (
-              <p class="content-card__description">{description}</p>
+              <p class="card__description">{description}</p>
             )}
           </div>
           {actionLinkVariant && (
-            <div class="content-card__meta">
+            <div class="card__meta">
               <ActionLink
                 variant={actionLinkVariant}
                 iconSrc={actionLinkIconSrc}
@@ -129,14 +129,14 @@ const isWriting = variant === 'writing';
 <style lang="scss">
   @use "tools" as *;
 
-  .content-card {
+  .card {
     position: relative;
     border-radius: var(--radius-4);
   }
 
-  .content-card--writing {
-    --content-card-title: var(--color-text);
-    --content-card-muted: var(--color-text-muted);
+  .card--writing {
+    --card-title: var(--color-text);
+    --card-muted: var(--color-text-muted);
 
     border: 1px solid var(--color-border);
     background: linear-gradient(
@@ -146,9 +146,9 @@ const isWriting = variant === 'writing';
     );
   }
 
-  .content-card--project {
-    --content-card-title: var(--color-text-inverse);
-    --content-card-muted: var(--color-text-inverse-muted);
+  .card--project {
+    --card-title: var(--color-text-inverse);
+    --card-muted: var(--color-text-inverse-muted);
 
     border: 1px solid var(--color-inverse-raised);
     background: linear-gradient(
@@ -158,7 +158,7 @@ const isWriting = variant === 'writing';
     );
   }
 
-  .content-card__title-link {
+  .card__title-link {
     color: inherit;
     text-decoration: none;
 
@@ -171,16 +171,16 @@ const isWriting = variant === 'writing';
     }
   }
 
-  .content-card__container {
+  .card__container {
     display: flex;
     flex-direction: column;
   }
 
-  .content-card--writing .content-card__container {
+  .card--writing .card__container {
     justify-content: space-between;
   }
 
-  .content-card--project .content-card__container {
+  .card--project .card__container {
     @include md {
       display: grid;
       grid-template-columns: 3fr 5fr;
@@ -188,23 +188,23 @@ const isWriting = variant === 'writing';
     }
   }
 
-  .content-card--no-thumbnail .content-card__container {
+  .card--no-thumbnail .card__container {
     @include md {
       grid-template-columns: 1fr;
     }
   }
 
-  .content-card__text {
+  .card__text {
     display: grid;
   }
 
-  .content-card__title {
+  .card__title {
     margin: 0;
     font-family: var(--font-sans);
     font-size: var(--text-md);
     font-weight: 700;
     line-height: rem(24);
-    color: var(--content-card-title);
+    color: var(--card-title);
 
     @include md {
       font-size: var(--text-lg);
@@ -212,27 +212,27 @@ const isWriting = variant === 'writing';
     }
   }
 
-  .content-card__description {
+  .card__description {
     margin: 0;
     font-size: var(--text-sm);
     line-height: rem(20);
-    color: var(--content-card-muted);
+    color: var(--card-muted);
   }
 
-  .content-card__meta {
+  .card__meta {
     display: flex;
     align-items: center;
     justify-content: flex-end;
   }
 
-  .content-card__date {
+  .card__date {
     margin-inline-end: auto;
     font-size: var(--text-xs);
     line-height: rem(20);
-    color: var(--content-card-muted);
+    color: var(--card-muted);
   }
 
-  .content-card__image {
+  .card__image {
     width: 100%;
     height: rem(170);
     border-radius: var(--radius-2);
@@ -245,7 +245,7 @@ const isWriting = variant === 'writing';
     }
   }
 
-  .content-card__body {
+  .card__body {
     display: flex;
     flex-direction: column;
 
