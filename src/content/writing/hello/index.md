@@ -1,7 +1,7 @@
 ---
 title: "Hello"
 description: "最初の投稿です。"
-publishedAt: 2026-08-12
+publishedAt: 2025-09-01
 updatedAt: 2026-08-20
 featuredImage:
 featuredImageAlt:

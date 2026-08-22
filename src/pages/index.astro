@@ -9,7 +9,7 @@ import { getProjects } from '../lib/projects';
 import { site } from '../data/site';
 import { homeJsonLd } from '../lib/seo';
 
-const writing = (await getWriting()).slice(0, 10);
+const writing = await getWriting();
 const projects = await getProjects();
 ---
 

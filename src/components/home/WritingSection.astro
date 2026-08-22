@@ -1,20 +1,37 @@
 ---
 import { writingListItem } from '../../lib/list';
+import { path } from '../../lib/path';
 import List from '../List.astro';
 import Section from '../Section.astro';
+import ButtonLink from '../ButtonLink.astro';
 import type { Writing } from '../../lib/writing';
 
 interface Props {
   writing: Writing[];
 }
 
+const DISPLAY_LIMIT = 3;
+
 const { writing } = Astro.props;
+const visibleWriting = writing.slice(0, DISPLAY_LIMIT);
+const hasMore = writing.length > DISPLAY_LIMIT;
 ---
 
 <Section title="Writing" titleId="writing-title">
   <List
     variant="writing"
     headingLevel={3}
-    items={writing.map(writingListItem)}
+    items={visibleWriting.map(writingListItem)}
   />
+  {
+    hasMore && (
+      <ButtonLink
+        slot="footer"
+        href={path('/writing/')}
+        ariaLabel="View all writing"
+      >
+        View all
+      </ButtonLink>
+    )
+  }
 </Section>

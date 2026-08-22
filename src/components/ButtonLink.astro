@@ -1,0 +1,19 @@
+---
+interface Props {
+  href: string;
+  ariaLabel?: string;
+}
+
+const { href, ariaLabel } = Astro.props;
+---
+
+<a class="button-link" href={href} aria-label={ariaLabel}>
+  <slot>View all</slot>
+</a>
+
+<style>
+.button-link {
+  user-select: none;
+  touch-action: manipulation;
+}
+</style>

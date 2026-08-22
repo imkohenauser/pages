@@ -5,18 +5,38 @@ interface Props {
 }
 
 const { title, titleId } = Astro.props;
+const hasFooter = Astro.slots.has('footer');
 ---
 
 <section class="section" aria-labelledby={titleId}>
   <h2 class="section-title" id={titleId}>{title}</h2>
   <slot />
+  {
+    hasFooter && (
+      <footer class="section__footer">
+        <slot name="footer" />
+      </footer>
+    )
+  }
 </section>
 
 <style lang="scss">
   @use "tools" as *;
 
   .section-title {
-    margin: 0;
+    /* Offset `.section` inline padding so the 16px inset matches the Figma heading. */
+    margin: 0 calc(-1 * var(--space-2));
+    padding: var(--space-4) var(--space-4) 0;
+    font-size: var(--text-xl);
+    line-height: rem(28);
+    /* -0.25px at 20px and -0.3px at 24px. */
+    letter-spacing: -0.0125em;
+
+    @include md {
+      padding-bottom: var(--space-2);
+      font-size: var(--text-2xl);
+      line-height: rem(32);
+    }
   }
 
   .section {
