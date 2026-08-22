@@ -54,12 +54,43 @@ const {
   </head>
   <body id="top">
     <a class="skip-link" href="#main-content">Skip to content</a>
-    <div>
+    <div class="site-container">
       <Header />
-      <main id="main-content">
-        <slot />
-      </main>
-      <Footer />
+      <div class="site-main">
+        <main id="main-content">
+          <slot />
+        </main>
+        <Footer />
+      </div>
     </div>
   </body>
 </html>
+
+<style lang="scss">
+  @use "tools" as *;
+
+  .site-container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+
+    @include md {
+      flex-direction: row;
+      gap: var(--space-4);
+      max-width: rem(1024);
+      margin: 0 auto;
+      padding: 0 var(--space-5);
+    }
+  }
+
+  .site-main {
+    width: 100%;
+    padding-top: var(--space-16);
+
+    @include md {
+      padding-left: var(--space-2);
+      padding-right: var(--space-2);
+    }
+  }
+</style>

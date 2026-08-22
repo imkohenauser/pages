@@ -2,6 +2,7 @@
 import type { Project } from '../../lib/projects';
 import { projectListItem } from '../../lib/list';
 import List from '../List.astro';
+import Section from '../Section.astro';
 
 interface Props {
   projects: Project[];
@@ -10,11 +11,10 @@ interface Props {
 const { projects } = Astro.props;
 ---
 
-<section aria-labelledby="projects-title">
-  <h2 id="projects-title">Projects</h2>
+<Section title="Projects" titleId="projects-title">
   <List
     variant="projects"
     headingLevel={3}
     items={projects.map(projectListItem)}
   />
-</section>
+</Section>

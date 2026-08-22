@@ -1,6 +1,7 @@
 ---
 import { writingListItem } from '../../lib/list';
 import List from '../List.astro';
+import Section from '../Section.astro';
 import type { Writing } from '../../lib/writing';
 
 interface Props {
@@ -10,11 +11,10 @@ interface Props {
 const { writing } = Astro.props;
 ---
 
-<section aria-labelledby="writing-title">
-  <h2 id="writing-title">Writing</h2>
+<Section title="Writing" titleId="writing-title">
   <List
     variant="writing"
     headingLevel={3}
     items={writing.map(writingListItem)}
   />
-</section>
+</Section>

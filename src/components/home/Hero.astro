@@ -7,14 +7,20 @@ interface Props {
 const { title, description } = Astro.props;
 ---
 
-<section>
+<section class="hero">
   <div>
-    <h1>{title}</h1>
+    <h1 class="hero-title">{title}</h1>
   </div>
   <div>
-    <p>{description}</p>
+    <p class="text-body">{description}</p>
   </div>
-  <div>
-    <slot />
-  </div>
+  <slot />
 </section>
+
+<style lang="scss">
+  @use "tools" as *;
+
+  .hero-title {
+    margin: 0;
+  }
+</style>
