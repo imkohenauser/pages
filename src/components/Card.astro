@@ -24,8 +24,9 @@ const {
   headingLevel,
   lang,
 } = Astro.props;
-const Heading = `h${headingLevel}` as 'h2' | 'h3';
+const Heading = headingLevel === 2 ? 'h2' : 'h3';
 const isWriting = variant === 'writing';
+const hasMeta = publishedAt || actionLinkVariant;
 ---
 
 <article
@@ -50,7 +51,7 @@ const isWriting = variant === 'writing';
         </div>
       )
     }
-    <div class="card__body" lang={lang}>
+    <div class="card__body">
       <div class="card__text">
         <Heading class="card__title">
           {
@@ -71,25 +72,25 @@ const isWriting = variant === 'writing';
         </Heading>
         {description && <p class="card__description">{description}</p>}
       </div>
-      <div class="card__meta">
-        {
-          publishedAt && (
-            <time class="card__date" datetime={publishedAt.toISOString()}>
-              {formatIsoDate(publishedAt)}
-            </time>
-          )
-        }
-        {
-          actionLinkVariant && (
-            <ActionLink
-              variant={actionLinkVariant}
-              iconSrc={actionLinkIconSrc}
-              tone={isWriting ? 'default' : 'inverse'}
-              decorative
-            />
-          )
-        }
-      </div>
+      {
+        hasMeta && (
+          <div class="card__meta">
+            {publishedAt && (
+              <time class="card__date" datetime={publishedAt.toISOString()}>
+                {formatIsoDate(publishedAt)}
+              </time>
+            )}
+            {actionLinkVariant && (
+              <ActionLink
+                variant={actionLinkVariant}
+                iconSrc={actionLinkIconSrc}
+                tone={isWriting ? 'default' : 'inverse'}
+                decorative
+              />
+            )}
+          </div>
+        )
+      }
     </div>
   </div>
 </article>
