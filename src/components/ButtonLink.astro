@@ -26,6 +26,14 @@ const { href, ariaLabel } = Astro.props;
   }
 
   .button-link {
+    --button-link-inner-edge:
+      inset 0 0 0 #{rem(1)} rgb(255 255 255 / 34%),
+      inset 0 #{rem(-1)} 0 rgb(8 47 107 / 18%);
+    --button-link-outer-shadow:
+      0 #{rem(1)} #{rem(2)} rgb(0 0 0 / 12%),
+      0 #{rem(5)} #{rem(10)} #{rem(-3)} rgb(0 0 0 / 10%),
+      0 #{rem(12)} #{rem(24)} #{rem(-8)} rgb(0 0 0 / 8%);
+
     position: relative;
     isolation: isolate;
     display: inline-flex;
@@ -57,23 +65,14 @@ const { href, ariaLabel } = Astro.props;
     );
     background-position: center top;
     background-size: 100% 125%;
-    border: rem(1) solid var(--color-border-strong);
     border-radius: var(--radius-4);
-    box-shadow:
-      0 rem(1) rem(1) rgb(0 0 0 / 10%),
-      0 rem(4) rem(2) rgb(0 0 0 / 9%),
-      0 rem(9) rem(2.5) rgb(0 0 0 / 5%),
-      0 rem(15) rem(3) rgb(0 0 0 / 1%);
+    box-shadow: var(--button-link-inner-edge), var(--button-link-outer-shadow);
     -webkit-tap-highlight-color: transparent;
 
-    &::before,
-    &::after {
+    &::before {
       position: absolute;
       pointer-events: none;
       content: "";
-    }
-
-    &::before {
       z-index: 0;
       inset: rem(-1) rem(-1) auto;
       height: rem(20);
@@ -85,30 +84,22 @@ const { href, ariaLabel } = Astro.props;
       border-radius: rem(20);
     }
 
-    &::after {
-      z-index: 2;
-      top: rem(-10);
-      bottom: rem(-10);
-      left: rem(-88);
-      width: rem(92);
-      opacity: 0;
-      background: linear-gradient(
-        90deg,
-        transparent 0%,
-        rgb(255 255 255 / 16%) 28%,
-        rgb(255 255 255 / 58%) 50%,
-        rgb(255 255 255 / 18%) 72%,
-        transparent 100%
-      );
-      border-radius: 45%;
-      filter: blur(rem(3));
-      mix-blend-mode: screen;
-      transform: translateX(0);
-    }
-
     &:focus-visible {
       outline: rem(3) solid var(--sky-400);
       outline-offset: rem(3);
+    }
+
+    @include hover-fine {
+      &:hover {
+        --button-link-outer-shadow:
+          0 #{rem(2)} #{rem(4)} #{rem(-1)} rgb(0 0 0 / 10%),
+          0 #{rem(8)} #{rem(16)} #{rem(-4)} rgb(0 0 0 / 9%),
+          0 #{rem(18)} #{rem(32)} #{rem(-10)} rgb(0 0 0 / 7%);
+
+        @include motion-safe {
+          transform: translateY(rem(-1));
+        }
+      }
     }
 
     @include motion-safe {
@@ -119,21 +110,29 @@ const { href, ariaLabel } = Astro.props;
     }
   }
 
-  button-link-interaction[data-button-link-scanning] .button-link::after {
+  button-link-interaction[data-button-link-blinking] .button-link {
     @include motion-safe {
-      animation: button-link-scan 200ms linear;
+      animation: button-link-blinky 266.667ms steps(1, jump-end) forwards;
     }
   }
 
-  button-link-interaction[data-button-link-scanning] .button-link {
+  button-link-interaction[data-button-link-blinking] .button-link::before {
     @include motion-safe {
-      animation: button-link-surface-scan 200ms linear;
+      animation: button-link-gloss-blinky 266.667ms steps(1, jump-end) forwards;
     }
   }
 
   button-link-interaction[data-button-link-pressed] .button-link {
-    filter: brightness(0.94);
+    background: linear-gradient(
+      180deg,
+      var(--sky-950) 0%,
+      var(--sky-900) 22%,
+      var(--sky-800) 45%,
+      var(--sky-700) 70%,
+      var(--sky-500) 100%
+    );
     box-shadow:
+      var(--button-link-inner-edge),
       0 rem(1) rem(1) rgb(0 0 0 / 10%),
       0 rem(2) rem(1) rgb(0 0 0 / 8%);
 
@@ -145,10 +144,8 @@ const { href, ariaLabel } = Astro.props;
 
   button-link-interaction[data-button-link-afterglow] .button-link {
     box-shadow:
-      0 rem(1) rem(1) rgb(0 0 0 / 10%),
-      0 rem(4) rem(2) rgb(0 0 0 / 9%),
-      0 rem(9) rem(2.5) rgb(0 0 0 / 5%),
-      0 rem(15) rem(3) rgb(0 0 0 / 1%),
+      var(--button-link-inner-edge),
+      var(--button-link-outer-shadow),
       inset 0 0 0 rem(1) rgb(255 255 255 / 55%),
       inset 0 0 rem(9) rgb(255 255 255 / 34%);
 
@@ -172,15 +169,15 @@ const { href, ariaLabel } = Astro.props;
     opacity: 0.92;
   }
 
-  button-link-interaction[data-button-link-scanning] .button-link__label {
+  button-link-interaction[data-button-link-blinking] .button-link__label {
     @include motion-safe {
-      animation: button-link-label-scan 200ms linear;
+      animation: button-link-label-blinky 266.667ms steps(1, jump-end) forwards;
     }
   }
 
-  button-link-interaction[data-button-link-scanning] .button-link__icon {
+  button-link-interaction[data-button-link-blinking] .button-link__icon {
     @include motion-safe {
-      animation: button-link-icon-scan 200ms linear;
+      animation: button-link-icon-blinky 266.667ms steps(1, jump-end) forwards;
     }
   }
 
@@ -196,80 +193,150 @@ const { href, ariaLabel } = Astro.props;
     filter: drop-shadow(0 rem(1) rem(0.5) rgb(0 0 0 / 9%));
   }
 
-  @keyframes button-link-scan {
-    0% {
-      opacity: 0;
-      transform: translateX(0);
-    }
-
-    28% {
-      opacity: 0.82;
-    }
-
+  @keyframes button-link-blinky {
+    0%,
     100% {
-      opacity: 0;
-      transform: translateX(rem(318));
+      background: linear-gradient(
+        180deg,
+        var(--sky-900) 0%,
+        var(--sky-800) 15%,
+        var(--sky-700) 30%,
+        var(--sky-500) 60%,
+        var(--sky-400) 75%,
+        var(--sky-200) 100%
+      );
+      box-shadow: var(--button-link-inner-edge), var(--button-link-outer-shadow);
+    }
+
+    25% {
+      background: linear-gradient(
+        180deg,
+        var(--sky-950) 0%,
+        var(--sky-900) 22%,
+        var(--sky-800) 45%,
+        var(--sky-700) 70%,
+        var(--sky-500) 100%
+      );
+      box-shadow:
+        var(--button-link-inner-edge),
+        var(--button-link-outer-shadow),
+        inset 0 0 rem(8) rgb(8 47 107 / 28%);
+    }
+
+    50% {
+      background: linear-gradient(
+        180deg,
+        var(--sky-700) 0%,
+        var(--sky-600) 20%,
+        var(--sky-500) 42%,
+        var(--sky-400) 67%,
+        var(--sky-300) 83%,
+        var(--sky-100) 100%
+      );
+      box-shadow:
+        var(--button-link-inner-edge),
+        var(--button-link-outer-shadow),
+        inset 0 0 0 rem(1) rgb(255 255 255 / 58%),
+        inset 0 0 rem(10) rgb(255 255 255 / 36%);
+    }
+
+    75% {
+      background: linear-gradient(
+        180deg,
+        var(--sky-900) 0%,
+        var(--sky-800) 25%,
+        var(--sky-700) 50%,
+        var(--sky-600) 75%,
+        var(--sky-400) 100%
+      );
+      box-shadow: var(--button-link-inner-edge), var(--button-link-outer-shadow);
     }
   }
 
-  @keyframes button-link-surface-scan {
+  @keyframes button-link-gloss-blinky {
     0%,
     100% {
-      background-position: center top;
-      filter: brightness(1);
+      opacity: 1;
     }
 
-    48% {
-      background-position: center 12%;
-      filter: brightness(1.06);
+    25% {
+      opacity: 0.46;
+    }
+
+    50% {
+      opacity: 1;
+    }
+
+    75% {
+      opacity: 0.68;
     }
   }
 
-  @keyframes button-link-label-scan {
+  @keyframes button-link-label-blinky {
     0%,
     100% {
+      opacity: 1;
       text-shadow:
         0 rem(1) rem(1) rgb(0 0 0 / 9%),
         0 rem(2) rem(1) rgb(0 0 0 / 5%);
     }
 
-    48% {
+    25% {
+      opacity: 0.9;
+      text-shadow: 0 rem(1) rem(1) rgb(0 0 0 / 14%);
+    }
+
+    50% {
+      opacity: 1;
       text-shadow:
-        0 0 rem(5) rgb(255 255 255 / 80%),
-        0 rem(1) rem(1) rgb(0 0 0 / 9%);
+        0 0 rem(5) rgb(255 255 255 / 82%),
+        0 rem(1) rem(1) rgb(0 0 0 / 7%);
+    }
+
+    75% {
+      opacity: 0.94;
+      text-shadow: 0 rem(1) rem(1) rgb(0 0 0 / 11%);
     }
   }
 
-  @keyframes button-link-icon-scan {
+  @keyframes button-link-icon-blinky {
     0%,
     100% {
+      opacity: 1;
       filter: drop-shadow(0 rem(1) rem(0.5) rgb(0 0 0 / 9%));
     }
 
-    48% {
+    25% {
+      opacity: 0.9;
+      filter: drop-shadow(0 rem(1) rem(0.5) rgb(0 0 0 / 14%));
+    }
+
+    50% {
+      opacity: 1;
       filter:
         drop-shadow(0 0 rem(4) rgb(255 255 255 / 90%))
         drop-shadow(0 rem(1) rem(0.5) rgb(0 0 0 / 9%));
+    }
+
+    75% {
+      opacity: 0.94;
+      filter: drop-shadow(0 rem(1) rem(0.5) rgb(0 0 0 / 11%));
     }
   }
 
   @keyframes button-link-afterglow {
     0% {
       box-shadow:
-        0 rem(1) rem(1) rgb(0 0 0 / 10%),
-        0 rem(4) rem(2) rgb(0 0 0 / 9%),
-        0 rem(9) rem(2.5) rgb(0 0 0 / 5%),
-        0 rem(15) rem(3) rgb(0 0 0 / 1%),
+        var(--button-link-inner-edge),
+        var(--button-link-outer-shadow),
         inset 0 0 0 rem(1) rgb(255 255 255 / 65%),
         inset 0 0 rem(11) rgb(255 255 255 / 42%);
     }
 
     100% {
       box-shadow:
-        0 rem(1) rem(1) rgb(0 0 0 / 10%),
-        0 rem(4) rem(2) rgb(0 0 0 / 9%),
-        0 rem(9) rem(2.5) rgb(0 0 0 / 5%),
-        0 rem(15) rem(3) rgb(0 0 0 / 1%),
+        var(--button-link-inner-edge),
+        var(--button-link-outer-shadow),
         inset 0 0 0 rem(1) transparent,
         inset 0 0 rem(9) transparent;
     }
@@ -279,10 +346,10 @@ const { href, ariaLabel } = Astro.props;
 <script>
   class ButtonLinkInteraction extends HTMLElement {
     private abortController?: AbortController;
-    private scanTimer?: number;
-    private scanResetTimer?: number;
+    private blinkTimer?: number;
+    private blinkResetTimer?: number;
     private afterglowTimer?: number;
-    private scanReady = true;
+    private blinkReady = true;
 
     connectedCallback() {
       if (this.abortController) return;
@@ -310,36 +377,36 @@ const { href, ariaLabel } = Astro.props;
     }
 
     private handlePointerEnter = () => {
-      window.clearTimeout(this.scanResetTimer);
+      window.clearTimeout(this.blinkResetTimer);
 
       if (
-        !this.scanReady ||
+        !this.blinkReady ||
         !window.matchMedia('(hover: hover) and (pointer: fine)').matches ||
         !window.matchMedia('(prefers-reduced-motion: no-preference)').matches
       ) {
         return;
       }
 
-      this.scanReady = false;
-      this.toggleAttribute('data-button-link-scanning', true);
-      window.clearTimeout(this.scanTimer);
-      this.scanTimer = window.setTimeout(() => {
-        this.removeAttribute('data-button-link-scanning');
-      }, 200);
+      this.blinkReady = false;
+      this.toggleAttribute('data-button-link-blinking', true);
+      window.clearTimeout(this.blinkTimer);
+      this.blinkTimer = window.setTimeout(() => {
+        this.removeAttribute('data-button-link-blinking');
+      }, 267);
     };
 
     private handlePointerLeave = () => {
-      window.clearTimeout(this.scanResetTimer);
-      this.scanResetTimer = window.setTimeout(() => {
-        this.scanReady = true;
+      window.clearTimeout(this.blinkResetTimer);
+      this.blinkResetTimer = window.setTimeout(() => {
+        this.blinkReady = true;
       }, 400);
       this.finishPress(false);
     };
 
     private handlePointerDown = (event: PointerEvent) => {
       if (event.pointerType === 'mouse' && event.button !== 0) return;
-      window.clearTimeout(this.scanTimer);
-      this.removeAttribute('data-button-link-scanning');
+      window.clearTimeout(this.blinkTimer);
+      this.removeAttribute('data-button-link-blinking');
       this.removeAttribute('data-button-link-afterglow');
       this.toggleAttribute('data-button-link-pressed', true);
     };
@@ -381,8 +448,8 @@ const { href, ariaLabel } = Astro.props;
     }
 
     private clearTimers() {
-      window.clearTimeout(this.scanTimer);
-      window.clearTimeout(this.scanResetTimer);
+      window.clearTimeout(this.blinkTimer);
+      window.clearTimeout(this.blinkResetTimer);
       window.clearTimeout(this.afterglowTimer);
     }
   }
