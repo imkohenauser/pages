@@ -148,7 +148,7 @@ const hasMeta = publishedAt || actionLinkVariant;
   .card--project .card__container {
     @include md {
       display: grid;
-      grid-template-columns: 3fr 5fr;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 5fr);
       align-items: stretch;
       padding: 0 0 0 rem(10);
     }
@@ -156,11 +156,12 @@ const hasMeta = publishedAt || actionLinkVariant;
 
   .card--no-thumbnail .card__container {
     @include md {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 
   .card__media {
+    min-width: 0;
     padding: var(--space-2) var(--space-2) 0;
 
     @include md {
@@ -170,8 +171,16 @@ const hasMeta = publishedAt || actionLinkVariant;
 
   .card__image-container {
     width: 100%;
-    height: 100%;
     aspect-ratio: 16 / 9;
+  }
+
+  .card--project .card__image-container {
+    @include md {
+      /* A definite height plus aspect-ratio inflates min-content width past the 3fr track. */
+      height: 100%;
+      min-height: 0;
+      aspect-ratio: auto;
+    }
   }
 
   .card__image {
@@ -189,6 +198,7 @@ const hasMeta = publishedAt || actionLinkVariant;
     flex-direction: column;
     justify-content: space-between;
     gap: var(--space-1);
+    min-width: 0;
     padding: var(--space-2) 0;
 
     @include md {
