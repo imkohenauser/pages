@@ -84,7 +84,6 @@ const hasMeta = publishedAt || actionLinkVariant;
               <ActionLink
                 variant={actionLinkVariant}
                 iconSrc={actionLinkIconSrc}
-                tone={isWriting ? 'default' : 'inverse'}
                 decorative
               />
             )}
@@ -122,20 +121,26 @@ const hasMeta = publishedAt || actionLinkVariant;
     }
 
     &:has(.card__title-link:focus-visible) {
+      background: white;
       box-shadow: var(--card-shadow-hover);
     }
 
     &:has(.card__title-link:focus-visible)::after {
-      box-shadow: inset 0 0 0 1px var(--card-title);
+      box-shadow:
+        inset 0 0 0 1px var(--card-title),
+        var(--card-edge-dim);
     }
 
     @include hover {
       &:has(.card__title-link):hover {
+        background: white;
         box-shadow: var(--card-shadow-hover);
       }
 
       &:has(.card__title-link):hover::after {
-        box-shadow: inset 0 0 0 1px var(--card-title);
+        box-shadow:
+          inset 0 0 0 1px var(--card-title),
+          var(--card-edge-dim);
       }
     }
 
@@ -145,51 +150,66 @@ const hasMeta = publishedAt || actionLinkVariant;
 
     @include hover-fine {
       @include motion-safe {
+        &:has(.card__title-link):hover {
+          animation: card-surface-blinky 480ms steps(1, jump-end) forwards;
+        }
+
         &:has(.card__title-link):hover::after {
-          animation: card-edge-blinky var(--motion-electronic-cycle)
-            steps(1, jump-end) forwards;
+          animation: card-edge-blinky 480ms steps(1, jump-end) forwards;
         }
       }
     }
   }
 
-  .card--writing {
+  .card--writing,
+  .card--project {
     --card-title: var(--color-text);
     --card-muted: var(--color-text-muted);
-    --card-shadow-hover: 0 #{rem(7)} #{rem(16)} #{rem(-10)} rgb(38 38 38 / 18%);
-    --card-edge-dim:
-      inset 0 0 #{rem(4)} color-mix(in srgb, var(--sky-400) 16%, transparent);
-    --card-edge-weak:
-      inset 0 0 #{rem(9)} color-mix(in srgb, var(--sky-400) 26%, transparent);
-    --card-edge-bloom:
-      inset 0 0 0 #{rem(2)} color-mix(in srgb, var(--sky-300) 55%, transparent),
-      inset 0 0 #{rem(18)} color-mix(in srgb, var(--sky-400) 48%, transparent);
-
-    box-shadow: 0 0 0 1px var(--color-border);
-    background: linear-gradient(
+    --card-surface-rest: linear-gradient(
       90deg,
       var(--neutral-50) 0%,
       var(--neutral-100) 100%
     );
+    --card-surface-dim: linear-gradient(
+      90deg,
+      var(--neutral-100) 0%,
+      var(--neutral-200) 100%
+    );
+    --card-surface-weak: linear-gradient(
+      90deg,
+      white 0%,
+      var(--neutral-50) 100%
+    );
+    --card-shadow-hover: 0 #{rem(7)} #{rem(16)} #{rem(-10)} rgb(38 38 38 / 18%);
+    --card-edge-dim:
+      inset 0 0 #{rem(5)} color-mix(in srgb, var(--sky-700) 26%, transparent);
+    --card-edge-weak:
+      inset 0 0 0 1px color-mix(in srgb, var(--sky-600) 54%, transparent),
+      inset 0 0 #{rem(11)} color-mix(in srgb, var(--sky-500) 42%, transparent);
+    --card-edge-bloom:
+      inset 0 0 0 #{rem(2)} color-mix(in srgb, var(--sky-600) 92%, transparent),
+      inset 0 0 #{rem(8)} color-mix(in srgb, var(--sky-500) 72%, transparent),
+      inset 0 0 #{rem(22)} color-mix(in srgb, var(--sky-400) 46%, transparent);
+
+    box-shadow: 0 0 0 1px var(--color-border);
+    background: var(--card-surface-rest);
   }
 
   .card--project {
-    --card-title: var(--color-text-inverse);
-    --card-muted: var(--color-text-inverse-muted);
-    --card-shadow-hover: 0 #{rem(8)} #{rem(18)} #{rem(-10)} rgb(0 0 0 / 52%);
-    --card-edge-dim:
-      inset 0 0 #{rem(4)} color-mix(in srgb, var(--sky-400) 20%, transparent);
-    --card-edge-weak:
-      inset 0 0 #{rem(10)} color-mix(in srgb, var(--sky-400) 32%, transparent);
-    --card-edge-bloom:
-      inset 0 0 0 #{rem(2)} color-mix(in srgb, var(--sky-300) 62%, transparent),
-      inset 0 0 #{rem(19)} color-mix(in srgb, var(--sky-400) 54%, transparent);
-
-    box-shadow: 0 0 0 1px var(--color-inverse-raised);
-    background: linear-gradient(
+    --card-surface-rest: linear-gradient(
       90deg,
-      var(--color-inverse-raised) 0%,
-      var(--color-inverse) 100%
+      var(--sky-50) 0%,
+      var(--sky-100) 100%
+    );
+    --card-surface-dim: linear-gradient(
+      90deg,
+      var(--sky-100) 0%,
+      var(--sky-200) 100%
+    );
+    --card-surface-weak: linear-gradient(
+      90deg,
+      white 0%,
+      var(--sky-50) 100%
     );
   }
 
@@ -270,7 +290,7 @@ const hasMeta = publishedAt || actionLinkVariant;
     border-radius: var(--radius-2);
     object-fit: cover;
     object-position: center;
-    outline: 1px solid oklch(1 0 0 / 0.1);
+    outline: 1px solid color-mix(in srgb, var(--color-text) 10%, transparent);
     outline-offset: -1px;
   }
 
@@ -340,28 +360,51 @@ const hasMeta = publishedAt || actionLinkVariant;
     color: var(--card-muted);
   }
 
-  /* A single low-area ignition keeps the electronic cue without flashing the card face. */
-  @keyframes card-edge-blinky {
+  /* Small luminance steps suggest ignition without a dark-to-light full-face flash. */
+  @keyframes card-surface-blinky {
     0%,
-    72%,
+    68% {
+      background: var(--card-surface-rest);
+    }
+
+    8%,
+    26% {
+      background: var(--card-surface-dim);
+    }
+
+    17%,
+    52% {
+      background: var(--card-surface-weak);
+    }
+
+    36%,
     100% {
+      background: white;
+    }
+  }
+
+  @keyframes card-edge-blinky {
+    0% {
       box-shadow: inset 0 0 0 1px var(--card-title);
     }
 
-    10%,
-    50% {
+    8%,
+    26%,
+    68%,
+    100% {
       box-shadow:
         inset 0 0 0 1px var(--card-title),
         var(--card-edge-dim);
     }
 
-    22% {
+    17%,
+    52% {
       box-shadow:
         inset 0 0 0 1px var(--card-title),
         var(--card-edge-weak);
     }
 
-    34% {
+    36% {
       box-shadow:
         inset 0 0 0 1px var(--card-title),
         var(--card-edge-bloom);
