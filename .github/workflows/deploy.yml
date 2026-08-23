@@ -1,8 +1,9 @@
 name: Deploy
 
 on:
-  push:
-    branches: [main]
+  # Paused until the site is ready to publish.
+  # push:
+  #   branches: [main]
   workflow_dispatch:
 
 permissions:
