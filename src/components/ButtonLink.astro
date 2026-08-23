@@ -27,12 +27,11 @@ const { href, ariaLabel } = Astro.props;
 
   .button-link {
     --button-link-inner-edge:
-      inset 0 0 0 #{rem(1)} rgb(255 255 255 / 34%),
-      inset 0 #{rem(-1)} 0 rgb(8 47 107 / 18%);
+      inset 0 #{rem(1)} 0 rgb(255 255 255 / 20%),
+      inset 0 #{rem(-1)} 0 rgb(8 47 107 / 32%);
     --button-link-outer-shadow:
-      0 #{rem(1)} #{rem(2)} rgb(0 0 0 / 12%),
-      0 #{rem(5)} #{rem(10)} #{rem(-3)} rgb(0 0 0 / 10%),
-      0 #{rem(12)} #{rem(24)} #{rem(-8)} rgb(0 0 0 / 8%);
+      0 #{rem(1)} #{rem(2)} rgb(0 0 0 / 16%),
+      0 #{rem(5)} #{rem(9)} #{rem(-4)} rgb(0 0 0 / 14%);
 
     position: relative;
     isolation: isolate;
@@ -91,14 +90,13 @@ const { href, ariaLabel } = Astro.props;
 
     @include hover-fine {
       &:hover {
+        // --button-link-outer-shadow:
+        //   0 #{rem(2)} #{rem(4)} #{rem(-1)} rgb(0 0 0 / 10%),
+        //   0 #{rem(8)} #{rem(16)} #{rem(-4)} rgb(0 0 0 / 9%),
+        //   0 #{rem(18)} #{rem(32)} #{rem(-10)} rgb(0 0 0 / 7%);
         --button-link-outer-shadow:
-          0 #{rem(2)} #{rem(4)} #{rem(-1)} rgb(0 0 0 / 10%),
-          0 #{rem(8)} #{rem(16)} #{rem(-4)} rgb(0 0 0 / 9%),
-          0 #{rem(18)} #{rem(32)} #{rem(-10)} rgb(0 0 0 / 7%);
-
-        // @include motion-safe {
-        //   transform: translateY(rem(-1));
-        // }
+          0 #{rem(2)} #{rem(3)} #{rem(-1)} rgb(0 0 0 / 14%),
+          0 #{rem(7)} #{rem(12)} #{rem(-5)} rgb(0 0 0 / 13%);
       }
     }
 
@@ -132,9 +130,9 @@ const { href, ariaLabel } = Astro.props;
       var(--sky-500) 100%
     );
     box-shadow:
-      var(--button-link-inner-edge),
-      0 rem(1) rem(1) rgb(0 0 0 / 10%),
-      0 rem(2) rem(1) rgb(0 0 0 / 8%);
+      inset 0 0 0 rem(1) rgb(255 255 255 / 14%),
+      inset 0 rem(2) rem(2) rgb(255 255 255 / 16%),
+      inset 0 rem(-3) rem(4) rgb(8 47 107 / 42%);
 
     @include motion-safe {
       transform: translateY(rem(1)) scale(0.97);
