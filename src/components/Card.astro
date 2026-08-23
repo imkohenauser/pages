@@ -103,6 +103,9 @@ const hasMeta = publishedAt || actionLinkVariant;
   $ignite-dwell: 70ms;
 
   @mixin card-lit {
+    --action-link-label: var(--sky-700);
+    --action-link-icon: var(--sky-600);
+
     box-shadow:
       inset 0 0 0 1px var(--card-title),
       0 0 0 1px transparent,
@@ -175,6 +178,11 @@ const hasMeta = publishedAt || actionLinkVariant;
 
         &:has(.card__title-link):hover::after {
           animation: card-edge-ignite var(--motion-electronic-cycle)
+            steps(1, jump-end) $ignite-dwell both;
+        }
+
+        &:has(.card__title-link):hover :global(.action-link__icon) {
+          animation: card-action-link-ignite var(--motion-electronic-cycle)
             steps(1, jump-end) $ignite-dwell both;
         }
       }
@@ -449,6 +457,24 @@ const hasMeta = publishedAt || actionLinkVariant;
 
     100% {
       opacity: 0;
+    }
+  }
+
+  @keyframes card-action-link-ignite {
+    0%,
+    20%,
+    64%,
+    100% {
+      opacity: 1;
+      filter: none;
+    }
+
+    4% {
+      opacity: 0.72;
+    }
+
+    42% {
+      filter: drop-shadow(0 0 #{rem(4)} color-mix(in srgb, var(--sky-600) 70%, transparent));
     }
   }
 </style>
