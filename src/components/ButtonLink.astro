@@ -21,6 +21,44 @@ const { href, ariaLabel } = Astro.props;
 <style lang="scss">
   @use "tools" as *;
 
+  $surface-stable: linear-gradient(
+    180deg,
+    var(--sky-900) 0%,
+    var(--sky-800) 15%,
+    var(--sky-700) 30%,
+    var(--sky-500) 60%,
+    var(--sky-400) 75%,
+    var(--sky-200) 100%
+  );
+  $surface-dim: linear-gradient(
+    180deg,
+    var(--sky-950) 0%,
+    var(--sky-900) 22%,
+    var(--sky-800) 45%,
+    var(--sky-700) 70%,
+    var(--sky-500) 100%
+  );
+  $surface-weak: linear-gradient(
+    180deg,
+    var(--sky-900) 0%,
+    var(--sky-800) 25%,
+    var(--sky-700) 50%,
+    var(--sky-600) 75%,
+    var(--sky-400) 100%
+  );
+  $surface-bloom: linear-gradient(
+    180deg,
+    var(--sky-700) 0%,
+    var(--sky-600) 20%,
+    var(--sky-500) 42%,
+    var(--sky-400) 67%,
+    var(--sky-300) 83%,
+    var(--sky-100) 100%
+  );
+  $label-shadow-stable:
+    0 rem(1) rem(1) rgb(0 0 0 / 9%),
+    0 rem(2) rem(1) rgb(0 0 0 / 5%);
+
   button-link-interaction {
     display: inline-flex;
   }
@@ -48,20 +86,10 @@ const { href, ariaLabel } = Astro.props;
     line-height: rem(24);
     color: var(--color-text-inverse);
     text-decoration: none;
-    text-shadow:
-      0 rem(1) rem(1) rgb(0 0 0 / 9%),
-      0 rem(2) rem(1) rgb(0 0 0 / 5%);
+    text-shadow: $label-shadow-stable;
     user-select: none;
     touch-action: manipulation;
-    background: linear-gradient(
-      180deg,
-      var(--sky-900) 0%,
-      var(--sky-800) 15%,
-      var(--sky-700) 30%,
-      var(--sky-500) 60%,
-      var(--sky-400) 75%,
-      var(--sky-200) 100%
-    );
+    background: $surface-stable;
     background-position: center top;
     background-size: 100% 125%;
     border-radius: var(--radius-4);
@@ -103,32 +131,27 @@ const { href, ariaLabel } = Astro.props;
     @include motion-safe {
       transition:
         filter 50ms ease-out,
-        transform 80ms ease-out,
+        transform var(--motion-material-release) ease-out,
         box-shadow 180ms ease-out;
     }
   }
 
   button-link-interaction[data-button-link-blinking] .button-link {
     @include motion-safe {
-      animation: button-link-blinky 266.667ms steps(1, jump-end) forwards;
+      animation: button-link-blinky var(--motion-electronic-cycle)
+        steps(1, jump-end) forwards;
     }
   }
 
   button-link-interaction[data-button-link-blinking] .button-link::before {
     @include motion-safe {
-      animation: button-link-gloss-blinky 266.667ms steps(1, jump-end) forwards;
+      animation: button-link-gloss-blinky var(--motion-electronic-cycle)
+        steps(1, jump-end) forwards;
     }
   }
 
   button-link-interaction[data-button-link-pressed] .button-link {
-    background: linear-gradient(
-      180deg,
-      var(--sky-950) 0%,
-      var(--sky-900) 22%,
-      var(--sky-800) 45%,
-      var(--sky-700) 70%,
-      var(--sky-500) 100%
-    );
+    background: $surface-dim;
     box-shadow:
       inset 0 0 0 rem(1) rgb(255 255 255 / 14%),
       inset 0 rem(2) rem(2) rgb(255 255 255 / 16%),
@@ -136,7 +159,7 @@ const { href, ariaLabel } = Astro.props;
 
     @include motion-safe {
       transform: translateY(rem(1)) scale(0.97);
-      transition-duration: 120ms;
+      transition-duration: var(--motion-material-press);
     }
   }
 
@@ -148,7 +171,7 @@ const { href, ariaLabel } = Astro.props;
       inset 0 0 rem(9) rgb(255 255 255 / 34%);
 
     @include motion-safe {
-      animation: button-link-afterglow 300ms ease-out;
+      animation: button-link-afterglow var(--motion-material-afterglow) ease-out;
     }
   }
 
@@ -158,7 +181,7 @@ const { href, ariaLabel } = Astro.props;
     z-index: 1;
 
     @include motion-safe {
-      transition: opacity 80ms ease-out;
+      transition: opacity var(--motion-material-release) ease-out;
     }
   }
 
@@ -169,13 +192,15 @@ const { href, ariaLabel } = Astro.props;
 
   button-link-interaction[data-button-link-blinking] .button-link__label {
     @include motion-safe {
-      animation: button-link-label-blinky 266.667ms steps(1, jump-end) forwards;
+      animation: button-link-label-blinky var(--motion-electronic-cycle)
+        steps(1, jump-end) forwards;
     }
   }
 
   button-link-interaction[data-button-link-blinking] .button-link__icon {
     @include motion-safe {
-      animation: button-link-icon-blinky 266.667ms steps(1, jump-end) forwards;
+      animation: button-link-icon-blinky var(--motion-electronic-cycle)
+        steps(1, jump-end) forwards;
     }
   }
 
@@ -196,28 +221,13 @@ const { href, ariaLabel } = Astro.props;
     0%,
     78%,
     100% {
-      background: linear-gradient(
-        180deg,
-        var(--sky-900) 0%,
-        var(--sky-800) 15%,
-        var(--sky-700) 30%,
-        var(--sky-500) 60%,
-        var(--sky-400) 75%,
-        var(--sky-200) 100%
-      );
+      background: $surface-stable;
       box-shadow: var(--button-link-inner-edge), var(--button-link-outer-shadow);
     }
 
     9%,
     31% {
-      background: linear-gradient(
-        180deg,
-        var(--sky-950) 0%,
-        var(--sky-900) 22%,
-        var(--sky-800) 45%,
-        var(--sky-700) 70%,
-        var(--sky-500) 100%
-      );
+      background: $surface-dim;
       box-shadow:
         var(--button-link-inner-edge),
         var(--button-link-outer-shadow),
@@ -225,27 +235,12 @@ const { href, ariaLabel } = Astro.props;
     }
 
     20% {
-      background: linear-gradient(
-        180deg,
-        var(--sky-900) 0%,
-        var(--sky-800) 25%,
-        var(--sky-700) 50%,
-        var(--sky-600) 75%,
-        var(--sky-400) 100%
-      );
+      background: $surface-weak;
       box-shadow: var(--button-link-inner-edge), var(--button-link-outer-shadow);
     }
 
     47% {
-      background: linear-gradient(
-        180deg,
-        var(--sky-700) 0%,
-        var(--sky-600) 20%,
-        var(--sky-500) 42%,
-        var(--sky-400) 67%,
-        var(--sky-300) 83%,
-        var(--sky-100) 100%
-      );
+      background: $surface-bloom;
       box-shadow:
         var(--button-link-inner-edge),
         var(--button-link-outer-shadow),
@@ -254,14 +249,7 @@ const { href, ariaLabel } = Astro.props;
     }
 
     63% {
-      background: linear-gradient(
-        180deg,
-        var(--sky-900) 0%,
-        var(--sky-800) 25%,
-        var(--sky-700) 50%,
-        var(--sky-600) 75%,
-        var(--sky-400) 100%
-      );
+      background: $surface-weak;
       box-shadow: var(--button-link-inner-edge), var(--button-link-outer-shadow);
     }
   }
@@ -297,9 +285,7 @@ const { href, ariaLabel } = Astro.props;
     59%,
     100% {
       opacity: 1;
-      text-shadow:
-        0 rem(1) rem(1) rgb(0 0 0 / 9%),
-        0 rem(2) rem(1) rgb(0 0 0 / 5%);
+      text-shadow: $label-shadow-stable;
     }
 
     35% {
@@ -309,9 +295,7 @@ const { href, ariaLabel } = Astro.props;
 
     43% {
       opacity: 1;
-      text-shadow:
-        0 rem(1) rem(1) rgb(0 0 0 / 9%),
-        0 rem(2) rem(1) rgb(0 0 0 / 5%);
+      text-shadow: $label-shadow-stable;
     }
 
     51% {
@@ -369,117 +353,7 @@ const { href, ariaLabel } = Astro.props;
 </style>
 
 <script>
-  class ButtonLinkInteraction extends HTMLElement {
-    private abortController?: AbortController;
-    private blinkTimer?: number;
-    private blinkResetTimer?: number;
-    private afterglowTimer?: number;
-    private blinkReady = true;
+  import { defineButtonLinkInteraction } from '../lib/button-link';
 
-    connectedCallback() {
-      if (this.abortController) return;
-
-      const link = this.querySelector('a');
-      if (!(link instanceof HTMLAnchorElement)) return;
-
-      this.abortController = new AbortController();
-      const { signal } = this.abortController;
-
-      link.addEventListener('pointerenter', this.handlePointerEnter, { signal });
-      link.addEventListener('pointerleave', this.handlePointerLeave, { signal });
-      link.addEventListener('pointerdown', this.handlePointerDown, { signal });
-      link.addEventListener('pointerup', this.handlePointerUp, { signal });
-      link.addEventListener('pointercancel', this.handlePointerCancel, { signal });
-      link.addEventListener('keydown', this.handleKeyDown, { signal });
-      link.addEventListener('keyup', this.handleKeyUp, { signal });
-      link.addEventListener('blur', this.handleBlur, { signal });
-    }
-
-    disconnectedCallback() {
-      this.abortController?.abort();
-      this.abortController = undefined;
-      this.clearTimers();
-    }
-
-    private handlePointerEnter = () => {
-      window.clearTimeout(this.blinkResetTimer);
-
-      if (
-        !this.blinkReady ||
-        !window.matchMedia('(hover: hover) and (pointer: fine)').matches ||
-        !window.matchMedia('(prefers-reduced-motion: no-preference)').matches
-      ) {
-        return;
-      }
-
-      this.blinkReady = false;
-      this.toggleAttribute('data-button-link-blinking', true);
-      window.clearTimeout(this.blinkTimer);
-      this.blinkTimer = window.setTimeout(() => {
-        this.removeAttribute('data-button-link-blinking');
-      }, 267);
-    };
-
-    private handlePointerLeave = () => {
-      window.clearTimeout(this.blinkResetTimer);
-      this.blinkResetTimer = window.setTimeout(() => {
-        this.blinkReady = true;
-      }, 400);
-      this.finishPress(false);
-    };
-
-    private handlePointerDown = (event: PointerEvent) => {
-      if (event.pointerType === 'mouse' && event.button !== 0) return;
-      window.clearTimeout(this.blinkTimer);
-      this.removeAttribute('data-button-link-blinking');
-      this.removeAttribute('data-button-link-afterglow');
-      this.toggleAttribute('data-button-link-pressed', true);
-    };
-
-    private handlePointerUp = () => {
-      this.finishPress(true);
-    };
-
-    private handlePointerCancel = () => {
-      this.finishPress(false);
-    };
-
-    private handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Enter' || event.repeat) return;
-      this.removeAttribute('data-button-link-afterglow');
-      this.toggleAttribute('data-button-link-pressed', true);
-    };
-
-    private handleKeyUp = (event: KeyboardEvent) => {
-      if (event.key !== 'Enter') return;
-      this.finishPress(true);
-    };
-
-    private handleBlur = () => {
-      this.finishPress(false);
-    };
-
-    private finishPress(showAfterglow: boolean) {
-      if (!this.hasAttribute('data-button-link-pressed')) return;
-
-      this.removeAttribute('data-button-link-pressed');
-      if (!showAfterglow) return;
-
-      this.toggleAttribute('data-button-link-afterglow', true);
-      window.clearTimeout(this.afterglowTimer);
-      this.afterglowTimer = window.setTimeout(() => {
-        this.removeAttribute('data-button-link-afterglow');
-      }, 300);
-    }
-
-    private clearTimers() {
-      window.clearTimeout(this.blinkTimer);
-      window.clearTimeout(this.blinkResetTimer);
-      window.clearTimeout(this.afterglowTimer);
-    }
-  }
-
-  if (!customElements.get('button-link-interaction')) {
-    customElements.define('button-link-interaction', ButtonLinkInteraction);
-  }
+  defineButtonLinkInteraction();
 </script>

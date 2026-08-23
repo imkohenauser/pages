@@ -1,0 +1,9 @@
+:root {
+  /* Electronic time uses a fixed sampled cadence. */
+  --motion-electronic-cycle: 266.667ms;
+
+  /* Material time stays short and continuous. */
+  --motion-material-release: 80ms;
+  --motion-material-press: 120ms;
+  --motion-material-afterglow: 300ms;
+}
