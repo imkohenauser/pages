@@ -40,8 +40,8 @@ const showModified = modifiedAt.valueOf() !== writing.data.publishedAt.valueOf()
   lang={writing.data.lang}
 >
   <JsonLd slot="head" data={writingJsonLd(writing)} />
-  <article>
-    <header>
+  <article class="writing-article">
+    <header class="writing-article__header">
       <h1>{writing.data.title}</h1>
       <p>{writing.data.description}</p>
       <p>
@@ -69,7 +69,7 @@ const showModified = modifiedAt.valueOf() !== writing.data.publishedAt.valueOf()
       />
     )}
 
-    <div>
+    <div class="writing-article__content">
       <Content />
     </div>
   </article>
@@ -79,3 +79,20 @@ const showModified = modifiedAt.valueOf() !== writing.data.publishedAt.valueOf()
     <span>{newer && <a href={path(writingHref(newer))}>{newer.data.title} →</a>}</span>
   </nav>
 </Base>
+
+<style lang="scss">
+  @use "tools" as *;
+
+  .writing-article {
+    padding: 0 var(--space-2);
+
+    h1 {
+      font-family: var(--font-sans);
+    }
+  }
+
+  .writing-article__header,
+  .writing-article__content {
+    padding: 0 var(--space-3);
+  }
+</style>
