@@ -52,6 +52,7 @@ Write comments in English. Prefer why over what. Keep them concise and factual. 
 
 Read the selected `.agents/skills/*/SKILL.md` before using a skill. Apply review skills only when review is the task; do not invoke them for ordinary implementation or use them to make fixes unless the user separately asks.
 
+- Use `motion-identity` when adding or changing motion and the project's lighting, ignition, material, or Frame Echo concepts are relevant. Do not invoke it for changes without motion or for a dedicated review.
 - Use `review-accessibility` only when the user explicitly asks for a dedicated accessibility or WCAG review or audit of existing interface code, a diff, or a rendered flow. Do not invoke it for implementation that merely involves forms, semantics, keyboard access, focus, media, or motion.
 - Use `review-animations` only when the user explicitly asks for a dedicated review of existing animation or motion code. Its automatic invocation is disabled; it reports findings and a `Block` or `Approve` verdict without implementing changes.
 - Use `web-naming-conventions` when choosing, reviewing, or changing names is the primary task. Do not invoke it for ordinary implementation that merely introduces names; repository-specific path rules above take precedence.
