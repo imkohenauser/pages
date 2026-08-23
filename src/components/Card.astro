@@ -29,70 +29,72 @@ const isWriting = variant === 'writing';
 const hasMeta = publishedAt || actionLinkVariant;
 ---
 
-<article
-  lang={lang}
-  class:list={[
-    'card',
-    isWriting ? 'card--writing' : 'card--project',
-    !featuredImage && 'card--no-thumbnail',
-  ]}
->
-  <div class="card__container">
-    {
-      featuredImage && (
-        <div class="card__media">
-          <div class="card__image-container">
-            <Image
-              src={featuredImage}
-              alt={featuredImageAlt ?? ''}
-              class="card__image"
-            />
-          </div>
-        </div>
-      )
-    }
-    <div class="card__body">
-      <div class="card__text">
-        <Heading class="card__title">
-          {
-            href ? (
-              <a
-                class="card__title-link"
-                href={href}
-                target={external ? '_blank' : undefined}
-                rel={external ? 'noopener noreferrer' : undefined}
-                aria-label={ariaLabel}
-              >
-                {title}
-              </a>
-            ) : (
-              title
-            )
-          }
-        </Heading>
-        {description && <p class="card__description">{description}</p>}
-      </div>
+<card-interaction>
+  <article
+    lang={lang}
+    class:list={[
+      'card',
+      isWriting ? 'card--writing' : 'card--project',
+      !featuredImage && 'card--no-thumbnail',
+    ]}
+  >
+    <div class="card__container">
       {
-        hasMeta && (
-          <div class="card__meta">
-            {publishedAt && (
-              <time class="card__date" datetime={publishedAt.toISOString()}>
-                {formatIsoDate(publishedAt)}
-              </time>
-            )}
-            {actionLinkVariant && (
-              <ActionLink
-                variant={actionLinkVariant}
-                iconSrc={actionLinkIconSrc}
-                decorative
+        featuredImage && (
+          <div class="card__media">
+            <div class="card__image-container">
+              <Image
+                src={featuredImage}
+                alt={featuredImageAlt ?? ''}
+                class="card__image"
               />
-            )}
+            </div>
           </div>
         )
       }
+      <div class="card__body">
+        <div class="card__text">
+          <Heading class="card__title">
+            {
+              href ? (
+                <a
+                  class="card__title-link"
+                  href={href}
+                  target={external ? '_blank' : undefined}
+                  rel={external ? 'noopener noreferrer' : undefined}
+                  aria-label={ariaLabel}
+                >
+                  {title}
+                </a>
+              ) : (
+                title
+              )
+            }
+          </Heading>
+          {description && <p class="card__description">{description}</p>}
+        </div>
+        {
+          hasMeta && (
+            <div class="card__meta">
+              {publishedAt && (
+                <time class="card__date" datetime={publishedAt.toISOString()}>
+                  {formatIsoDate(publishedAt)}
+                </time>
+              )}
+              {actionLinkVariant && (
+                <ActionLink
+                  variant={actionLinkVariant}
+                  iconSrc={actionLinkIconSrc}
+                  decorative
+                />
+              )}
+            </div>
+          )
+        }
+      </div>
     </div>
-  </div>
-</article>
+  </article>
+</card-interaction>
 
 <style lang="scss">
   @use "tools" as *;
@@ -109,6 +111,10 @@ const hasMeta = publishedAt || actionLinkVariant;
     &::before {
       opacity: 1;
     }
+  }
+
+  card-interaction {
+    display: block;
   }
 
   .card {
@@ -155,7 +161,9 @@ const hasMeta = publishedAt || actionLinkVariant;
     }
 
     @include motion-safe {
-      transition: box-shadow 180ms ease-out;
+      transition:
+        transform var(--motion-material-release) ease-out,
+        box-shadow 180ms ease-out;
     }
 
     @include hover-fine {
@@ -207,9 +215,42 @@ const hasMeta = publishedAt || actionLinkVariant;
     );
   }
 
+  card-interaction[data-card-pressed] .card {
+    box-shadow:
+      inset 0 0 0 1px transparent,
+      0 0 0 1px var(--color-border),
+      inset 0 rem(2) rem(4) rgb(38 38 38 / 12%);
+
+    @include motion-safe {
+      transform: translateY(rem(1)) scale(0.97);
+      /* The press is the deliberate half, so it runs slower than the release. */
+      transition:
+        transform var(--motion-material-press) ease-out,
+        box-shadow var(--motion-material-press) ease-out;
+    }
+  }
+
+  card-interaction[data-card-pressed] .card:has(.card__title-link:focus-visible) {
+    box-shadow:
+      inset 0 0 0 1px var(--card-title),
+      0 0 0 1px transparent,
+      inset 0 rem(2) rem(4) rgb(38 38 38 / 12%);
+  }
+
+  card-interaction[data-card-pressed] .card:has(.card__title-link):hover {
+    @include hover {
+      box-shadow:
+        inset 0 0 0 1px var(--card-title),
+        0 0 0 1px transparent,
+        inset 0 rem(2) rem(4) rgb(38 38 38 / 12%);
+    }
+  }
+
   .card__title-link {
     color: inherit;
     text-decoration: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
 
     &:focus-visible {
       outline: none;
@@ -411,3 +452,9 @@ const hasMeta = publishedAt || actionLinkVariant;
     }
   }
 </style>
+
+<script>
+  import { defineCardInteraction } from '../lib/card';
+
+  defineCardInteraction();
+</script>
