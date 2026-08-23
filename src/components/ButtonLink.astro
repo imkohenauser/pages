@@ -86,14 +86,14 @@ const { href, ariaLabel } = Astro.props;
     &:focus-visible {
       outline: rem(3) solid var(--sky-400);
       outline-offset: rem(3);
+
+      @media (forced-colors: active) {
+        outline: rem(2) solid CanvasText;
+      }
     }
 
     @include hover-fine {
       &:hover {
-        // --button-link-outer-shadow:
-        //   0 #{rem(2)} #{rem(4)} #{rem(-1)} rgb(0 0 0 / 10%),
-        //   0 #{rem(8)} #{rem(16)} #{rem(-4)} rgb(0 0 0 / 9%),
-        //   0 #{rem(18)} #{rem(32)} #{rem(-10)} rgb(0 0 0 / 7%);
         --button-link-outer-shadow:
           0 #{rem(2)} #{rem(3)} #{rem(-1)} rgb(0 0 0 / 14%),
           0 #{rem(7)} #{rem(12)} #{rem(-5)} rgb(0 0 0 / 13%);
