@@ -8,22 +8,45 @@ const { title, description } = Astro.props;
 ---
 
 <section class="hero">
-  <h1 class="hero-title">{title}</h1>
-  <div class="hero-description">
-    <p class="text-body">{description}</p>
+  <div class="hero__inner">
+    <h1 class="hero__title">{title}</h1>
+    <div class="hero__description">
+      <p class="text-body">{description}</p>
+    </div>
+    <div class="hero__frame">
+      <slot />
+    </div>
   </div>
-  <slot />
 </section>
 
 <style lang="scss">
   @use "tools" as *;
 
-  .hero-title {
+  .hero__inner {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-areas:
+      "title title title title"
+      "desc desc frame frame";
+    align-items: start;
+    gap: var(--space-2);
+    padding-inline: var(--space-3);
+
+    @include md {
+      grid-template-areas:
+        "title title frame frame"
+        "desc desc frame frame";
+      gap: var(--space-4);
+      padding-inline: var(--space-4);
+    }
+  }
+
+  .hero__title {
+    grid-area: title;
     margin: 0;
     padding: var(--space-2) var(--space-3);
     font-size: var(--text-2xl);
     line-height: rem(32);
-    /* -0.36px at 24px and -0.48px at 32px. */
     letter-spacing: -0.015em;
     text-wrap: balance;
 
@@ -34,7 +57,26 @@ const { title, description } = Astro.props;
     }
   }
 
-  .hero-description {
+  .hero__description {
+    grid-area: desc;
     padding: var(--space-4) var(--space-3);
+
+    @include md {
+      text-align: center;
+    }
+  }
+
+  .hero__frame {
+    grid-area: frame;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+
+    @include md {
+      height: rem(400);
+      max-height: rem(400);
+      padding-top: var(--space-8);
+    }
   }
 </style>
