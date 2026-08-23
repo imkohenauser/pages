@@ -3,17 +3,69 @@ import { site } from '../data/site';
 import ActionLink from './ActionLink.astro';
 ---
 
-<footer>
-  <small>© {new Date().getFullYear()} {site.shortName}.</small>
-  <a href="#top" class="site-footer__page-top" aria-label="Page top">
-    <ActionLink variant="page-top" decorative />
-  </a>
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <small class="site-footer__copyright">© {new Date().getFullYear()} {site.shortName}.</small>
+    <page-top-link>
+      <a href="#top" class="site-footer__page-top" aria-label="Page top">
+        <ActionLink variant="page-top" decorative />
+      </a>
+    </page-top-link>
+  </div>
 </footer>
 
 <style lang="scss">
+  @use "tools" as *;
+
+  .site-footer {
+    mix-blend-mode: multiply;
+    padding-block: var(--space-30) var(--space-20);
+  }
+
+  .site-footer__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-inline: var(--space-4);
+  }
+
+  .site-footer__copyright {
+    padding-inline: var(--space-2);
+    font-size: var(--text-xs);
+    line-height: rem(20);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  page-top-link {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+
   .site-footer__page-top {
     display: inline-flex;
     color: inherit;
     text-decoration: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+
+    @include motion-safe {
+      transition: transform var(--motion-material-release) ease-out;
+    }
+  }
+
+  page-top-link[data-page-top-pressed] .site-footer__page-top {
+    opacity: 0.92;
+
+    @include motion-safe {
+      transform: translateY(rem(1)) scale(0.97);
+      transition-duration: var(--motion-material-press);
+    }
   }
 </style>
+
+<script>
+  import { definePageTopLink } from '../lib/page-top';
+
+  definePageTopLink();
+</script>
