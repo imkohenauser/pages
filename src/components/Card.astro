@@ -99,13 +99,71 @@ const hasMeta = publishedAt || actionLinkVariant;
   @use "tools" as *;
 
   .card {
+    --card-edge-dim: inset 0 0 0 transparent;
+    --card-edge-weak: inset 0 0 0 transparent;
+    --card-edge-bloom: inset 0 0 0 transparent;
+
     position: relative;
+    isolation: isolate;
     border-radius: var(--radius-4);
+
+    &::after {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      content: "";
+      border-radius: inherit;
+      box-shadow: inset 0 0 0 1px transparent;
+
+      @include motion-safe {
+        transition: box-shadow 160ms ease-out;
+      }
+    }
+
+    &:has(.card__title-link:focus-visible) {
+      box-shadow: var(--card-shadow-hover);
+    }
+
+    &:has(.card__title-link:focus-visible)::after {
+      box-shadow: inset 0 0 0 1px var(--card-title);
+    }
+
+    @include hover {
+      &:has(.card__title-link):hover {
+        box-shadow: var(--card-shadow-hover);
+      }
+
+      &:has(.card__title-link):hover::after {
+        box-shadow: inset 0 0 0 1px var(--card-title);
+      }
+    }
+
+    @include motion-safe {
+      transition: box-shadow 180ms ease-out;
+    }
+
+    @include hover-fine {
+      @include motion-safe {
+        &:has(.card__title-link):hover::after {
+          animation: card-edge-blinky var(--motion-electronic-cycle)
+            steps(1, jump-end) forwards;
+        }
+      }
+    }
   }
 
   .card--writing {
     --card-title: var(--color-text);
     --card-muted: var(--color-text-muted);
+    --card-shadow-hover: 0 #{rem(7)} #{rem(16)} #{rem(-10)} rgb(38 38 38 / 18%);
+    --card-edge-dim:
+      inset 0 0 #{rem(4)} color-mix(in srgb, var(--sky-400) 16%, transparent);
+    --card-edge-weak:
+      inset 0 0 #{rem(9)} color-mix(in srgb, var(--sky-400) 26%, transparent);
+    --card-edge-bloom:
+      inset 0 0 0 #{rem(2)} color-mix(in srgb, var(--sky-300) 55%, transparent),
+      inset 0 0 #{rem(18)} color-mix(in srgb, var(--sky-400) 48%, transparent);
 
     box-shadow: 0 0 0 1px var(--color-border);
     background: linear-gradient(
@@ -118,6 +176,14 @@ const hasMeta = publishedAt || actionLinkVariant;
   .card--project {
     --card-title: var(--color-text-inverse);
     --card-muted: var(--color-text-inverse-muted);
+    --card-shadow-hover: 0 #{rem(8)} #{rem(18)} #{rem(-10)} rgb(0 0 0 / 52%);
+    --card-edge-dim:
+      inset 0 0 #{rem(4)} color-mix(in srgb, var(--sky-400) 20%, transparent);
+    --card-edge-weak:
+      inset 0 0 #{rem(10)} color-mix(in srgb, var(--sky-400) 32%, transparent);
+    --card-edge-bloom:
+      inset 0 0 0 #{rem(2)} color-mix(in srgb, var(--sky-300) 62%, transparent),
+      inset 0 0 #{rem(19)} color-mix(in srgb, var(--sky-400) 54%, transparent);
 
     box-shadow: 0 0 0 1px var(--color-inverse-raised);
     background: linear-gradient(
@@ -131,16 +197,31 @@ const hasMeta = publishedAt || actionLinkVariant;
     color: inherit;
     text-decoration: none;
 
+    &:focus-visible {
+      outline: none;
+    }
+
     &::after {
       position: absolute;
       inset: 0;
-      z-index: 1;
+      z-index: 3;
       border-radius: var(--radius-4);
       content: "";
+    }
+
+    &:focus-visible::after {
+      outline: rem(3) solid var(--sky-400);
+      outline-offset: rem(3);
+
+      @media (forced-colors: active) {
+        outline: rem(2) solid CanvasText;
+      }
     }
   }
 
   .card__container {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
   }
@@ -257,5 +338,33 @@ const hasMeta = publishedAt || actionLinkVariant;
     font-size: var(--text-xs);
     line-height: rem(20);
     color: var(--card-muted);
+  }
+
+  /* A single low-area ignition keeps the electronic cue without flashing the card face. */
+  @keyframes card-edge-blinky {
+    0%,
+    72%,
+    100% {
+      box-shadow: inset 0 0 0 1px var(--card-title);
+    }
+
+    10%,
+    50% {
+      box-shadow:
+        inset 0 0 0 1px var(--card-title),
+        var(--card-edge-dim);
+    }
+
+    22% {
+      box-shadow:
+        inset 0 0 0 1px var(--card-title),
+        var(--card-edge-weak);
+    }
+
+    34% {
+      box-shadow:
+        inset 0 0 0 1px var(--card-title),
+        var(--card-edge-bloom);
+    }
   }
 </style>
