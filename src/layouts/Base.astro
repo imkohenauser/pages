@@ -1,6 +1,7 @@
 ---
 import { Font } from 'astro:assets';
 import '../styles.scss';
+import ActionLink from '../components/ActionLink.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import Seo from '../components/Seo.astro';
@@ -53,7 +54,9 @@ const {
     <slot name="head" />
   </head>
   <body id="top">
-    <a class="skip-link" href="#main-content">Skip to content</a>
+    <a class="skip-link" href="#main-content" aria-label="Skip to content">
+      <ActionLink variant="skip-to-content" decorative />
+    </a>
     <div class="site-container">
       <Header />
       <div class="site-main">
@@ -68,6 +71,25 @@ const {
 
 <style lang="scss">
   @use "tools" as *;
+
+  .skip-link {
+    display: inline-flex;
+    color: inherit;
+    text-decoration: none;
+    border-radius: var(--radius-2);
+
+    &:focus-visible {
+      --action-link-label: var(--sky-700);
+      --action-link-icon: var(--sky-600);
+
+      outline: rem(3) solid var(--sky-400);
+      outline-offset: rem(2);
+
+      @media (forced-colors: active) {
+        outline: rem(2) solid CanvasText;
+      }
+    }
+  }
 
   .site-container {
     position: relative;

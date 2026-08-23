@@ -6,7 +6,8 @@ export type ActionLinkVariant =
   | 'zenn'
   | 'github'
   | 'official-site'
-  | 'page-top';
+  | 'page-top'
+  | 'skip-to-content';
 
 export type ExternalIcon = string | { src: string };
 
