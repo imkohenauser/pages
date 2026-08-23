@@ -87,9 +87,11 @@ const {
   .site-main {
     flex: 1;
     min-width: 0;
-    padding-top: var(--space-16);
+    /* Matches the absolutely positioned header height on small screens. */
+    padding-top: rem(64);
 
     @include md {
+      padding-top: 0;
       padding-left: var(--space-2);
       padding-right: var(--space-2);
     }

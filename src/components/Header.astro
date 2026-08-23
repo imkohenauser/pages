@@ -5,13 +5,16 @@ import Icon from './Icon.astro';
 ---
 
 <header class="site-header">
-  <div>
-    <a href={path('/')}>{site.name}</a>
+  <div class="site-header__inner">
+    <a class="site-header__name" href={path('/')}>
+      {site.name}<span class="hidden-mobile"> {site.kanaName}</span>
+    </a>
     <nav class="site-header__nav" aria-label="External links">
       <ul class="site-header__links">
         {site.externalLinks.map((link) => (
           <li>
             <a
+              class="site-header__link"
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
@@ -30,51 +33,105 @@ import Icon from './Icon.astro';
   @use "tools" as *;
 
   .site-header {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: 1;
 
     @include md {
+      position: relative;
       flex-shrink: 0;
       width: rem(200);
+      padding: var(--space-20) 0;
     }
   }
 
-  .site-header__nav {
-    display: none;
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: rem(64);
+    padding: var(--space-3) var(--space-4);
+
+    @include md {
+      flex-direction: column;
+      gap: var(--space-16);
+      align-items: flex-start;
+      justify-content: flex-start;
+      min-height: rem(44);
+      padding: var(--space-2) var(--space-4);
+    }
+  }
+
+  .site-header__name {
+    padding: var(--space-2);
+    font-size: var(--text-sm);
+    line-height: rem(24);
+    color: inherit;
+    text-decoration: none;
+    white-space: nowrap;
+    border-radius: var(--radius-2);
+
+    @include md {
+      white-space: normal;
+    }
   }
 
   .site-header__links {
     display: flex;
+    gap: var(--space-1);
     margin: 0;
-    padding: 0;
+    padding: 0 rem(2);
     list-style: none;
+
+    @include md {
+      flex-direction: column;
+    }
   }
 
-  // .site-header :global(.site-header__icon) {
-  //   flex-shrink: 0;
-  //   width: rem(24);
-  //   height: rem(24);
-  // }
+  .site-header__link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: rem(11);
+    color: inherit;
+    text-decoration: none;
+    border-radius: var(--radius-2);
 
-//   .site-header__label {
-//     position: absolute;
-//     width: 1px;
-//     height: 1px;
-//     padding: 0;
-//     margin: -1px;
-//     overflow: hidden;
-//     clip-path: inset(50%);
-//     white-space: nowrap;
-//     border: 0;
-// 
-//     @include md {
-//       position: static;
-//       width: auto;
-//       height: auto;
-//       margin: 0;
-//       overflow: visible;
-//       clip-path: none;
-//       white-space: normal;
-//     }
-//   }
+    @include md {
+      justify-content: flex-start;
+      gap: var(--space-2);
+      padding: var(--space-1\.5);
+    }
+  }
+
+  .site-header :global(.site-header__icon) {
+    flex-shrink: 0;
+    width: rem(18);
+    height: rem(18);
+  }
+
+  .site-header__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+
+    @include md {
+      position: static;
+      width: auto;
+      height: auto;
+      margin: 0;
+      overflow: visible;
+      clip-path: none;
+      font-size: var(--text-xs);
+      line-height: rem(20);
+      white-space: nowrap;
+    }
+  }
 </style>
-
-

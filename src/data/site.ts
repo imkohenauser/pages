@@ -1,7 +1,8 @@
 import type { HeaderIconName } from '../lib/icon';
 
 export const site = {
-  name: 'Kohei Saito, or 廣円 (Kohen)',
+  name: 'Kohei Saito, or 廣円',
+  kanaName: '(Kohen)',
   shortName: 'Kohei Saito',
   title: 'Personal site of a Design Engineer, or Creative Technologist',
   bio: 'Lorem ipsum dolor sit amet consectetur adipiscing elit quisque faucibus ex sapien vitae pellentesque sem placerat in id cursus mi pretium tellus duis convallis tempus leo eu aenean sed diam urna tempor.',
