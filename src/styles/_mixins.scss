@@ -4,10 +4,17 @@
 // Values are unitless px and converted to rem in the mixins.
 $breakpoints: (
   md: 768,
+  ml: 896,
 );
 
 @mixin md {
   @media (min-width: rem(map.get($breakpoints, md))) {
+    @content;
+  }
+}
+
+@mixin ml {
+  @media (min-width: rem(map.get($breakpoints, ml))) {
     @content;
   }
 }
