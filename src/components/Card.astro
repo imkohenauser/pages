@@ -103,9 +103,6 @@ const hasMeta = publishedAt || actionLinkVariant;
   $ignite-dwell: 70ms;
 
   @mixin card-lit {
-    --action-link-label: var(--sky-700);
-    --action-link-icon: var(--sky-600);
-
     box-shadow:
       inset 0 0 0 1px var(--card-title),
       0 0 0 1px transparent,
@@ -463,18 +460,14 @@ const hasMeta = publishedAt || actionLinkVariant;
   @keyframes card-action-link-ignite {
     0%,
     20%,
+    42%,
     64%,
     100% {
       opacity: 1;
-      filter: none;
     }
 
     4% {
       opacity: 0.72;
-    }
-
-    42% {
-      filter: drop-shadow(0 0 #{rem(4)} color-mix(in srgb, var(--sky-600) 70%, transparent));
     }
   }
 </style>

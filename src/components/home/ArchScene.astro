@@ -5,10 +5,68 @@ interface Props {
   avatarSrc?: string;
 }
 
-const { avatarSrc = path('/avatar.png') } = Astro.props;
+const { avatarSrc = path('/avatar.svg') } = Astro.props;
 ---
 
-<div aria-hidden="true">
-  <img src={avatarSrc} alt="" width="1000" height="1000" />
-  <slot />
+<div class="arch-scene" aria-hidden="true">
+  <div class="arch-scene__outer"></div>
+  <div class="arch-scene__floor"></div>
+  <div class="arch-scene__inner">
+    <img class="arch-scene__avatar" src={avatarSrc} alt="" width="1000" height="1000" />
+  </div>
 </div>
+
+<style lang="scss">
+  @use "tools" as *;
+
+  .arch-scene {
+    position: relative;
+    /* The gate is a 1:2 portrait, so it fits the available width on small screens. */
+    width: 100%;
+    aspect-ratio: 1 / 2;
+
+    @include md {
+      /* Fit the available height instead, letting the ratio derive the width. */
+      width: auto;
+      height: 100%;
+    }
+  }
+
+  .arch-scene__outer {
+    position: absolute;
+    inset: 0;
+    /* A horizontal radius of half the width with a matching vertical radius makes the top a semicircle. */
+    border-radius: 50% 50% 0 0 / 25% 25% 0 0;
+    background-image: linear-gradient(to top, var(--neutral-50) 75%, var(--neutral-300) 100%);
+    /* Layered shadow so the gate reads as standing on the page. */
+    box-shadow:
+      0 rem(3) rem(5) rgb(0 0 0 / 0.1),
+      0 rem(9) rem(9) rgb(0 0 0 / 0.09),
+      0 rem(19) rem(12) rgb(0 0 0 / 0.05);
+  }
+
+  /* Triangle rising from the bottom edge to the middle of the gate. Only the part left uncovered by
+     the inner arch shows, which reads as the floor receding into the gate. */
+  .arch-scene__floor {
+    position: absolute;
+    inset: 50% 0 0;
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    background-image: linear-gradient(to left, var(--neutral-50), var(--neutral-300) 25%);
+  }
+
+  .arch-scene__inner {
+    position: absolute;
+    /* Frame thickness: 6% of the width at the sides, 4% above the arch and 6% below. */
+    inset: 4% 6% 6%;
+    /* 220 / 900 of the inner box, keeping this arch a semicircle as well. */
+    border-radius: 50% 50% 0 0 / 24.444% 24.444% 0 0;
+    overflow: hidden;
+  }
+
+  .arch-scene__avatar {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>
