@@ -10,6 +10,7 @@ gsap.registerPlugin(ScrollToPlugin);
 
 class PageTopLink extends HTMLElement {
   private abortController?: AbortController;
+  private scrollInterruptionController?: AbortController;
   private scrollTween?: gsap.core.Tween;
 
   connectedCallback() {
@@ -95,15 +96,17 @@ class PageTopLink extends HTMLElement {
       return;
     }
 
+    this.watchForScrollInterruption();
     this.scrollTween = gsap.to(window, {
       duration: scrollDuration(distance) / 1000,
       ease: 'power3.out',
       scrollTo: {
         y: 0,
-        autoKill: true,
-        onAutoKill: this.handleScrollAutoKill,
+        // Position-delta detection can mistake iOS scroll drift for user input.
+        autoKill: false,
       },
       onComplete: this.handleScrollComplete,
+      onInterrupt: this.handleScrollInterrupt,
       overwrite: 'auto',
     });
   }
@@ -111,20 +114,57 @@ class PageTopLink extends HTMLElement {
   private cancelScroll() {
     this.scrollTween?.kill();
     this.scrollTween = undefined;
+    this.stopWatchingForScrollInterruption();
   }
 
-  private handleScrollAutoKill = () => {
+  private handleScrollInterrupt = () => {
     this.scrollTween = undefined;
+    this.stopWatchingForScrollInterruption();
   };
 
   private handleScrollComplete = () => {
     this.scrollTween = undefined;
+    this.stopWatchingForScrollInterruption();
     this.focusMain();
+  };
+
+  private watchForScrollInterruption() {
+    this.scrollInterruptionController = new AbortController();
+    const { signal } = this.scrollInterruptionController;
+
+    window.addEventListener('pointerdown', this.handleScrollInterruption, {
+      passive: true,
+      signal,
+    });
+    window.addEventListener('touchstart', this.handleScrollInterruption, {
+      passive: true,
+      signal,
+    });
+    window.addEventListener('wheel', this.handleScrollInterruption, {
+      passive: true,
+      signal,
+    });
+    window.addEventListener('keydown', this.handleScrollInterruption, { signal });
+  }
+
+  private stopWatchingForScrollInterruption() {
+    this.scrollInterruptionController?.abort();
+    this.scrollInterruptionController = undefined;
+  }
+
+  private handleScrollInterruption = () => {
+    this.cancelScroll();
   };
 
   private focusMain() {
     const main = document.getElementById('main-content');
     if (!(main instanceof HTMLElement)) return;
+    main.toggleAttribute('data-page-top-focus', true);
+    main.addEventListener(
+      'blur',
+      () => main.removeAttribute('data-page-top-focus'),
+      { once: true },
+    );
     main.focus({ preventScroll: true });
   }
 }

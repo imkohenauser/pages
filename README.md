@@ -14,9 +14,12 @@ Volta は `package.json` の pin を自動的に使用します。その他の�
 ```sh
 npm ci
 npm run dev
+npm run dev:host
 npm run build
 npm run check
 ```
+
+`npm run dev:host` はローカルネットワークからも確認できます。起動ログの Network URL（例: `http://192.168.0.183:4321/pages/`）を使います。
 
 ## Content
 
