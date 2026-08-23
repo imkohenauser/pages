@@ -21,6 +21,8 @@
 
 - Use SCSS. Keep tokens, reset, base rules, and shared utilities in partials under `src/styles/`, composed by `src/styles.scss`; keep component layout and appearance in scoped Astro `<style lang="scss">` blocks.
 - Keep design tokens as CSS custom properties so they remain available at runtime. Use Sass features for organization and authoring rather than duplicating runtime tokens.
+- Keep reusable motion durations in `src/styles/_motion-tokens.scss` as CSS custom properties; leave one-off, component-specific timing values scoped to the component.
+- Add a matching value to `src/lib/motion-tokens.ts` only when TypeScript behavior needs the numeric duration. Keep the semantic name and duration synchronized across CSS and TypeScript, and prefer `animationend` or `transitionend` when that safely avoids mirrored timing logic.
 - Use semantic kebab-case blocks, `block__element`, and `block--modifier`. Do not add `l-`, `p-`, or `c-` prefixes.
 - Nest `@media` inside the selector it overrides so base and breakpoint rules stay together. Keep BEM elements and modifiers as top-level selectors.
 - Reserve classes for styling. TypeScript must not query or toggle presentation classes.
