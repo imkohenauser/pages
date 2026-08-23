@@ -1,13 +1,11 @@
-import { motionDuration } from './motion-tokens';
-
+// Cooldown before a re-entry may blink again. This is interaction pacing, not animation timing.
 const BLINK_RESET_DELAY_MS = 400;
 
 class ButtonLinkInteraction extends HTMLElement {
   private abortController?: AbortController;
-  private blinkTimer?: number;
   private blinkResetTimer?: number;
-  private afterglowTimer?: number;
   private blinkReady = true;
+  private link?: HTMLAnchorElement;
 
   connectedCallback() {
     if (this.abortController) return;
@@ -15,6 +13,7 @@ class ButtonLinkInteraction extends HTMLElement {
     const link = this.querySelector('a');
     if (!(link instanceof HTMLAnchorElement)) return;
 
+    this.link = link;
     this.abortController = new AbortController();
     const { signal } = this.abortController;
 
@@ -26,12 +25,19 @@ class ButtonLinkInteraction extends HTMLElement {
     link.addEventListener('keydown', this.handleKeyDown, { signal });
     link.addEventListener('keyup', this.handleKeyUp, { signal });
     link.addEventListener('blur', this.handleBlur, { signal });
+    link.addEventListener('animationend', this.handleAnimationEnd, { signal });
   }
 
   disconnectedCallback() {
     this.abortController?.abort();
     this.abortController = undefined;
-    this.clearTimers();
+    this.link = undefined;
+    window.clearTimeout(this.blinkResetTimer);
+  }
+
+  // Both blink states end with their animation, so they must not be entered when it cannot run.
+  private get motionAllowed() {
+    return window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
   }
 
   private handlePointerEnter = () => {
@@ -40,17 +46,13 @@ class ButtonLinkInteraction extends HTMLElement {
     if (
       !this.blinkReady ||
       !window.matchMedia('(hover: hover) and (pointer: fine)').matches ||
-      !window.matchMedia('(prefers-reduced-motion: no-preference)').matches
+      !this.motionAllowed
     ) {
       return;
     }
 
     this.blinkReady = false;
     this.toggleAttribute('data-button-link-blinking', true);
-    window.clearTimeout(this.blinkTimer);
-    this.blinkTimer = window.setTimeout(() => {
-      this.removeAttribute('data-button-link-blinking');
-    }, motionDuration.electronicCycle);
   };
 
   private handlePointerLeave = () => {
@@ -63,7 +65,6 @@ class ButtonLinkInteraction extends HTMLElement {
 
   private handlePointerDown = (event: PointerEvent) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
-    window.clearTimeout(this.blinkTimer);
     this.removeAttribute('data-button-link-blinking');
     this.removeAttribute('data-button-link-afterglow');
     this.toggleAttribute('data-button-link-pressed', true);
@@ -92,23 +93,21 @@ class ButtonLinkInteraction extends HTMLElement {
     this.finishPress(false);
   };
 
+  // The blink and the afterglow never overlap, so one end event can clear either state.
+  private handleAnimationEnd = (event: AnimationEvent) => {
+    if (event.target !== this.link || event.pseudoElement) return;
+
+    this.removeAttribute('data-button-link-blinking');
+    this.removeAttribute('data-button-link-afterglow');
+  };
+
   private finishPress(showAfterglow: boolean) {
     if (!this.hasAttribute('data-button-link-pressed')) return;
 
     this.removeAttribute('data-button-link-pressed');
-    if (!showAfterglow) return;
+    if (!showAfterglow || !this.motionAllowed) return;
 
     this.toggleAttribute('data-button-link-afterglow', true);
-    window.clearTimeout(this.afterglowTimer);
-    this.afterglowTimer = window.setTimeout(() => {
-      this.removeAttribute('data-button-link-afterglow');
-    }, motionDuration.materialAfterglow);
-  }
-
-  private clearTimers() {
-    window.clearTimeout(this.blinkTimer);
-    window.clearTimeout(this.blinkResetTimer);
-    window.clearTimeout(this.afterglowTimer);
   }
 }
 
