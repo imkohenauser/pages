@@ -166,24 +166,25 @@ const hasMeta = publishedAt || actionLinkVariant;
         box-shadow 180ms ease-out;
     }
 
-    @include hover-fine {
-      @include motion-safe {
-        &:has(.card__title-link):hover::before {
-          animation: card-surface-ignite var(--motion-electronic-cycle)
-            steps(1, jump-end) $ignite-dwell both;
-        }
+    // Temporarily hidden while the hover ignition is under review.
+    // @include hover-fine {
+    //   @include motion-safe {
+    //     &:has(.card__title-link):hover::before {
+    //       animation: card-surface-ignite var(--motion-electronic-cycle)
+    //         steps(1, jump-end) $ignite-dwell both;
+    //     }
 
-        &:has(.card__title-link):hover::after {
-          animation: card-edge-ignite var(--motion-electronic-cycle)
-            steps(1, jump-end) $ignite-dwell both;
-        }
+    //     &:has(.card__title-link):hover::after {
+    //       animation: card-edge-ignite var(--motion-electronic-cycle)
+    //         steps(1, jump-end) $ignite-dwell both;
+    //     }
 
-        &:has(.card__title-link):hover :global(.action-link__icon) {
-          animation: card-action-link-ignite var(--motion-electronic-cycle)
-            steps(1, jump-end) $ignite-dwell both;
-        }
-      }
-    }
+    //     &:has(.card__title-link):hover :global(.action-link__icon) {
+    //       animation: card-action-link-ignite var(--motion-electronic-cycle)
+    //         steps(1, jump-end) $ignite-dwell both;
+    //     }
+    //   }
+    // }
   }
 
   .card--writing,
