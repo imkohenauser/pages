@@ -5,7 +5,6 @@ import Base from '../../layouts/Base.astro';
 import { site } from '../../data/site';
 import { writingListItem } from '../../lib/list';
 import { getWriting, type Writing } from '../../lib/writing';
-import { path } from '../../lib/path';
 
 export const getStaticPaths = (async ({ paginate }) =>
   paginate(await getWriting(), { pageSize: 10 })) satisfies GetStaticPaths;
@@ -37,9 +36,9 @@ const description = paged
     />
     {page.lastPage > 1 && (
       <nav aria-label="Pagination">
-        <span>{page.url.prev && <a href={path(page.url.prev)}>← Prev</a>}</span>
+        <span>{page.url.prev && <a href={page.url.prev}>← Prev</a>}</span>
         <span>{page.currentPage} / {page.lastPage}</span>
-        <span>{page.url.next && <a href={path(page.url.next)}>Next →</a>}</span>
+        <span>{page.url.next && <a href={page.url.next}>Next →</a>}</span>
       </nav>
     )}
   </section>
