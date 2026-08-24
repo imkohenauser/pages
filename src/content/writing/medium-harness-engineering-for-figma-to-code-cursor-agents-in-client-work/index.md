@@ -1,11 +1,11 @@
 ---
 title: "Harness Engineering for Figma to Code: Cursor Agents in Client Work"
-description: "In client work, Cursor and Figma MCP are used to turn Figma designs into code, integrate the result into a CMS or an SSG / SSR setup, and deliver an implementation that the client can maintain after launch."
-publishedAt: "2026-06-13"
+description: "I explain how I use Cursor and Figma MCP in client work, from design-to-code through CMS integration, with project rules and review guardrails."
+publishedAt: "2026-06-13 17:34"
 updatedAt:
 featuredImage:
 featuredImageAlt:
-externalUrl: https://medium.com/@imkohenauser/harness-engineering-for-figma-to-code-cursor-agents-in-client-work-6c4a45525ad0?sharedUserId=imkohenauser
+externalUrl: https://medium.com/@imkohenauser/harness-engineering-for-figma-to-code-cursor-agents-in-client-work-6c4a45525ad0?source=rss-61e770de53f3------2
 lang: en
 canonicalUrl:
 noindex: true
