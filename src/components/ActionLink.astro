@@ -17,7 +17,11 @@ const zennLogo = path('/logo/zenn.svg');
 ---
 
 <span
-  class:list={['action-link', tone === 'inverse' && 'action-link--inverse']}
+  class:list={[
+    'action-link',
+    tone === 'inverse' && 'action-link--inverse',
+    variant === 'page-top' && 'action-link--page-top',
+  ]}
   aria-hidden={decorative ? 'true' : undefined}
 >
   {
@@ -113,7 +117,7 @@ const zennLogo = path('/logo/zenn.svg');
 
   .action-link {
     --action-link-label-default: var(--color-text);
-    --action-link-icon-default: var(--color-text-muted);
+    --action-link-icon-default: var(--color-text);
 
     display: inline-flex;
     align-items: center;
@@ -124,7 +128,7 @@ const zennLogo = path('/logo/zenn.svg');
 
   .action-link--inverse {
     --action-link-label-default: var(--color-text-inverse);
-    --action-link-icon-default: var(--color-text-inverse-muted);
+    --action-link-icon-default: var(--color-text-inverse);
   }
 
   .action-link__label {
@@ -159,5 +163,10 @@ const zennLogo = path('/logo/zenn.svg');
     height: rem(16);
     border-radius: rem(3);
     object-fit: cover;
+  }
+
+  .action-link--page-top .action-link__label,
+  .action-link--page-top .action-link__icon {
+    @include hover-color-transition;
   }
 </style>

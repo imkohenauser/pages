@@ -6,4 +6,7 @@
   --motion-material-release: 80ms;
   --motion-material-press: 120ms;
   --motion-material-afterglow: 300ms;
+
+  /* Hover feedback settles after the initial electronic response. */
+  --motion-hover-settle: 180ms;
 }

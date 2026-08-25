@@ -44,3 +44,9 @@ $breakpoints: (
     @content;
   }
 }
+
+@mixin hover-color-transition {
+  @include motion-safe {
+    transition: color var(--motion-hover-settle) ease-out;
+  }
+}
