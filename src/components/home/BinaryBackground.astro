@@ -1,14 +1,21 @@
-<div class="binary-background">
+<binary-background class="binary-background">
   <div class="binary-background__surface" aria-hidden="true">
     <div class="binary-background__gradient"></div>
+    <div class="binary-background__glyphs">
+      <canvas
+        class="binary-background__canvas"
+        data-binary-background-canvas
+      ></canvas>
+    </div>
   </div>
   <slot />
-</div>
+</binary-background>
 
 <style lang="scss">
   @use "tools" as *;
 
   .binary-background {
+    display: block;
     position: relative;
     isolation: isolate;
   }
@@ -18,7 +25,7 @@
     inset-block-start: calc(-1 * var(--space-16));
     inset-inline-start: 0;
     z-index: -1;
-    width: rem(375);
+    width: 100vw;
     height: calc(100% + var(--space-16));
     pointer-events: none;
     mask-image: linear-gradient(
@@ -29,11 +36,20 @@
     );
     mask-repeat: no-repeat;
     mask-size: 100% 100%;
+    -webkit-mask-image: linear-gradient(
+      180deg,
+      #000 0%,
+      #000 50%,
+      transparent 100%
+    );
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
 
     @include md {
       width: 100vw;
       height: rem(240);
       mask-image: none;
+      -webkit-mask-image: none;
     }
 
     @include ml {
@@ -48,7 +64,7 @@
     position: absolute;
     inset-block: 0;
     inset-inline-end: 0;
-    width: rem(240);
+    width: 64%;
     background: linear-gradient(
       90deg,
       rgb(250 250 250 / 0%) 30%,
@@ -67,4 +83,35 @@
       );
     }
   }
+
+  .binary-background__glyphs {
+    position: absolute;
+    inset-block: rem(-10);
+    inset-inline-end: rem(-8);
+    width: calc(64% + #{rem(16)});
+    pointer-events: none;
+
+    @include md {
+      inset-inline-start: rem(-8);
+      width: calc(100% + #{rem(16)});
+    }
+  }
+
+  .binary-background__canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+  }
+
+  .binary-background[data-binary-background-ready]
+    .binary-background__canvas {
+    opacity: 1;
+  }
 </style>
+
+<script>
+  import { defineBinaryBackground } from '../../lib/binary-background';
+
+  defineBinaryBackground();
+</script>
