@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import BinaryBackground from '../components/home/BinaryBackground.astro';
+import FishScene from '../components/home/FishScene.astro';
 import Hero from '../components/home/Hero.astro';
 import JsonLd from '../components/JsonLd.astro';
 import ProjectsSection from '../components/home/ProjectsSection.astro';
@@ -23,6 +24,7 @@ const projects = await getProjects();
     <WritingSection writing={writing} />
     <ProjectsSection projects={projects} />
   </div>
+  <FishScene />
 </Base>
 
 <style lang="scss">
