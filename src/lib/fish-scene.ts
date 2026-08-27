@@ -27,7 +27,7 @@ interface Fish {
   /* Place in the loose formation, as a fraction of the band. */
   slotX: number;
   slotY: number;
-  /* Tiny offset from the shared stroke, so the three beat almost together. */
+  /* Tiny offset from the shared stroke, so the pair beat almost together. */
   phase: number;
   clip: number;
   scale: number;
@@ -56,12 +56,11 @@ const clips: FishClip[] = [
   { x: 1127, y: 581, width: 375, height: 341, anchorX: 216, anchorY: 144 },
 ];
 
-/* Moorish idols are normally found in groups of two or three, so three swim here. Slots sit close
-   enough that the three cross now and then, and the phases are near enough to beat as one. */
+/* Moorish idols are normally found in groups of two or three, so two swim here. Slots sit close
+   enough that the pair cross now and then, and the phases are near enough to beat as one. */
 const formation: readonly Pick<Fish, 'sizeFactor' | 'slotX' | 'slotY' | 'phase' | 'clip'>[] = [
   { sizeFactor: 1, slotX: 0, slotY: 0, phase: 0, clip: 0 },
-  { sizeFactor: 0.74, slotX: -0.038, slotY: 0.04, phase: 0.04, clip: 1 },
-  { sizeFactor: 0.56, slotX: 0.042, slotY: -0.042, phase: 0.08, clip: 2 },
+  { sizeFactor: 0.85, slotX: 0.082, slotY: -0.042, phase: 0.08, clip: 2 },
 ];
 
 /* How far the drawn fish reaches from its anchor, so it can be kept inside the canvas. */
@@ -87,7 +86,7 @@ const STROKE_INTERVAL_S = 1.5;
 const STROKE_IMPULSE = 62;
 const GLIDE_DRAG = 1.7;
 const COHESION = 1.1;
-/* Weak enough that the three can pass through each other instead of bouncing apart. */
+/* Weak enough that the pair can pass through each other instead of bouncing apart. */
 const SEPARATION_PUSH = 10;
 const BODY_HEIGHT_RATIO = 0.72;
 const MIN_MOSAIC_CELLS = 3;
@@ -95,10 +94,11 @@ const GLITCH_TRIGGER = 0.16;
 const GLITCH_CLEAR = 0.08;
 /* Encounter sequence for a crossing, stepped like the gate echoes rather than interpolated. */
 const GLITCH_SEQUENCE = [
-  { until: 0.07, mosaicPx: 8, dissolve: 0.46, scatter: 0.45, chromaPx: 2 },
-  { until: 0.16, mosaicPx: 6, dissolve: 0.28, scatter: 0.32, chromaPx: 1.5 },
-  { until: 0.28, mosaicPx: 4, dissolve: 0.14, scatter: 0.2, chromaPx: 1 },
+  { until: 0.07, mosaicPx: 10, dissolve: 0.5, scatter: 0.48, chromaPx: 2.5 },
+  { until: 0.16, mosaicPx: 9, dissolve: 0.32, scatter: 0.36, chromaPx: 2 },
+  { until: 0.28, mosaicPx: 8, dissolve: 0.18, scatter: 0.24, chromaPx: 1.5 },
 ] as const;
+const GLITCH_DURATION_S = GLITCH_SEQUENCE[GLITCH_SEQUENCE.length - 1].until;
 const TURN_HYSTERESIS = 10;
 const OBSTACLE_PUSH = 900;
 const OBSTACLE_PADDING = 20;
@@ -110,6 +110,7 @@ class FishScene extends HTMLElement {
   private resizeObserver?: ResizeObserver;
   private intersectionObserver?: IntersectionObserver;
   private reducedMotionQuery?: MediaQueryList;
+  private hoverFineQuery?: MediaQueryList;
   private canvas?: HTMLCanvasElement;
   private context?: CanvasRenderingContext2D;
   private mosaic?: HTMLCanvasElement;
@@ -126,6 +127,9 @@ class FishScene extends HTMLElement {
   private scale = 1;
   private placed = false;
   private pointerClientX?: number;
+  private pointerClientY?: number;
+  /* The fish the fine pointer is over, so a stay does not retrigger the sequence. */
+  private hoveredFish?: Fish;
   private obstacles: Obstacle[] = [];
   private school: Fish[] = formation.map((member) => ({
     ...member,
@@ -170,6 +174,7 @@ class FishScene extends HTMLElement {
 
     this.reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     this.reducedMotionQuery.addEventListener('change', this.handleMotionPreference, { signal });
+    this.hoverFineQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
 
     this.resizeObserver = new ResizeObserver(this.scheduleResize);
     this.resizeObserver.observe(this);
@@ -200,6 +205,8 @@ class FishScene extends HTMLElement {
     this.mosaicContext = undefined;
     this.sheet = undefined;
     this.reducedMotionQuery = undefined;
+    this.hoverFineQuery = undefined;
+    this.hoveredFish = undefined;
     this.removeAttribute('data-fish-scene-ready');
   }
 
@@ -329,6 +336,7 @@ class FishScene extends HTMLElement {
 
   private handlePointerMove = (event: PointerEvent) => {
     this.pointerClientX = event.clientX;
+    this.pointerClientY = event.clientY;
   };
 
   /* A finger stops existing when it lifts, unlike a cursor, so it must not keep facing that point. */
@@ -339,6 +347,7 @@ class FishScene extends HTMLElement {
 
   private handlePointerLeave = () => {
     this.pointerClientX = undefined;
+    this.pointerClientY = undefined;
   };
 
   private tick = (time: number) => {
@@ -358,12 +367,14 @@ class FishScene extends HTMLElement {
     const rootRect = this.getBoundingClientRect();
     const pointerX =
       this.pointerClientX === undefined ? undefined : this.pointerClientX - rootRect.left;
+    const pointerY =
+      this.pointerClientY === undefined ? undefined : this.pointerClientY - rootRect.top;
 
     /* One drifting point the whole group hangs off, which is what makes them read as a group. */
     const schoolX = this.width * (0.5 + 0.24 * Math.sin(this.elapsed * 0.17));
     const schoolY = this.height * (0.46 + 0.2 * Math.sin(this.elapsed * 0.27 + 1.1));
 
-    /* Face the cursor from anywhere on the page, using the lead fish so the three turn together. */
+    /* Face the cursor from anywhere on the page, using the lead fish so the pair turn together. */
     const lead = this.school[0];
     const towardPointerX =
       pointerX === undefined || !lead ? undefined : pointerX - lead.x;
@@ -443,18 +454,56 @@ class FishScene extends HTMLElement {
       }
     }
 
+    /* Only the farther fish mosaics, so the nearer one stays intact through the crossing. */
     for (const fish of this.school) {
       let overlap = 0;
       for (const other of this.school) {
-        if (other === fish) continue;
+        if (other === fish || fish.sizeFactor >= other.sizeFactor) continue;
         overlap = Math.max(overlap, bodyOverlap(fish, other));
       }
       if (overlap >= GLITCH_TRIGGER && fish.glitchArmed) {
         fish.glitchArmed = false;
-        fish.glitchAt = this.elapsed;
+        this.sparkGlitch(fish);
       }
       if (overlap < GLITCH_CLEAR) fish.glitchArmed = true;
     }
+
+    this.sparkHoverGlitch(pointerX, pointerY);
+  }
+
+  /* The canvas keeps pointer-events none so footer links stay clickable; hit-testing uses the page pointer. */
+  private sparkHoverGlitch(pointerX: number | undefined, pointerY: number | undefined) {
+    if (
+      this.reducedMotionQuery?.matches ||
+      !this.hoverFineQuery?.matches ||
+      pointerX === undefined ||
+      pointerY === undefined
+    ) {
+      this.hoveredFish = undefined;
+      return;
+    }
+
+    const hit = this.fishUnderPointer(pointerX, pointerY);
+    if (hit === this.hoveredFish) return;
+
+    this.hoveredFish = hit;
+    if (hit) this.sparkGlitch(hit);
+  }
+
+  private fishUnderPointer(x: number, y: number) {
+    /* Frontmost first: the larger fish is drawn last. */
+    for (const fish of this.school) {
+      const rect = bodyRect(fish);
+      if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) return fish;
+    }
+    return undefined;
+  }
+
+  /* Play the encounter once and settle; a second spark waits until the sequence has finished. */
+  private sparkGlitch(fish: Fish) {
+    const age = this.elapsed - fish.glitchAt;
+    if (age >= 0 && age < GLITCH_DURATION_S) return;
+    fish.glitchAt = this.elapsed;
   }
 
   /* A stroke is the only thing that changes the clip, so the pose holds for the whole glide. */
