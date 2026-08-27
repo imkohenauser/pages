@@ -20,7 +20,7 @@ const description = `Writing by ${site.name}.`;
     <writing-label-filter>
       <WritingLabelFilterFields options={labelOptions} />
       <List variant="writing" headingLevel={2} items={items} />
-      <p class="writing-filter-empty" data-writing-filter-empty hidden>
+      <p data-writing-filter-empty hidden>
         No writing matches the selected labels.
       </p>
     </writing-label-filter>
@@ -48,18 +48,6 @@ const description = `Writing by ${site.name}.`;
       font-size: var(--text-3xl);
       line-height: rem(40);
     }
-  }
-
-  .writing-filter-empty {
-    margin: 0;
-    padding: 0 var(--space-4) var(--space-4);
-    font-size: var(--text-sm);
-    line-height: rem(20);
-    color: var(--color-text-muted);
-  }
-
-  writing-label-filter {
-    display: block;
   }
 </style>
 
