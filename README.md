@@ -15,6 +15,7 @@ Volta は `package.json` の pin を自動的に使用します。その他の�
 npm ci
 npm run dev
 npm run dev:host
+npm run stop
 npm run build
 npm run check
 ```
