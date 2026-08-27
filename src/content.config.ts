@@ -44,7 +44,6 @@ const writingLabelExternalUrlRefine = {
   },
   message:
     'zenn and medium require externalUrl; essay, journal, note, and blog must not set it',
-  path: ['externalUrl'] as const,
 };
 
 const markdownLoader = (base: string) =>
@@ -85,7 +84,7 @@ const writing = defineCollection({
       })
       .refine(writingLabelExternalUrlRefine.refine, {
         message: writingLabelExternalUrlRefine.message,
-        path: writingLabelExternalUrlRefine.path,
+        path: ['externalUrl'],
       }),
 });
 
