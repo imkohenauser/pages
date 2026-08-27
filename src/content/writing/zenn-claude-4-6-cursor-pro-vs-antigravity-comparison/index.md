@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://zenn.dev/imkohenauser/articles/claude-4-6-cursor-pro-vs-antigravity-comparison"
+label: zenn
 lang: ja
 canonicalUrl:
 noindex: true

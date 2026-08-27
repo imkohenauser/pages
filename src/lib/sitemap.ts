@@ -45,6 +45,11 @@ export function includeInSitemap(page: string) {
     return false;
   }
 
+  // Former writing pagination URLs now redirect to /writing/.
+  if (/\/writing\/\d+\/?$/.test(pathname)) {
+    return false;
+  }
+
   if (pathname.endsWith('rss.xml') || pathname.endsWith('robots.txt')) {
     return false;
   }

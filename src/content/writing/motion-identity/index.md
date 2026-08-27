@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl:
+label: blog
 lang: en
 canonicalUrl:
 noindex: false

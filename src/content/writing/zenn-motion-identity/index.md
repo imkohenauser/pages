@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: https://zenn.dev/imkohenauser/articles/motion-identity
+label: zenn
 lang: ja
 canonicalUrl:
 noindex: true

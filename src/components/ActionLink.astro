@@ -5,12 +5,19 @@ import Icon from './Icon.astro';
 
 interface Props {
   variant: ActionLinkVariant;
+  label?: string;
   iconSrc?: string;
   decorative?: boolean;
   tone?: 'default' | 'inverse';
 }
 
-const { variant, iconSrc, decorative = false, tone = 'default' } = Astro.props;
+const {
+  variant,
+  label,
+  iconSrc,
+  decorative = false,
+  tone = 'default',
+} = Astro.props;
 
 const mediumLogo = path('/logo/medium.svg');
 const zennLogo = path('/logo/zenn.svg');
@@ -21,9 +28,9 @@ const zennLogo = path('/logo/zenn.svg');
   aria-hidden={decorative ? 'true' : undefined}
 >
   {
-    variant === 'read-article' && (
+    variant === 'read' && (
       <>
-        <span class="action-link__label">Read article</span>
+        <span class="action-link__label">{label ?? 'Read article'}</span>
         <span class="action-link__icon">
           <Icon name="arrow-right" />
         </span>

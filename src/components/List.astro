@@ -1,4 +1,3 @@
----
 import Card from './Card.astro';
 import type { ListItem } from '../lib/list';
 
@@ -15,7 +14,10 @@ const { items, class: className, variant, headingLevel } = Astro.props;
 <ol class:list={['content-list', className]}>
   {
     items.map((item) => (
-      <li class="content-list__item">
+      <li
+        class="content-list__item"
+        data-writing-label={item.label}
+      >
         <Card {...item} variant={variant} headingLevel={headingLevel} />
       </li>
     ))

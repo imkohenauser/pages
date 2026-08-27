@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://zenn.dev/imkohenauser/articles/cursor-japanese-language-policy-and-figma-mcp"
+label: zenn
 lang: ja
 canonicalUrl:
 noindex: true

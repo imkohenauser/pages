@@ -6,6 +6,7 @@ updatedAt: 2026-08-20
 featuredImage:
 featuredImageAlt:
 externalUrl:
+label: blog
 lang: ja
 canonicalUrl:
 noindex: false

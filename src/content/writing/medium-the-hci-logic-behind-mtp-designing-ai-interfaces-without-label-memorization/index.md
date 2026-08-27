@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://medium.com/design-bootcamp/the-hci-logic-behind-mtp-designing-ai-interfaces-without-label-memorization-15e86fb3c6df?source=rss-61e770de53f3------2"
+label: medium
 lang: en
 canonicalUrl:
 noindex: true

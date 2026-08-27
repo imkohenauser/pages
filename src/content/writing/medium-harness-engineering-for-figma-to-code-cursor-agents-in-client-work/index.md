@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: https://medium.com/@imkohenauser/harness-engineering-for-figma-to-code-cursor-agents-in-client-work-6c4a45525ad0?source=rss-61e770de53f3------2
+label: medium
 lang: en
 canonicalUrl:
 noindex: true

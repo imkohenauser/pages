@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://medium.com/@imkohenauser/beyond-fictionalization-equip-your-ai-agent-with-a-live-clock-knowledge-cutoff-awareness-skill-md-3e55c388ef0c?source=rss-61e770de53f3------2"
+label: medium
 lang: en
 canonicalUrl:
 noindex: true

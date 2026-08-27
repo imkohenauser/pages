@@ -17,6 +17,7 @@ const {
   href,
   external,
   actionLinkVariant,
+  actionLinkLabel,
   actionLinkIconSrc,
   ariaLabel,
   featuredImage,
@@ -84,6 +85,7 @@ const hasMeta = publishedAt || actionLinkVariant;
               {actionLinkVariant && (
                 <ActionLink
                   variant={actionLinkVariant}
+                  label={actionLinkLabel}
                   iconSrc={actionLinkIconSrc}
                   decorative
                 />

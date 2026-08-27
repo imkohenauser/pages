@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://zenn.dev/imkohenauser/articles/mtp-agent-skills-with-astro-starlight-docs"
+label: zenn
 lang: ja
 canonicalUrl:
 noindex: true
