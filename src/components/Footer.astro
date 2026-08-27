@@ -52,7 +52,7 @@ import ActionLink from './ActionLink.astro';
 
     &:focus-visible {
       --action-link-label: var(--sky-700);
-      --action-link-icon: var(--sky-600);
+      --action-link-icon: var(--sky-700);
 
       outline: rem(3) solid var(--sky-400);
       outline-offset: rem(2);
@@ -64,8 +64,8 @@ import ActionLink from './ActionLink.astro';
 
     @include hover {
       &:hover {
-        --action-link-label: var(--sky-800);
-        --action-link-icon: var(--sky-600);
+        --action-link-label: var(--sky-700);
+        --action-link-icon: var(--sky-700);
       }
     }
 
@@ -103,14 +103,13 @@ import ActionLink from './ActionLink.astro';
     }
   }
 
-//   page-top-link[data-page-top-pressed] .site-footer__page-top {
-//     opacity: 0.92;
-// 
-//     @include motion-safe {
-//       transform: translateY(rem(1)) scale(0.97);
-//       transition-duration: var(--motion-material-press);
-//     }
-//   }
+  page-top-link[data-page-top-pressed] .site-footer__page-top {
+
+    @include motion-safe {
+      transform: translateY(rem(1)) scale(0.97);
+      transition-duration: var(--motion-material-press);
+    }
+  }
 </style>
 
 <script>

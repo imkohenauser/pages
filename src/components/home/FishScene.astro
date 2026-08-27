@@ -1,1 +1,38 @@
-<div aria-hidden="true"></div>
+<fish-scene class="fish-scene" aria-hidden="true">
+  <canvas class="fish-scene__canvas" data-fish-scene-canvas></canvas>
+</fish-scene>
+
+<style lang="scss">
+  @use "tools" as *;
+
+  /* The element itself takes no space: it only anchors the canvas that reaches down over the footer. */
+  .fish-scene {
+    position: relative;
+    display: block;
+    height: 0;
+  }
+
+  .fish-scene__canvas {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline: 0;
+    /* Above the footer, which follows this element in document order. */
+    z-index: 1;
+    display: block;
+    width: 100%;
+    /* Replaced with the measured footer band once the script runs. */
+    height: rem(220);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .fish-scene[data-fish-scene-ready] .fish-scene__canvas {
+    opacity: 1;
+  }
+</style>
+
+<script>
+  import { defineFishScene } from '../../lib/fish-scene';
+
+  defineFishScene();
+</script>

@@ -3,6 +3,7 @@ import { Image } from 'astro:assets';
 import ActionLink from './ActionLink.astro';
 import { formatIsoDate } from '../lib/date';
 import type { ListItem } from '../lib/list';
+import { path } from '../lib/path';
 
 interface Props extends ListItem {
   variant: 'writing' | 'projects';
@@ -28,6 +29,7 @@ const {
 const Heading = headingLevel === 2 ? 'h2' : 'h3';
 const isWriting = variant === 'writing';
 const hasMeta = publishedAt || actionLinkVariant;
+const cellMask = `--card-cell-mask: url("${path('/pattern/border-cell.svg')}")`;
 ---
 
 <card-interaction>
@@ -39,6 +41,11 @@ const hasMeta = publishedAt || actionLinkVariant;
       !featuredImage && 'card--no-thumbnail',
     ]}
   >
+    {
+      !isWriting && (
+        <div class="card__grid" style={cellMask} aria-hidden="true" />
+      )
+    }
     <div class="card__container">
       {
         featuredImage && (
@@ -106,7 +113,7 @@ const hasMeta = publishedAt || actionLinkVariant;
 
   @mixin card-lit {
     box-shadow:
-      inset 0 0 0 1px var(--card-title),
+      inset 0 0 0 1px var(--color-text-muted),
       0 0 0 1px transparent,
       var(--card-shadow-hover);
 
@@ -165,7 +172,7 @@ const hasMeta = publishedAt || actionLinkVariant;
     @include motion-safe {
       transition:
         transform var(--motion-material-release) ease-out,
-        box-shadow 180ms ease-out;
+        box-shadow var(--motion-hover-settle) ease-out;
     }
 
     @include hover-fine {
@@ -192,11 +199,6 @@ const hasMeta = publishedAt || actionLinkVariant;
   .card--project {
     --card-title: var(--color-text);
     --card-muted: var(--color-text-muted);
-    --card-surface-rest: linear-gradient(
-      90deg,
-      var(--color-canvas) 0%,
-      var(--color-surface) 100%
-    );
     --card-shadow-hover: 0 #{rem(7)} #{rem(16)} #{rem(-10)} rgb(38 38 38 / 18%);
     /*
      * The hard band stays hairline and the brightness comes from the diffuse halo,
@@ -207,11 +209,20 @@ const hasMeta = publishedAt || actionLinkVariant;
       inset 0 0 #{rem(12)} color-mix(in srgb, var(--sky-500) 42%, transparent),
       inset 0 0 #{rem(28)} color-mix(in srgb, var(--sky-400) 30%, transparent);
 
+    background: var(--card-surface-rest);
+  }
+
+  .card--writing {
+    --card-surface-rest: linear-gradient(
+      90deg,
+      var(--color-canvas) 0%,
+      var(--color-surface) 100%
+    );
+
     /* The transparent inset keeps the rest and lit shadow lists interpolable. */
     box-shadow:
       inset 0 0 0 1px transparent,
       0 0 0 1px var(--color-border);
-    background: var(--card-surface-rest);
   }
 
   .card--project {
@@ -290,6 +301,25 @@ const hasMeta = publishedAt || actionLinkVariant;
     z-index: 1;
     display: flex;
     flex-direction: column;
+  }
+
+  /*
+   * Sit behind the ignition overlay. Inside .card__container it would share
+   * that stacking context (z-index: 1) and cover the lit surface.
+   */
+  .card__grid {
+    position: absolute;
+    inset: rem(1);
+    z-index: -1;
+    pointer-events: none;
+    background: var(--sky-100);
+    border-radius: calc(var(--radius-4) - #{rem(1)});
+    mask-image: var(--card-cell-mask);
+    mask-repeat: repeat;
+    mask-size: 8px 8px;
+    -webkit-mask-image: var(--card-cell-mask);
+    -webkit-mask-repeat: repeat;
+    -webkit-mask-size: 8px 8px;
   }
 
   .card--project .card__container {
