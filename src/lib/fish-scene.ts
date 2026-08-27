@@ -22,6 +22,12 @@ interface Glitch {
   chromaPx: number;
 }
 
+interface Attraction {
+  x: number;
+  y: number;
+  until: number;
+}
+
 interface Fish {
   sizeFactor: number;
   /* Place in the loose formation, as a fraction of the band. */
@@ -80,11 +86,15 @@ const NARROW_BODY_WIDTH_PX = 46;
 const NARROW_WIDTH_PX = 520;
 const MAX_DELTA_S = 0.05;
 const FALLBACK_BAND_PX = 148;
+const BAND_RISE_PX = 200;
 /* Each stroke is one push followed by a glide, and the glide is what damps the push out. */
 const STROKE_INTERVAL_S = 1.5;
 const STROKE_IMPULSE = 62;
 const GLIDE_DRAG = 1.7;
 const COHESION = 1.1;
+const ATTRACTION_DURATION_S = 1.8;
+const ATTRACTION_RELEASE_S = 0.6;
+const ATTRACTION_MAX_OFFSET_PX = 160;
 /* Weak enough that the pair can pass through each other instead of bouncing apart. */
 const SEPARATION_PUSH = 10;
 const BODY_HEIGHT_RATIO = 0.48;
@@ -104,6 +114,18 @@ const OBSTACLE_PUSH = 900;
 const OBSTACLE_PADDING = 20;
 const EDGE_MARGIN = 6;
 const LOAD_MARGIN_PX = 400;
+const INTERACTIVE_SELECTOR = [
+  'a',
+  'button',
+  'input',
+  'select',
+  'textarea',
+  'summary',
+  'label',
+  '[role="button"]',
+  '[role="link"]',
+  '[contenteditable]:not([contenteditable="false"])',
+].join(',');
 
 class FishScene extends HTMLElement {
   private abortController?: AbortController;
@@ -128,6 +150,7 @@ class FishScene extends HTMLElement {
   private placed = false;
   private pointerClientX?: number;
   private pointerClientY?: number;
+  private attraction?: Attraction;
   /* The fish the fine pointer is over, so a stay does not retrigger the sequence. */
   private hoveredFish?: Fish;
   private obstacles: Obstacle[] = [];
@@ -169,6 +192,7 @@ class FishScene extends HTMLElement {
     window.addEventListener('pointerdown', this.handlePointerMove, { passive: true, signal });
     window.addEventListener('pointerup', this.handlePointerEnd, { passive: true, signal });
     window.addEventListener('pointercancel', this.handlePointerEnd, { passive: true, signal });
+    window.addEventListener('click', this.handleAttraction, { passive: true, signal });
     document.addEventListener('pointerleave', this.handlePointerLeave, { signal });
     document.addEventListener('visibilitychange', this.handleVisibility, { signal });
 
@@ -207,6 +231,7 @@ class FishScene extends HTMLElement {
     this.reducedMotionQuery = undefined;
     this.hoverFineQuery = undefined;
     this.hoveredFish = undefined;
+    this.attraction = undefined;
     this.removeAttribute('data-fish-scene-ready');
   }
 
@@ -260,17 +285,19 @@ class FishScene extends HTMLElement {
     const rootRect = this.getBoundingClientRect();
     if (rootRect.width <= 0) return;
 
-    /* The band the school may use runs from the end of the page content to the bottom of the footer,
-       which lives outside this component, so it is measured rather than duplicated as a length. */
+    /* The band starts above the end of the page content and reaches through the footer, which lives
+       outside this component, so its lower edge is measured rather than duplicated as a length. */
     const footer = document.querySelector('.site-footer');
     const footerRect = footer?.getBoundingClientRect();
+    const bandTop = rootRect.top - BAND_RISE_PX;
     this.width = rootRect.width;
-    this.height = Math.max(
+    this.height = BAND_RISE_PX + Math.max(
       FALLBACK_BAND_PX,
       footerRect ? footerRect.bottom - rootRect.top : FALLBACK_BAND_PX,
     );
 
     const pixelRatio = Math.min(window.devicePixelRatio, 2);
+    this.canvas.style.insetBlockStart = `${-BAND_RISE_PX}px`;
     this.canvas.style.height = `${this.height}px`;
     this.canvas.width = Math.round(this.width * pixelRatio);
     this.canvas.height = Math.round(this.height * pixelRatio);
@@ -282,21 +309,29 @@ class FishScene extends HTMLElement {
       fish.scale = this.scale * fish.sizeFactor;
     }
 
-    /* Footer text and links stay clear of the school, so it never covers something readable. */
-    this.obstacles = Array.from(footer?.querySelectorAll('small, a') ?? [])
+    /* Footer controls and cards inside the raised band stay clear of the school. */
+    const cardElements = this.previousElementSibling?.querySelectorAll('article') ?? [];
+    const footerElements = footer?.querySelectorAll('small, a') ?? [];
+    this.obstacles = [...cardElements, ...footerElements]
       .map((element) => element.getBoundingClientRect())
       .map((rect) => ({
         left: rect.left - rootRect.left - OBSTACLE_PADDING,
-        top: rect.top - rootRect.top - OBSTACLE_PADDING,
+        top: rect.top - bandTop - OBSTACLE_PADDING,
         right: rect.right - rootRect.left + OBSTACLE_PADDING,
-        bottom: rect.bottom - rootRect.top + OBSTACLE_PADDING,
+        bottom: rect.bottom - bandTop + OBSTACLE_PADDING,
       }));
+
+    if (this.attraction) {
+      this.attraction.x = clamp(this.attraction.x, 0, this.width);
+      this.attraction.y = clamp(this.attraction.y, 0, this.height);
+    }
 
     if (!this.placed) {
       this.placed = true;
       for (const fish of this.school) {
         fish.x = this.width * (0.66 + fish.slotX);
-        fish.y = this.height * (0.34 + fish.slotY);
+        /* The resting reduced-motion frame remains below the preceding cards. */
+        fish.y = BAND_RISE_PX + (this.height - BAND_RISE_PX) * (0.34 + fish.slotY);
       }
     }
 
@@ -327,6 +362,7 @@ class FishScene extends HTMLElement {
 
   private handleMotionPreference = () => {
     if (this.reducedMotionQuery?.matches) {
+      this.attraction = undefined;
       this.stop();
       this.draw();
     } else if (this.inView) {
@@ -350,6 +386,21 @@ class FishScene extends HTMLElement {
     this.pointerClientY = undefined;
   };
 
+  private handleAttraction = (event: MouseEvent) => {
+    if (event.defaultPrevented || event.button !== 0 || this.reducedMotionQuery?.matches) return;
+
+    const target = event.target;
+    if (target instanceof Element && target.closest(INTERACTIVE_SELECTOR)) return;
+
+    const rootRect = this.getBoundingClientRect();
+    const x = event.clientX - rootRect.left;
+    const y = event.clientY - (rootRect.top - BAND_RISE_PX);
+    if (x < 0 || x > this.width || y < 0 || y > this.height) return;
+
+    this.attraction = { x, y, until: this.elapsed + ATTRACTION_DURATION_S };
+    for (const fish of this.school) fish.strokeTimer = 0;
+  };
+
   private tick = (time: number) => {
     const previous = this.lastFrameAt ?? time;
     this.lastFrameAt = time;
@@ -368,11 +419,30 @@ class FishScene extends HTMLElement {
     const pointerX =
       this.pointerClientX === undefined ? undefined : this.pointerClientX - rootRect.left;
     const pointerY =
-      this.pointerClientY === undefined ? undefined : this.pointerClientY - rootRect.top;
+      this.pointerClientY === undefined
+        ? undefined
+        : this.pointerClientY - (rootRect.top - BAND_RISE_PX);
 
     /* One drifting point the whole group hangs off, which is what makes them read as a group. */
-    const schoolX = this.width * (0.5 + 0.24 * Math.sin(this.elapsed * 0.17));
-    const schoolY = this.height * (0.46 + 0.2 * Math.sin(this.elapsed * 0.27 + 1.1));
+    let schoolX = this.width * (0.5 + 0.24 * Math.sin(this.elapsed * 0.17));
+    let schoolY = this.height * (0.56 + 0.22 * Math.sin(this.elapsed * 0.27 + 1.1));
+
+    if (this.attraction) {
+      const remaining = this.attraction.until - this.elapsed;
+      if (remaining <= 0) {
+        this.attraction = undefined;
+      } else {
+        const towardX = this.attraction.x - schoolX;
+        const towardY = this.attraction.y - schoolY;
+        const distance = Math.hypot(towardX, towardY);
+        if (distance > 0.001) {
+          const release = Math.min(remaining / ATTRACTION_RELEASE_S, 1);
+          const offset = Math.min(distance, ATTRACTION_MAX_OFFSET_PX) * release;
+          schoolX += (towardX / distance) * offset;
+          schoolY += (towardY / distance) * offset;
+        }
+      }
+    }
 
     /* The lead fish supplies one shared direction so the pair always face the same way. */
     const lead = this.school[0];
