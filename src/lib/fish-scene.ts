@@ -33,6 +33,8 @@ interface Fish {
   /* Place in the loose formation, as a fraction of the band. */
   slotX: number;
   slotY: number;
+  /* Fixed rendered offset keeps the pair's spacing stable across viewport widths. */
+  offsetX: number;
   /* Tiny offset from the shared stroke, so the pair beat almost together. */
   phase: number;
   clip: number;
@@ -63,9 +65,12 @@ const clips: FishClip[] = [
 
 /* Slots sit close enough that the pair cross now and then, and the phases are near enough to beat
    as one. */
-const formation: readonly Pick<Fish, 'sizeFactor' | 'slotX' | 'slotY' | 'phase' | 'clip'>[] = [
-  { sizeFactor: 1, slotX: 0, slotY: 0, phase: 0, clip: 0 },
-  { sizeFactor: 0.85, slotX: 0.082, slotY: -0.042, phase: 0.08, clip: 2 },
+const formation: readonly Pick<
+  Fish,
+  'sizeFactor' | 'slotX' | 'slotY' | 'offsetX' | 'phase' | 'clip'
+>[] = [
+  { sizeFactor: 1, slotX: 0, slotY: 0, offsetX: 0, phase: 0, clip: 0 },
+  { sizeFactor: 0.85, slotX: 0.082, slotY: -0.042, offsetX: 12, phase: 0.08, clip: 2 },
 ];
 
 /* How far the drawn fish reaches from its anchor, so it can be kept inside the canvas. */
@@ -329,7 +334,7 @@ class FishScene extends HTMLElement {
     if (!this.placed) {
       this.placed = true;
       for (const fish of this.school) {
-        fish.x = this.width * (0.66 + fish.slotX);
+        fish.x = this.width * (0.66 + fish.slotX) + fish.offsetX;
         /* The resting reduced-motion frame remains below the preceding cards. */
         fish.y = BAND_RISE_PX + (this.height - BAND_RISE_PX) * (0.34 + fish.slotY);
       }
@@ -455,7 +460,7 @@ class FishScene extends HTMLElement {
       const minY = extent.top * fish.scale + EDGE_MARGIN;
       const maxY = Math.max(minY, this.height - extent.bottom * fish.scale - EDGE_MARGIN);
 
-      const targetX = clamp(schoolX + this.width * fish.slotX, minX, maxX);
+      const targetX = clamp(schoolX + this.width * fish.slotX + fish.offsetX, minX, maxX);
       const targetY = clamp(schoolY + this.height * fish.slotY, minY, maxY);
 
       fish.strokeTimer -= delta;

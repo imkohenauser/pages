@@ -32,10 +32,13 @@ const ATLAS_WIDTH = 1448;
 const ATLAS_HEIGHT = 1086;
 /* Long enough that the run starts after the page has settled instead of during the first paint. */
 const START_DELAY_MS = 600;
+/* Ignore only implausibly rapid input; an intentional second activation adds another run. */
+const REPLAY_COOLDOWN_MS = 150;
+/* Bound GPU work during sustained tapping without interrupting horses already in flight. */
+const MAX_CONCURRENT_RUNS = 6;
 const TAIL_STEP_MS = 120;
 const MIN_MOSAIC_CELLS = 3;
-const TOP_ENTER_PX = 1;
-const TOP_REARM_PX = 48;
+const INITIAL_PLAY_MAX_SCROLL_PX = 48;
 const MAX_PIXEL_RATIO = 2;
 const MAX_DRAWING_BUFFER_SIZE = 4096;
 
@@ -67,6 +70,13 @@ interface EchoStep {
   dissolve: number;
   /* How unevenly the surviving cells are faded, so the oldest echoes stop reading as a solid grid. */
   scatter: number;
+}
+
+interface HorseRun {
+  startedAt: number;
+  delayMs: number;
+  visibleStep?: number;
+  meshes: Mesh<PlaneGeometry, ShaderMaterial>[];
 }
 
 /* Positions include hourse_v4's -220px, 390px offset in frame_v8--break. */
@@ -191,12 +201,11 @@ class ArchScene extends HTMLElement {
   private maskGeometry?: ShapeGeometry;
   private maskMesh?: Mesh<ShapeGeometry, MeshBasicMaterial>;
   private horseGeometry?: PlaneGeometry;
-  private horseMeshes: Mesh<PlaneGeometry, ShaderMaterial>[] = [];
+  private runs: HorseRun[] = [];
   private animationFrame?: number;
   private resizeFrame?: number;
-  private runStartedAt?: number;
-  private visibleStep?: number;
-  private topArmed = true;
+  private lastReplayAt = -Infinity;
+  private nextRunOrder = 0;
   private connectionId = 0;
   private canvasWidth = 0;
   private canvasHeight = 0;
@@ -207,17 +216,18 @@ class ArchScene extends HTMLElement {
     if (this.abortController) return;
 
     const canvas = this.querySelector('[data-arch-scene-canvas]');
-    if (!(canvas instanceof HTMLCanvasElement)) return;
+    const trigger = this.querySelector('[data-arch-scene-trigger]');
+    if (!(canvas instanceof HTMLCanvasElement) || !(trigger instanceof HTMLButtonElement)) return;
 
     this.canvas = canvas;
     this.abortController = new AbortController();
     const { signal } = this.abortController;
     const connectionId = ++this.connectionId;
 
-    window.addEventListener('scroll', this.handleScroll, { passive: true, signal });
     window.addEventListener('resize', this.scheduleResize, { signal });
     document.addEventListener('visibilitychange', this.handleVisibility, { signal });
     canvas.addEventListener('webglcontextlost', this.handleContextLost, { signal });
+    trigger.addEventListener('click', this.handleReplay, { signal });
 
     this.reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     this.reducedMotionQuery.addEventListener('change', this.handleMotionPreference, { signal });
@@ -278,16 +288,12 @@ class ArchScene extends HTMLElement {
       this.camera.position.z = 10;
 
       this.createMask();
-      this.createHorseMeshes(texture);
+      this.horseGeometry = new PlaneGeometry(1, 1);
       this.resize();
-      this.setVisibleStep(undefined);
+      this.render();
       this.toggleAttribute('data-arch-scene-ready', true);
-      /* Play once on arrival, and let a return to the top of the page re-arm the run. */
-      if (window.scrollY <= TOP_REARM_PX) {
-        this.enterTop();
-      } else {
-        this.topArmed = true;
-      }
+      /* Arrival is the only automatic run; later runs belong to explicit gate activations. */
+      if (window.scrollY <= INITIAL_PLAY_MAX_SCROLL_PX) this.play(START_DELAY_MS);
     } catch {
       this.toggleAttribute('data-arch-scene-fallback', true);
     }
@@ -321,62 +327,23 @@ class ArchScene extends HTMLElement {
     this.scene.add(this.maskMesh);
   }
 
-  private createHorseMeshes(texture: Texture) {
-    if (!this.scene) return;
+  private handleReplay = () => {
+    const now = performance.now();
+    if (now - this.lastReplayAt < REPLAY_COOLDOWN_MS) return;
 
-    const geometry = new PlaneGeometry(1, 1);
-    this.horseGeometry = geometry;
-    this.horseMeshes = clips.map((clip, index) => {
-      const mesh = new Mesh(geometry, createHorseMaterial(texture, clip));
-      /* Later clips stand closer to the viewer, so painting in clip order keeps the trail behind. */
-      mesh.renderOrder = 1 + index;
-      mesh.visible = false;
-      this.scene?.add(mesh);
-      return mesh;
-    });
-  }
-
-  private enterTop() {
-    this.topArmed = false;
-    if (this.reducedMotionQuery?.matches) {
-      this.stopRun();
-      this.setVisibleStep(undefined);
-      return;
-    }
+    this.lastReplayAt = now;
     this.play();
-  }
-
-  private handleScroll = () => {
-    const scrollTop = Math.max(window.scrollY, 0);
-    if (scrollTop > TOP_REARM_PX) {
-      this.topArmed = true;
-      return;
-    }
-
-    if (scrollTop <= TOP_ENTER_PX && this.topArmed && this.renderer) {
-      this.enterTop();
-    }
   };
 
   private handleVisibility = () => {
     if (document.hidden) {
       this.stopRun();
-      this.setVisibleStep(undefined);
       return;
-    }
-
-    if (window.scrollY <= TOP_ENTER_PX) {
-      this.topArmed = false;
-      if (!this.reducedMotionQuery?.matches) this.play();
     }
   };
 
   private handleMotionPreference = () => {
     this.stopRun();
-    this.setVisibleStep(undefined);
-    if (!this.reducedMotionQuery?.matches && window.scrollY <= TOP_ENTER_PX) {
-      this.play();
-    }
   };
 
   private scheduleResize = () => {
@@ -419,9 +386,18 @@ class ArchScene extends HTMLElement {
     this.camera.updateProjectionMatrix();
 
     this.maskMesh?.scale.set(this.designScale, this.designScale, 1);
+    for (const run of this.runs) this.layoutHorseMeshes(run.meshes);
+    this.applyRuns();
+    this.render();
+  }
+
+  private layoutHorseMeshes(meshes: Mesh<PlaneGeometry, ShaderMaterial>[]) {
+    if (this.designScale <= 0) return;
+
+    const designWidth = this.canvasWidth / this.designScale;
     const exitStartX = approachClips[approachClips.length - 1]?.x ?? 0;
     const exitEndX = designWidth - EXIT_EDGE_MARGIN;
-    this.horseMeshes.forEach((mesh, index) => {
+    meshes.forEach((mesh, index) => {
       const clip = clips[index];
       if (!clip) return;
       const x = clip.x ?? exitStartX + (exitEndX - exitStartX) * (clip.exitProgress ?? 1);
@@ -436,90 +412,139 @@ class ArchScene extends HTMLElement {
         1,
       );
     });
-    this.applyStep();
   }
 
-  private play() {
-    if (!this.renderer || document.hidden || this.reducedMotionQuery?.matches) return;
+  private play(delayMs = 0) {
+    if (
+      !this.renderer ||
+      !this.scene ||
+      !this.texture ||
+      !this.horseGeometry ||
+      document.hidden ||
+      this.reducedMotionQuery?.matches ||
+      this.runs.length >= MAX_CONCURRENT_RUNS
+    ) return;
 
-    this.stopRun();
-    this.setVisibleStep(undefined);
-    this.runStartedAt = performance.now();
+    const scene = this.scene;
+    const texture = this.texture;
+    const geometry = this.horseGeometry;
+    const renderOrderBase = 1 + this.nextRunOrder * clips.length;
+    this.nextRunOrder += 1;
+    const meshes = clips.map((clip, index) => {
+      const mesh = new Mesh(geometry, createHorseMaterial(texture, clip));
+      /* Later runs paint above earlier ones while every run keeps its own echo order. */
+      mesh.renderOrder = renderOrderBase + index;
+      mesh.visible = false;
+      scene.add(mesh);
+      return mesh;
+    });
+    this.layoutHorseMeshes(meshes);
+    this.runs.push({ startedAt: performance.now(), delayMs, meshes });
     this.toggleAttribute('data-arch-scene-running', true);
-    this.animationFrame = requestAnimationFrame(this.tick);
+    if (this.animationFrame === undefined) {
+      this.animationFrame = requestAnimationFrame(this.tick);
+    }
   }
 
   private tick = (time: number) => {
-    if (this.runStartedAt === undefined) return;
-
-    const elapsed = time - this.runStartedAt - START_DELAY_MS;
-    if (elapsed < 0) {
-      this.animationFrame = requestAnimationFrame(this.tick);
-      return;
-    }
-
+    this.animationFrame = undefined;
     const timeline = this.extended ? fullTimeline : approachTimeline;
-    if (elapsed >= timeline.durationMs) {
-      this.stopRun();
-      this.setVisibleStep(undefined);
-      return;
+    let changed = false;
+
+    for (const run of [...this.runs]) {
+      const elapsed = time - run.startedAt - run.delayMs;
+      if (elapsed < 0) continue;
+
+      if (elapsed >= timeline.durationMs) {
+        this.removeRun(run);
+        changed = true;
+        continue;
+      }
+
+      const step = timeline.stepEndTimesMs.findIndex((end) => elapsed < end);
+      if (step !== run.visibleStep) {
+        run.visibleStep = step;
+        changed = true;
+      }
     }
 
-    const step = timeline.stepEndTimesMs.findIndex((end) => elapsed < end);
-    if (step !== this.visibleStep) this.setVisibleStep(step);
-    this.animationFrame = requestAnimationFrame(this.tick);
+    if (changed) {
+      this.applyRuns();
+      this.updateFrameAttribute();
+      this.render();
+    }
+
+    if (this.runs.length > 0) {
+      this.animationFrame = requestAnimationFrame(this.tick);
+    } else {
+      this.removeAttribute('data-arch-scene-running');
+      this.removeAttribute('data-arch-scene-frame');
+    }
   };
 
-  private setVisibleStep(step: number | undefined) {
-    this.visibleStep = step;
-    if (step === undefined) {
-      this.removeAttribute('data-arch-scene-frame');
-    } else {
-      this.dataset.archSceneFrame = String(step + 1);
+  private updateFrameAttribute() {
+    for (let index = this.runs.length - 1; index >= 0; index -= 1) {
+      const step = this.runs[index]?.visibleStep;
+      if (step !== undefined) {
+        this.dataset.archSceneFrame = String(step + 1);
+        return;
+      }
     }
-    this.applyStep();
+    this.removeAttribute('data-arch-scene-frame');
   }
 
-  private applyStep() {
-    const { visibleStep } = this;
+  private applyRuns() {
     let masked = false;
 
-    this.horseMeshes.forEach((mesh, index) => {
-      const clip = clips[index];
-      const echo = visibleStep === undefined ? undefined : echoSteps[visibleStep - index];
-      mesh.visible = Boolean(clip && echo);
-      if (!clip || !echo) return;
+    for (const run of this.runs) {
+      run.meshes.forEach((mesh, index) => {
+        const clip = clips[index];
+        const echo = run.visibleStep === undefined ? undefined : echoSteps[run.visibleStep - index];
+        mesh.visible = Boolean(clip && echo);
+        if (!clip || !echo) return;
 
-      /* Mosaic and chroma are sized against the drawn width so they stay the same on screen
-         whatever the clip's distance, while the exit adds its own decay to the echo's. */
-      const drawnWidth = clip.width * this.designScale;
-      const drawnHeight = clip.height * this.designScale;
-      const mosaicPx = Math.max(echo.mosaicPx, clip.exitMosaicPx ?? 0);
+        /* Mosaic and chroma are sized against the drawn width so they stay the same on screen
+           whatever the clip's distance, while the exit adds its own decay to the echo's. */
+        const drawnWidth = clip.width * this.designScale;
+        const drawnHeight = clip.height * this.designScale;
+        const mosaicPx = Math.max(echo.mosaicPx, clip.exitMosaicPx ?? 0);
 
-      const { uniforms } = mesh.material;
-      uniforms.uOpacity.value = echo.opacity * (clip.exitOpacity ?? 1);
-      uniforms.uMosaic.value = mosaicPx > 0 ? 1 : 0;
-      uniforms.uChroma.value = echo.chromaPx / drawnWidth;
-      uniforms.uDissolve.value = Math.max(echo.dissolve, clip.exitDissolve ?? 0);
-      uniforms.uScatter.value = echo.scatter;
-      uniforms.uMosaicCells.value.set(
-        mosaicCells(drawnWidth, mosaicPx),
-        mosaicCells(drawnHeight, mosaicPx),
-      );
-      masked ||= clip.masked;
-    });
+        const { uniforms } = mesh.material;
+        uniforms.uOpacity.value = echo.opacity * (clip.exitOpacity ?? 1);
+        uniforms.uMosaic.value = mosaicPx > 0 ? 1 : 0;
+        uniforms.uChroma.value = echo.chromaPx / drawnWidth;
+        uniforms.uDissolve.value = Math.max(echo.dissolve, clip.exitDissolve ?? 0);
+        uniforms.uScatter.value = echo.scatter;
+        uniforms.uMosaicCells.value.set(
+          mosaicCells(drawnWidth, mosaicPx),
+          mosaicCells(drawnHeight, mosaicPx),
+        );
+        masked ||= clip.masked;
+      });
+    }
 
     if (this.maskMesh) this.maskMesh.visible = masked;
-    this.render();
   }
 
-  private stopRun() {
+  private removeRun(run: HorseRun) {
+    const index = this.runs.indexOf(run);
+    if (index >= 0) this.runs.splice(index, 1);
+    for (const mesh of run.meshes) {
+      this.scene?.remove(mesh);
+      mesh.material.dispose();
+    }
+  }
+
+  private stopRun(render = true) {
     if (this.animationFrame !== undefined) {
       cancelAnimationFrame(this.animationFrame);
       this.animationFrame = undefined;
     }
-    this.runStartedAt = undefined;
+    for (const run of [...this.runs]) this.removeRun(run);
+    if (this.maskMesh) this.maskMesh.visible = false;
     this.removeAttribute('data-arch-scene-running');
+    this.removeAttribute('data-arch-scene-frame');
+    if (render) this.render();
   }
 
   private render() {
@@ -530,13 +555,11 @@ class ArchScene extends HTMLElement {
 
   private handleContextLost = (event: Event) => {
     event.preventDefault();
-    this.stopRun();
+    this.stopRun(false);
     this.toggleAttribute('data-arch-scene-fallback', true);
   };
 
   private disposeScene() {
-    this.horseMeshes.forEach((mesh) => mesh.material.dispose());
-    this.horseMeshes = [];
     this.horseGeometry?.dispose();
     this.horseGeometry = undefined;
     this.maskGeometry?.dispose();
