@@ -8,19 +8,22 @@ interface Props {
 const { avatarSrc = path('/avatar.svg') } = Astro.props;
 ---
 
-<div class="arch-scene" aria-hidden="true">
+<arch-scene class="arch-scene" aria-hidden="true">
   <div class="arch-scene__outer"></div>
   <div class="arch-scene__floor"></div>
   <div class="arch-scene__inner">
     <img class="arch-scene__avatar" src={avatarSrc} alt="" width="1000" height="1000" />
   </div>
-</div>
+  <canvas class="arch-scene__canvas" data-arch-scene-canvas></canvas>
+</arch-scene>
 
 <style lang="scss">
   @use "tools" as *;
 
   .arch-scene {
     position: relative;
+    isolation: isolate;
+    display: block;
     /* The gate is a 1:2 portrait, so it fits the available width on small screens. */
     width: 100%;
     aspect-ratio: 1 / 2;
@@ -35,6 +38,7 @@ const { avatarSrc = path('/avatar.svg') } = Astro.props;
   .arch-scene__outer {
     position: absolute;
     inset: 0;
+    z-index: 0;
     /* A horizontal radius of half the width with a matching vertical radius makes the top a semicircle. */
     border-radius: 50% 50% 0 0 / 25% 25% 0 0;
     background-image: linear-gradient(to top, var(--neutral-50) 75%, var(--neutral-300) 100%);
@@ -50,6 +54,7 @@ const { avatarSrc = path('/avatar.svg') } = Astro.props;
   .arch-scene__floor {
     position: absolute;
     inset: 50% 0 0;
+    z-index: 1;
     clip-path: polygon(50% 0, 100% 100%, 0 100%);
     background-image: linear-gradient(to left, var(--neutral-50), var(--neutral-300) 25%);
   }
@@ -61,6 +66,7 @@ const { avatarSrc = path('/avatar.svg') } = Astro.props;
     /* 220 / 900 of the inner box, keeping this arch a semicircle as well. */
     border-radius: 50% 50% 0 0 / 24.444% 24.444% 0 0;
     overflow: hidden;
+    z-index: 1;
   }
 
   .arch-scene__avatar {
@@ -69,4 +75,26 @@ const { avatarSrc = path('/avatar.svg') } = Astro.props;
     height: 100%;
     object-fit: cover;
   }
+
+  .arch-scene__canvas {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    z-index: 2;
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .arch-scene[data-arch-scene-ready] .arch-scene__canvas {
+    opacity: 1;
+  }
 </style>
+
+<script>
+  import { defineArchScene } from '../../lib/arch-scene';
+
+  defineArchScene();
+</script>
