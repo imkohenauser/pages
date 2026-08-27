@@ -8,6 +8,15 @@ interface Props {
 const { options } = Astro.props;
 ---
 
+<search>
+  <label for="writing-query">Search writing</label>
+  <input
+    id="writing-query"
+    type="search"
+    name="writing-query"
+    autocomplete="off"
+  />
+</search>
 <fieldset>
   <legend>Filter by label</legend>
   <ul>

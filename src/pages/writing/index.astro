@@ -1,6 +1,6 @@
 ---
 import List from '../../components/List.astro';
-import WritingLabelFilterFields from '../../components/WritingLabelFilter.astro';
+import WritingFilter from '../../components/WritingFilter.astro';
 import Base from '../../layouts/Base.astro';
 import { site } from '../../data/site';
 import { writingListItem } from '../../lib/list';
@@ -17,13 +17,13 @@ const description = `Writing by ${site.name}.`;
 <Base title={title} description={description}>
   <section class="writing-section" aria-labelledby="writing-title">
     <h1 class="writing-title" id="writing-title">Writing</h1>
-    <writing-label-filter>
-      <WritingLabelFilterFields options={labelOptions} />
+    <writing-filter>
+      <WritingFilter options={labelOptions} />
       <List variant="writing" headingLevel={2} items={items} />
       <p data-writing-filter-empty hidden>
-        No writing matches the selected labels.
+        No writing matches the current filters.
       </p>
-    </writing-label-filter>
+    </writing-filter>
   </section>
 </Base>
 
@@ -52,7 +52,7 @@ const description = `Writing by ${site.name}.`;
 </style>
 
 <script>
-  import { defineWritingLabelFilter } from '../../lib/writing-label-filter';
+  import { defineWritingFilter } from '../../lib/writing-filter';
 
-  defineWritingLabelFilter();
+  defineWritingFilter();
 </script>

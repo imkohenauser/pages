@@ -1,6 +1,7 @@
 ---
 import Card from './Card.astro';
 import type { ListItem } from '../lib/list';
+import { writingQueryText } from '../lib/writing-query';
 
 interface Props {
   items: ListItem[];
@@ -18,6 +19,11 @@ const { items, class: className, variant, headingLevel } = Astro.props;
       <li
         class="content-list__item"
         data-writing-label={item.label}
+        data-writing-query={
+          variant === 'writing'
+            ? writingQueryText(item.title, item.description, item.label)
+            : undefined
+        }
       >
         <Card {...item} variant={variant} headingLevel={headingLevel} />
       </li>

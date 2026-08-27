@@ -1,4 +1,6 @@
-class WritingLabelFilter extends HTMLElement {
+import { normalizeWritingQuery } from './writing-query';
+
+class WritingFilter extends HTMLElement {
   private abortController?: AbortController;
 
   connectedCallback() {
@@ -7,7 +9,7 @@ class WritingLabelFilter extends HTMLElement {
     this.abortController = new AbortController();
     const { signal } = this.abortController;
 
-    this.addEventListener('change', this.handleChange, { signal });
+    this.addEventListener('input', this.handleInput, { signal });
     this.sync();
   }
 
@@ -16,11 +18,10 @@ class WritingLabelFilter extends HTMLElement {
     this.abortController = undefined;
   }
 
-  private handleChange = (event: Event) => {
+  private handleInput = (event: Event) => {
     const target = event.target;
-    if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') {
-      return;
-    }
+    if (!(target instanceof HTMLInputElement)) return;
+    if (target.type !== 'checkbox' && target.type !== 'search') return;
     this.sync();
   };
 
@@ -36,15 +37,28 @@ class WritingLabelFilter extends HTMLElement {
     return selected;
   }
 
+  private queryTokens() {
+    const input = this.querySelector(
+      'input[type="search"][name="writing-query"]',
+    );
+    if (!(input instanceof HTMLInputElement)) return [];
+    return normalizeWritingQuery(input.value).split(/\s+/).filter(Boolean);
+  }
+
   private sync() {
     const selected = this.selectedLabels();
-    const showAll = selected.length === 0;
+    const tokens = this.queryTokens();
+    const showAllLabels = selected.length === 0;
     let visibleCount = 0;
 
     for (const item of this.querySelectorAll('[data-writing-label]')) {
       if (!(item instanceof HTMLElement)) continue;
       const label = item.getAttribute('data-writing-label');
-      const visible = showAll || (label !== null && selected.includes(label));
+      const haystack = item.getAttribute('data-writing-query') ?? '';
+      const matchesLabel =
+        showAllLabels || (label !== null && selected.includes(label));
+      const matchesQuery = tokens.every((token) => haystack.includes(token));
+      const visible = matchesLabel && matchesQuery;
       item.toggleAttribute('hidden', !visible);
       if (visible) visibleCount += 1;
     }
@@ -56,8 +70,8 @@ class WritingLabelFilter extends HTMLElement {
   }
 }
 
-export function defineWritingLabelFilter() {
-  if (!customElements.get('writing-label-filter')) {
-    customElements.define('writing-label-filter', WritingLabelFilter);
+export function defineWritingFilter() {
+  if (!customElements.get('writing-filter')) {
+    customElements.define('writing-filter', WritingFilter);
   }
 }
