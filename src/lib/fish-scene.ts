@@ -42,22 +42,21 @@ interface Fish {
   glitchAt: number;
 }
 
-/* The sheet is not a regular grid: each fish was measured as a connected region, and the frame
-   numbers printed underneath are left outside every rect. */
+/* The sheet is not a regular grid: these rectangles follow the Figma clip markers and leave the
+   frame numbers outside every rect. */
 const clips: FishClip[] = [
-  { x: 25, y: 38, width: 383, height: 414, anchorX: 220, anchorY: 212 },
-  { x: 420, y: 95, width: 360, height: 360, anchorX: 204, anchorY: 160 },
-  { x: 863, y: 59, width: 272, height: 405, anchorX: 120, anchorY: 192 },
-  { x: 1165, y: 102, width: 335, height: 362, anchorX: 184, anchorY: 156 },
-  { x: 39, y: 517, width: 395, height: 395, anchorX: 232, anchorY: 180 },
-  /* Trimmed on the left, where the previous frame's snout reaches into this rect on the sheet. */
-  { x: 434, y: 538, width: 351, height: 363, anchorX: 196, anchorY: 168 },
-  { x: 882, y: 519, width: 210, height: 392, anchorX: 76, anchorY: 184 },
-  { x: 1127, y: 581, width: 375, height: 341, anchorX: 216, anchorY: 144 },
+  { x: 0, y: 100, width: 402, height: 330, anchorX: 278, anchorY: 206 },
+  { x: 402, y: 100, width: 376, height: 330, anchorX: 255, anchorY: 206 },
+  { x: 778, y: 100, width: 384, height: 330, anchorX: 258, anchorY: 212 },
+  { x: 1162, y: 100, width: 370, height: 330, anchorX: 240, anchorY: 208 },
+  { x: 0, y: 530, width: 392, height: 340, anchorX: 264, anchorY: 222 },
+  { x: 392, y: 530, width: 392, height: 340, anchorX: 268, anchorY: 225 },
+  { x: 784, y: 530, width: 354, height: 340, anchorX: 227, anchorY: 226 },
+  { x: 1138, y: 530, width: 394, height: 340, anchorX: 269, anchorY: 222 },
 ];
 
-/* Moorish idols are normally found in groups of two or three, so two swim here. Slots sit close
-   enough that the pair cross now and then, and the phases are near enough to beat as one. */
+/* Slots sit close enough that the pair cross now and then, and the phases are near enough to beat
+   as one. */
 const formation: readonly Pick<Fish, 'sizeFactor' | 'slotX' | 'slotY' | 'phase' | 'clip'>[] = [
   { sizeFactor: 1, slotX: 0, slotY: 0, phase: 0, clip: 0 },
   { sizeFactor: 0.85, slotX: 0.082, slotY: -0.042, phase: 0.08, clip: 2 },
@@ -75,7 +74,7 @@ const extent = clips.reduce(
 );
 
 /* Width of the solid body in the first frame, used to size every frame from one number. */
-const REFERENCE_BODY_WIDTH = 312;
+const REFERENCE_BODY_WIDTH = 256;
 const BODY_WIDTH_PX = 58;
 const NARROW_BODY_WIDTH_PX = 46;
 const NARROW_WIDTH_PX = 520;
@@ -88,7 +87,7 @@ const GLIDE_DRAG = 1.7;
 const COHESION = 1.1;
 /* Weak enough that the pair can pass through each other instead of bouncing apart. */
 const SEPARATION_PUSH = 10;
-const BODY_HEIGHT_RATIO = 0.72;
+const BODY_HEIGHT_RATIO = 0.48;
 const MIN_MOSAIC_CELLS = 3;
 const GLITCH_TRIGGER = 0.16;
 const GLITCH_CLEAR = 0.08;
@@ -99,7 +98,8 @@ const GLITCH_SEQUENCE = [
   { until: 0.28, mosaicPx: 8, dissolve: 0.18, scatter: 0.24, chromaPx: 1.5 },
 ] as const;
 const GLITCH_DURATION_S = GLITCH_SEQUENCE[GLITCH_SEQUENCE.length - 1].until;
-const TURN_HYSTERESIS = 10;
+const MOVEMENT_FACING_THRESHOLD = 2;
+const POINTER_TURN_HYSTERESIS = 10;
 const OBSTACLE_PUSH = 900;
 const OBSTACLE_PADDING = 20;
 const EDGE_MARGIN = 6;
@@ -229,7 +229,7 @@ class FishScene extends HTMLElement {
     const connectionId = this.connectionId;
     const sheet = new Image();
     sheet.decoding = 'async';
-    sheet.src = `${import.meta.env.BASE_URL}sprite-sheet/zanclus_v1.png`;
+    sheet.src = `${import.meta.env.BASE_URL}sprite-sheet/sacura-margaritacea_v1.png`;
 
     try {
       await sheet.decode();
@@ -374,7 +374,7 @@ class FishScene extends HTMLElement {
     const schoolX = this.width * (0.5 + 0.24 * Math.sin(this.elapsed * 0.17));
     const schoolY = this.height * (0.46 + 0.2 * Math.sin(this.elapsed * 0.27 + 1.1));
 
-    /* Face the cursor from anywhere on the page, using the lead fish so the pair turn together. */
+    /* The lead fish supplies one shared direction so the pair always face the same way. */
     const lead = this.school[0];
     const towardPointerX =
       pointerX === undefined || !lead ? undefined : pointerX - lead.x;
@@ -444,14 +444,17 @@ class FishScene extends HTMLElement {
         if (exit.x === 0) fish.vy = 0;
         else fish.vx = 0;
       }
+    }
 
-      if (towardPointerX !== undefined) {
-        if (Math.abs(towardPointerX) > TURN_HYSTERESIS) {
-          fish.heading = towardPointerX > 0 ? 1 : -1;
-        }
-      } else if (lead && Math.abs(lead.vx) > TURN_HYSTERESIS) {
-        fish.heading = lead.vx > 0 ? 1 : -1;
-      }
+    let heading: number | undefined;
+    if (lead && Math.abs(lead.vx) > MOVEMENT_FACING_THRESHOLD) {
+      heading = lead.vx > 0 ? 1 : -1;
+    } else if (towardPointerX !== undefined && Math.abs(towardPointerX) > POINTER_TURN_HYSTERESIS) {
+      /* Looking at the cursor is reserved for a near-stop so it cannot oppose visible travel. */
+      heading = towardPointerX > 0 ? 1 : -1;
+    }
+    if (heading !== undefined) {
+      for (const fish of this.school) fish.heading = heading;
     }
 
     /* Only the farther fish mosaics, so the nearer one stays intact through the crossing. */
