@@ -79,7 +79,7 @@ const BODY_WIDTH_PX = 58;
 const NARROW_BODY_WIDTH_PX = 46;
 const NARROW_WIDTH_PX = 520;
 const MAX_DELTA_S = 0.05;
-const FALLBACK_BAND_PX = 220;
+const FALLBACK_BAND_PX = 148;
 /* Each stroke is one push followed by a glide, and the glide is what damps the push out. */
 const STROKE_INTERVAL_S = 1.5;
 const STROKE_IMPULSE = 62;

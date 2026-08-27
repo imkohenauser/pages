@@ -7,6 +7,9 @@ export default defineConfig({
   site: 'https://imkohenauser.github.io',
   base: '/pages',
   trailingSlash: 'always',
+  devToolbar: {
+    enabled: false,
+  },
   vite: {
     css: {
       preprocessorOptions: {
