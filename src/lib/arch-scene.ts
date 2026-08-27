@@ -65,6 +65,8 @@ interface EchoStep {
   chromaPx: number;
   /* Share of mosaic cells dropped by the ordered dither, which breaks the ghost apart as it ages. */
   dissolve: number;
+  /* How unevenly the surviving cells are faded, so the oldest echoes stop reading as a solid grid. */
+  scatter: number;
 }
 
 /* Positions include hourse_v4's -220px, 390px offset in frame_v8--break. */
@@ -101,12 +103,12 @@ const stepDurationsMs = [230, 180, 180, 260, 150, 150, 230, 140, 140, 260, 190, 
 
 /* Indexed by age in steps: 0 is the live frame, later entries are echoes left behind it. */
 const echoSteps: EchoStep[] = [
-  { opacity: 1, mosaicPx: 0, chromaPx: 0, dissolve: 0 },
-  { opacity: 0.68, mosaicPx: 8, chromaPx: 1.5, dissolve: 0.22 },
-  { opacity: 0.48, mosaicPx: 10, chromaPx: 2.5, dissolve: 0.42 },
-  { opacity: 0.32, mosaicPx: 12, chromaPx: 3.5, dissolve: 0.6 },
-  { opacity: 0.2, mosaicPx: 14, chromaPx: 4.5, dissolve: 0.76 },
-  { opacity: 0.11, mosaicPx: 16, chromaPx: 5.5, dissolve: 0.88 },
+  { opacity: 1, mosaicPx: 0, chromaPx: 0, dissolve: 0, scatter: 0 },
+  { opacity: 0.72, mosaicPx: 8, chromaPx: 1.5, dissolve: 0.25, scatter: 0.25 },
+  { opacity: 0.55, mosaicPx: 10, chromaPx: 2.5, dissolve: 0.46, scatter: 0.4 },
+  { opacity: 0.4, mosaicPx: 12, chromaPx: 3.5, dissolve: 0.64, scatter: 0.55 },
+  { opacity: 0.26, mosaicPx: 14, chromaPx: 4.5, dissolve: 0.8, scatter: 0.7 },
+  { opacity: 0.15, mosaicPx: 16, chromaPx: 5.5, dissolve: 0.92, scatter: 0.85 },
 ];
 
 /* Each run continues past its last clip so the trail can decay after the horse has left. */
@@ -131,7 +133,11 @@ const horseFragmentShader = /* glsl */ `
   uniform float uChroma;
   uniform float uOpacity;
   uniform float uDissolve;
+  uniform float uScatter;
   varying vec2 vUv;
+
+  /* How much earlier the trailing edge breaks up than the leading one. */
+  const float DISSOLVE_BIAS = 0.6;
 
   vec4 sampleClip(vec2 local) {
     /* Clamping keeps an offset sample inside this clip instead of bleeding into the next atlas cell. */
@@ -150,13 +156,17 @@ const horseFragmentShader = /* glsl */ `
 
   void main() {
     vec2 cell = floor(vUv * uMosaicCells);
-    if (uDissolve > 0.0 && bayer4(cell) < uDissolve) discard;
+    /* Dissolving from the back of the horse forward keeps the decay pointing the way it travels. */
+    float threshold = uDissolve * (1.0 + DISSOLVE_BIAS * (0.5 - vUv.x));
+    if (threshold > 0.0 && bayer4(cell) < threshold) discard;
 
     vec2 quantised = (cell + 0.5) / uMosaicCells;
     vec2 local = mix(vUv, quantised, uMosaic);
 
     vec4 base = sampleClip(local);
-    float alpha = base.a * uOpacity;
+    /* A second dither pattern, uncorrelated with the dropout, grades the cells that remain. */
+    float grade = bayer4(cell.yx + vec2(1.0, 3.0));
+    float alpha = base.a * uOpacity * mix(1.0, grade, uScatter);
     if (alpha <= 0.0) discard;
 
     /* The silhouette comes from the unshifted sample, so the split stays inside the horse. */
@@ -491,6 +501,7 @@ class ArchScene extends HTMLElement {
       uniforms.uMosaic.value = mosaicPx > 0 ? 1 : 0;
       uniforms.uChroma.value = echo.chromaPx / drawnWidth;
       uniforms.uDissolve.value = Math.max(echo.dissolve, clip.exitDissolve ?? 0);
+      uniforms.uScatter.value = echo.scatter;
       uniforms.uMosaicCells.value.set(
         mosaicCells(drawnWidth, mosaicPx),
         mosaicCells(drawnHeight, mosaicPx),
@@ -576,6 +587,7 @@ function createHorseMaterial(texture: Texture, clip: HorseClip) {
       uChroma: { value: 0 },
       uOpacity: { value: 1 },
       uDissolve: { value: 0 },
+      uScatter: { value: 0 },
     },
     vertexShader: horseVertexShader,
     fragmentShader: horseFragmentShader,
