@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://zenn.dev/imkohenauser/articles/ancient-world-models-as-markdown"
+label: zenn
 lang: ja
 canonicalUrl:
 noindex: true

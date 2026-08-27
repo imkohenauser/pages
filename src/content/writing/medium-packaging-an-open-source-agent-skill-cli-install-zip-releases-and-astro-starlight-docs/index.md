@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://medium.com/@imkohenauser/packaging-an-open-source-agent-skill-cli-install-zip-releases-and-astro-starlight-docs-8a57e75d8a0c?source=rss-61e770de53f3------2"
+label: medium
 lang: en
 canonicalUrl:
 noindex: true

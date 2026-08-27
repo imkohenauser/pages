@@ -1,0 +1,58 @@
+---
+import List from '../../components/List.astro';
+import WritingLabelFilterFields from '../../components/WritingLabelFilter.astro';
+import Base from '../../layouts/Base.astro';
+import { site } from '../../data/site';
+import { writingListItem } from '../../lib/list';
+import { getWriting } from '../../lib/writing';
+import { writingLabelCounts } from '../../lib/writing-label';
+
+const writing = await getWriting();
+const items = writing.map(writingListItem);
+const labelOptions = writingLabelCounts(writing);
+const title = 'Writing';
+const description = `Writing by ${site.name}.`;
+---
+
+<Base title={title} description={description}>
+  <section class="writing-section" aria-labelledby="writing-title">
+    <h1 class="writing-title" id="writing-title">Writing</h1>
+    <writing-label-filter>
+      <WritingLabelFilterFields options={labelOptions} />
+      <List variant="writing" headingLevel={2} items={items} />
+      <p data-writing-filter-empty hidden>
+        No writing matches the selected labels.
+      </p>
+    </writing-label-filter>
+  </section>
+</Base>
+
+<style lang="scss">
+  @use "tools" as *;
+
+  .writing-section {
+    padding: 0 var(--space-2) var(--space-2);
+  }
+
+  .writing-title {
+    margin: 0;
+    padding: var(--space-4) var(--space-4) 0;
+    font-size: var(--text-2xl);
+    line-height: rem(32);
+    letter-spacing: -0.015em;
+    overflow-wrap: break-word;
+    text-wrap: balance;
+
+    @include md {
+      padding-bottom: var(--space-2);
+      font-size: var(--text-3xl);
+      line-height: rem(40);
+    }
+  }
+</style>
+
+<script>
+  import { defineWritingLabelFilter } from '../../lib/writing-label-filter';
+
+  defineWritingLabelFilter();
+</script>

@@ -3,6 +3,12 @@ import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
 import { contentEntryId } from './lib/content-id';
 import { empty, writingSitemapSchema } from './lib/content-schema';
+import {
+  isExternalWritingLabel,
+  isLocalWritingLabel,
+  writingLabels,
+  type WritingLabel,
+} from './lib/writing-label';
 
 const featuredImageAlt = (data: {
   featuredImage?: unknown;
@@ -22,6 +28,22 @@ const externalIconRefine = {
     !data.externalIcon || Boolean(data.externalUrl),
   message: 'externalUrl is required when externalIcon is set',
   path: ['externalUrl'] as const,
+};
+
+const writingLabelSchema = z.enum(writingLabels);
+
+const writingLabelExternalUrlRefine = {
+  refine: (data: { label: WritingLabel; externalUrl?: string }) => {
+    if (isExternalWritingLabel(data.label)) {
+      return Boolean(data.externalUrl);
+    }
+    if (isLocalWritingLabel(data.label)) {
+      return !data.externalUrl;
+    }
+    return true;
+  },
+  message:
+    'zenn and medium require externalUrl; essay, journal, note, and blog must not set it',
 };
 
 const markdownLoader = (base: string) =>
@@ -50,6 +72,7 @@ const writing = defineCollection({
         ...entryFields(context),
         ...externalFields(context),
         ...writingSitemapSchema.shape,
+        label: writingLabelSchema,
       })
       .refine(featuredImageAlt, {
         message: 'featuredImageAlt is required when featuredImage is set',
@@ -57,6 +80,10 @@ const writing = defineCollection({
       })
       .refine(externalIconRefine.refine, {
         message: externalIconRefine.message,
+        path: ['externalUrl'],
+      })
+      .refine(writingLabelExternalUrlRefine.refine, {
+        message: writingLabelExternalUrlRefine.message,
         path: ['externalUrl'],
       }),
 });

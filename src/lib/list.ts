@@ -7,6 +7,11 @@ import {
 import { path } from './path';
 import type { Project } from './projects';
 import { projectHref } from './projects';
+import {
+  isLocalWritingLabel,
+  readActionLabel,
+  type WritingLabel,
+} from './writing-label';
 import { writingHref, type Writing } from './writing';
 
 export type ListItem = {
@@ -16,11 +21,13 @@ export type ListItem = {
   href?: string;
   external?: boolean;
   actionLinkVariant?: ActionLinkVariant;
+  actionLinkLabel?: string;
   actionLinkIconSrc?: string;
   ariaLabel?: string;
   featuredImage?: ImageMetadata;
   featuredImageAlt?: string;
   lang?: string;
+  label?: WritingLabel;
 };
 
 function mapListItem(input: {
@@ -31,9 +38,13 @@ function mapListItem(input: {
   externalUrl?: string;
   externalIcon?: string | { src: string };
   lang?: string;
+  readLabel?: string;
+  label?: WritingLabel;
 }) {
   const external = Boolean(input.externalUrl);
-  const actionLink = listActionLink(input.externalUrl, input.externalIcon);
+  const actionLink = listActionLink(input.externalUrl, input.externalIcon, {
+    readLabel: input.readLabel,
+  });
 
   return {
     title: input.title,
@@ -42,6 +53,7 @@ function mapListItem(input: {
     href: input.href,
     external,
     actionLinkVariant: actionLink?.variant,
+    actionLinkLabel: actionLink?.label,
     actionLinkIconSrc: actionLink?.iconSrc,
     ariaLabel: cardLinkAriaLabel(
       input.title,
@@ -50,12 +62,17 @@ function mapListItem(input: {
       input.lang,
     ),
     lang: input.lang,
+    label: input.label,
   } satisfies ListItem;
 }
 
 export function writingListItem(entry: Writing): ListItem {
   const externalUrl = entry.data.externalUrl;
   const href = externalUrl ? externalUrl : path(writingHref(entry));
+  const label = entry.data.label;
+  const readLabel = isLocalWritingLabel(label)
+    ? readActionLabel(label)
+    : undefined;
 
   return mapListItem({
     title: entry.data.title,
@@ -65,6 +82,8 @@ export function writingListItem(entry: Writing): ListItem {
     externalUrl,
     externalIcon: entry.data.externalIcon,
     lang: entry.data.lang,
+    readLabel,
+    label,
   });
 }
 

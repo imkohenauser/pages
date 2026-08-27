@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://medium.com/@imkohenauser/fictionalization-of-facts-how-llms-mistake-current-reality-for-fiction-and-3-ways-to-fix-it-10269476e1a2?source=rss-61e770de53f3------2"
+label: medium
 lang: en
 canonicalUrl:
 noindex: true

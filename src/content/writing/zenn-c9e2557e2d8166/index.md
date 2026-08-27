@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://zenn.dev/imkohenauser/articles/c9e2557e2d8166"
+label: zenn
 lang: ja
 canonicalUrl:
 noindex: true

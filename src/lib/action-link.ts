@@ -1,7 +1,7 @@
 import { externalSource } from './external-source';
 
 export type ActionLinkVariant =
-  | 'read-article'
+  | 'read'
   | 'medium'
   | 'zenn'
   | 'github'
@@ -24,7 +24,7 @@ export function actionLinkVariant(
   externalIcon: ExternalIcon | undefined,
 ): ActionLinkVariant | undefined {
   if (!externalUrl) {
-    return 'read-article';
+    return 'read';
   }
 
   const { id } = externalSource(externalUrl);
@@ -51,6 +51,7 @@ export function actionLinkVariant(
 export function listActionLink(
   externalUrl: string | undefined,
   externalIcon: ExternalIcon | undefined,
+  options?: { readLabel?: string },
 ) {
   const variant = actionLinkVariant(externalUrl, externalIcon);
 
@@ -60,6 +61,7 @@ export function listActionLink(
 
   return {
     variant,
+    label: variant === 'read' ? (options?.readLabel ?? 'Read article') : undefined,
     iconSrc:
       variant === 'official-site' ? externalIconSrc(externalIcon) : undefined,
   };

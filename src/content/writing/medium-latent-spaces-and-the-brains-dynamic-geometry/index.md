@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://medium.com/@imkohenauser/latent-spaces-and-the-brains-dynamic-geometry-a1f53b89c991?source=rss-61e770de53f3------2"
+label: medium
 lang: en
 canonicalUrl:
 noindex: true

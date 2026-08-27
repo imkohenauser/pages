@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://zenn.dev/imkohenauser/articles/agents-md-context-configuration"
+label: zenn
 lang: ja
 canonicalUrl:
 noindex: true

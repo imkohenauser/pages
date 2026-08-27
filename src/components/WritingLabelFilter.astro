@@ -1,0 +1,25 @@
+---
+import type { WritingLabel } from '../lib/writing-label';
+
+interface Props {
+  options: { label: WritingLabel; count: number }[];
+}
+
+const { options } = Astro.props;
+---
+
+<fieldset>
+  <legend>Filter by label</legend>
+  <ul>
+    {
+      options.map(({ label, count }) => (
+        <li>
+          <label>
+            <input type="checkbox" name="writing-label" value={label} />
+            <span translate="no">{label}</span> ({count})
+          </label>
+        </li>
+      ))
+    }
+  </ul>
+</fieldset>

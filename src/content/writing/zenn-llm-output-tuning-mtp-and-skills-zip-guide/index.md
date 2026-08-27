@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://zenn.dev/imkohenauser/articles/llm-output-tuning-mtp-and-skills-zip-guide"
+label: zenn
 lang: ja
 canonicalUrl:
 noindex: true

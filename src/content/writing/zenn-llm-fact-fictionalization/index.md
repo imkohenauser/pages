@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://zenn.dev/imkohenauser/articles/llm-fact-fictionalization"
+label: zenn
 lang: ja
 canonicalUrl:
 noindex: true

@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://medium.com/@imkohenauser/in-defense-of-the-shell-why-consciousness-needs-the-friction-of-a-dying-body-9b924505f3d7?source=rss-61e770de53f3------2"
+label: medium
 lang: en
 canonicalUrl:
 noindex: true

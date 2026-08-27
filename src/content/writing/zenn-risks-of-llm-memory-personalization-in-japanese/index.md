@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://zenn.dev/imkohenauser/articles/risks-of-llm-memory-personalization-in-japanese"
+label: zenn
 lang: ja
 canonicalUrl:
 noindex: true

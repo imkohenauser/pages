@@ -6,6 +6,7 @@ updatedAt:
 featuredImage:
 featuredImageAlt:
 externalUrl: "https://medium.com/@imkohenauser/ai-is-the-soap-film-of-time-the-physics-of-prompt-engineering-cfef4cc6f9d0?source=rss-61e770de53f3------2"
+label: medium
 lang: en
 canonicalUrl:
 noindex: true

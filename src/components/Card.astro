@@ -18,6 +18,7 @@ const {
   href,
   external,
   actionLinkVariant,
+  actionLinkLabel,
   actionLinkIconSrc,
   ariaLabel,
   featuredImage,
@@ -91,6 +92,7 @@ const cellMask = `--card-cell-mask: url("${path('/pattern/border-cell.svg')}")`;
               {actionLinkVariant && (
                 <ActionLink
                   variant={actionLinkVariant}
+                  label={actionLinkLabel}
                   iconSrc={actionLinkIconSrc}
                   decorative
                 />
