@@ -1,6 +1,5 @@
 ---
 import Base from '../layouts/Base.astro';
-import BinaryBackground from '../components/home/BinaryBackground.astro';
 import FishScene from '../components/home/FishScene.astro';
 import Hero from '../components/home/Hero.astro';
 import JsonLd from '../components/JsonLd.astro';
@@ -17,9 +16,7 @@ const projects = await getProjects();
 
 <Base description={site.bio}>
   <JsonLd slot="head" data={homeJsonLd()} />
-  <BinaryBackground>
-    <Hero title={site.title} description={site.bio} />
-  </BinaryBackground>
+  <Hero title={site.title} description={site.bio} />
   <div id="home-sections" class="section-container">
     <WritingSection writing={writing} />
     <ProjectsSection projects={projects} />
@@ -29,10 +26,6 @@ const projects = await getProjects();
 
 <style lang="scss">
   @use "tools" as *;
-
-  :global(html) {
-    overflow-x: clip;
-  }
 
   .section-container {
     display: flex;

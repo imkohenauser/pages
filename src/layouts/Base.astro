@@ -2,6 +2,7 @@
 import { Font } from 'astro:assets';
 import '../styles.scss';
 import ActionLink from '../components/ActionLink.astro';
+import BinaryBackground from '../components/BinaryBackground.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import Seo from '../components/Seo.astro';
@@ -60,9 +61,11 @@ const {
     <div class="site-container">
       <Header />
       <div class="site-main">
-        <main id="main-content" tabindex="-1">
-          <slot />
-        </main>
+        <BinaryBackground>
+          <main id="main-content" tabindex="-1">
+            <slot />
+          </main>
+        </BinaryBackground>
         <Footer />
       </div>
     </div>

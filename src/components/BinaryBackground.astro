@@ -15,7 +15,7 @@
   @use "tools" as *;
 
   .binary-background {
-    display: block;
+    display: flow-root;
     position: relative;
     isolation: isolate;
   }
@@ -112,7 +112,7 @@
 </style>
 
 <script>
-  import { defineBinaryBackground } from '../../lib/binary-background';
+  import { defineBinaryBackground } from '../lib/binary-background';
 
   defineBinaryBackground();
 </script>
