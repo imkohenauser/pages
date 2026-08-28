@@ -8,6 +8,8 @@ interface FishClip {
   anchorY: number;
 }
 
+type FishKind = 'male' | 'female';
+
 interface Obstacle {
   left: number;
   top: number;
@@ -29,6 +31,7 @@ interface Attraction {
 }
 
 interface Fish {
+  kind: FishKind;
   sizeFactor: number;
   /* Place in the loose formation, as a fraction of the band. */
   slotX: number;
@@ -52,7 +55,7 @@ interface Fish {
 
 /* The sheet is not a regular grid: these rectangles follow the Figma clip markers and leave the
    frame numbers outside every rect. */
-const clips: FishClip[] = [
+const maleClips: FishClip[] = [
   { x: 0, y: 100, width: 402, height: 330, anchorX: 278, anchorY: 206 },
   { x: 402, y: 100, width: 376, height: 330, anchorX: 255, anchorY: 206 },
   { x: 778, y: 100, width: 384, height: 330, anchorX: 258, anchorY: 212 },
@@ -63,18 +66,42 @@ const clips: FishClip[] = [
   { x: 1138, y: 530, width: 394, height: 340, anchorX: 269, anchorY: 222 },
 ];
 
+const femaleClips: FishClip[] = [
+  { x: 0, y: 130, width: 402, height: 330, anchorX: 253, anchorY: 173 },
+  { x: 402, y: 130, width: 376, height: 330, anchorX: 245, anchorY: 171 },
+  { x: 778, y: 130, width: 384, height: 330, anchorX: 245, anchorY: 172 },
+  { x: 1162, y: 130, width: 370, height: 330, anchorX: 230, anchorY: 173 },
+  { x: 0, y: 560, width: 392, height: 340, anchorX: 254, anchorY: 182 },
+  { x: 392, y: 560, width: 392, height: 340, anchorX: 251, anchorY: 187 },
+  { x: 784, y: 560, width: 354, height: 340, anchorX: 231, anchorY: 180 },
+  { x: 1138, y: 560, width: 394, height: 340, anchorX: 252, anchorY: 182 },
+];
+
+const clipSets: Record<FishKind, FishClip[]> = {
+  male: maleClips,
+  female: femaleClips,
+};
+
 /* Slots sit close enough that the pair cross now and then, and the phases are near enough to beat
    as one. */
 const formation: readonly Pick<
   Fish,
-  'sizeFactor' | 'slotX' | 'slotY' | 'offsetX' | 'phase' | 'clip'
+  'kind' | 'sizeFactor' | 'slotX' | 'slotY' | 'offsetX' | 'phase' | 'clip'
 >[] = [
-  { sizeFactor: 1, slotX: 0, slotY: 0, offsetX: 0, phase: 0, clip: 0 },
-  { sizeFactor: 0.85, slotX: 0.082, slotY: -0.042, offsetX: 12, phase: 0.08, clip: 2 },
+  { kind: 'male', sizeFactor: 1, slotX: 0, slotY: 0, offsetX: 0, phase: 0, clip: 0 },
+  {
+    kind: 'female',
+    sizeFactor: 0.8,
+    slotX: 0.082,
+    slotY: -0.042,
+    offsetX: 12,
+    phase: 0.08,
+    clip: 2,
+  },
 ];
 
 /* How far the drawn fish reaches from its anchor, so it can be kept inside the canvas. */
-const extent = clips.reduce(
+const extent = [...maleClips, ...femaleClips].reduce(
   (current, clip) => ({
     left: Math.max(current.left, clip.anchorX),
     right: Math.max(current.right, clip.width - clip.anchorX),
@@ -142,7 +169,7 @@ class FishScene extends HTMLElement {
   private context?: CanvasRenderingContext2D;
   private mosaic?: HTMLCanvasElement;
   private mosaicContext?: CanvasRenderingContext2D;
-  private sheet?: HTMLImageElement;
+  private sheets?: Record<FishKind, HTMLImageElement>;
   private animationFrame?: number;
   private resizeFrame?: number;
   private lastFrameAt?: number;
@@ -232,7 +259,7 @@ class FishScene extends HTMLElement {
     this.context = undefined;
     this.mosaic = undefined;
     this.mosaicContext = undefined;
-    this.sheet = undefined;
+    this.sheets = undefined;
     this.reducedMotionQuery = undefined;
     this.hoverFineQuery = undefined;
     this.hoveredFish = undefined;
@@ -254,22 +281,25 @@ class FishScene extends HTMLElement {
   };
 
   private async load() {
-    if (this.sheet) return;
+    if (this.sheets) return;
 
     const connectionId = this.connectionId;
-    const sheet = new Image();
-    sheet.decoding = 'async';
-    sheet.src = `${import.meta.env.BASE_URL}sprite-sheet/sacura-margaritacea_v1.png`;
+    const male = new Image();
+    const female = new Image();
+    male.decoding = 'async';
+    female.decoding = 'async';
+    male.src = `${import.meta.env.BASE_URL}sprite-sheet/sacura-margaritacea_male_v1.png`;
+    female.src = `${import.meta.env.BASE_URL}sprite-sheet/sacura-margaritacea_female_v1.png`;
 
     try {
-      await sheet.decode();
+      await Promise.all([male.decode(), female.decode()]);
     } catch {
       return;
     }
 
     if (connectionId !== this.connectionId) return;
 
-    this.sheet = sheet;
+    this.sheets = { male, female };
     this.resize();
     this.toggleAttribute('data-fish-scene-ready', true);
 
@@ -345,7 +375,7 @@ class FishScene extends HTMLElement {
 
   private start() {
     if (this.animationFrame !== undefined) return;
-    if (!this.sheet || document.hidden || this.reducedMotionQuery?.matches) return;
+    if (!this.sheets || document.hidden || this.reducedMotionQuery?.matches) return;
 
     this.lastFrameAt = undefined;
     this.animationFrame = requestAnimationFrame(this.tick);
@@ -586,7 +616,7 @@ class FishScene extends HTMLElement {
 
   /* A stroke is the only thing that changes the clip, so the pose holds for the whole glide. */
   private beginStroke(fish: Fish, targetX: number, targetY: number) {
-    fish.clip = (fish.clip + 1) % clips.length;
+    fish.clip = (fish.clip + 1) % clipSets[fish.kind].length;
 
     const towardX = targetX - fish.x;
     const towardY = targetY - fish.y;
@@ -604,8 +634,7 @@ class FishScene extends HTMLElement {
 
   private draw() {
     const context = this.context;
-    const sheet = this.sheet;
-    if (!context || !sheet) return;
+    if (!context || !this.sheets) return;
 
     context.clearRect(0, 0, this.width, this.height);
 
@@ -622,8 +651,8 @@ class FishScene extends HTMLElement {
 
   private drawFish(fish: Fish, glitch: Glitch) {
     const context = this.context;
-    const sheet = this.sheet;
-    const clip = clips[fish.clip];
+    const sheet = this.sheets?.[fish.kind];
+    const clip = clipSets[fish.kind][fish.clip];
     if (!context || !sheet || !clip) return;
 
     const drawnWidth = clip.width * fish.scale;
