@@ -1,6 +1,12 @@
 @use "functions" as *;
 @use "mixins" as *;
 
+/* Display font is loaded at weight 400 only. */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
 /* Body copy: 14/24 on small screens, 16/24 from md. */
 .text-body {
   margin: 0;

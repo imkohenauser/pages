@@ -7,10 +7,3 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-/* Display font is loaded at weight 400 only. */
-h1,
-h2 {
-  font-family: var(--font-display);
-  font-weight: 400;
-}
