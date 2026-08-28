@@ -17,12 +17,7 @@ interface Obstacle {
   bottom: number;
 }
 
-interface Glitch {
-  mosaicPx: number;
-  dissolve: number;
-  scatter: number;
-  chromaPx: number;
-}
+import { drawMosaicImage, glitchFromAge, type Glitch } from './mosaic-glitch';
 
 interface Attraction {
   x: number;
@@ -130,7 +125,6 @@ const ATTRACTION_MAX_OFFSET_PX = 160;
 /* Weak enough that the pair can pass through each other instead of bouncing apart. */
 const SEPARATION_PUSH = 10;
 const BODY_HEIGHT_RATIO = 0.48;
-const MIN_MOSAIC_CELLS = 3;
 const GLITCH_TRIGGER = 0.16;
 const GLITCH_CLEAR = 0.08;
 /* Encounter sequence for a crossing, stepped like the gate echoes rather than interpolated. */
@@ -170,7 +164,6 @@ class FishScene extends HTMLElement {
   private obstacleRoot?: HTMLElement;
   private footer?: HTMLElement;
   private mosaic?: HTMLCanvasElement;
-  private mosaicContext?: CanvasRenderingContext2D;
   private sheets?: Record<FishKind, HTMLImageElement>;
   private animationFrame?: number;
   private resizeFrame?: number;
@@ -224,15 +217,12 @@ class FishScene extends HTMLElement {
     }
 
     const mosaic = document.createElement('canvas');
-    const mosaicContext = mosaic.getContext('2d');
-    if (!mosaicContext) return;
 
     this.canvas = canvas;
     this.context = context;
     this.obstacleRoot = obstacleRoot;
     this.footer = footer;
     this.mosaic = mosaic;
-    this.mosaicContext = mosaicContext;
     this.abortController = new AbortController();
     const { signal } = this.abortController;
 
@@ -279,7 +269,6 @@ class FishScene extends HTMLElement {
     this.obstacleRoot = undefined;
     this.footer = undefined;
     this.mosaic = undefined;
-    this.mosaicContext = undefined;
     this.sheets = undefined;
     this.reducedMotionQuery = undefined;
     this.hoverFineQuery = undefined;
@@ -663,7 +652,9 @@ class FishScene extends HTMLElement {
 
     context.clearRect(0, 0, this.width, this.height);
 
-    const glitches = this.school.map((fish) => glitchFromAge(this.elapsed - fish.glitchAt));
+    const glitches = this.school.map((fish) =>
+      glitchFromAge(this.elapsed - fish.glitchAt, GLITCH_SEQUENCE),
+    );
 
     /* Smallest first, so the nearer fish pass in front. */
     for (let index = this.school.length - 1; index >= 0; index -= 1) {
@@ -690,57 +681,26 @@ class FishScene extends HTMLElement {
     /* The sheet faces right, so swimming or looking left is the mirrored draw. */
     if (fish.heading < 0) context.scale(-1, 1);
 
-    if (glitch.mosaicPx <= 0) {
-      context.drawImage(
-        sheet,
-        clip.x,
-        clip.y,
-        clip.width,
-        clip.height,
-        drawX,
-        drawY,
-        drawnWidth,
-        drawnHeight,
-      );
-      context.restore();
-      return;
-    }
-
     const mosaic = this.mosaic;
-    const mosaicContext = this.mosaicContext;
-    if (!mosaic || !mosaicContext) {
+    if (!mosaic) {
       context.restore();
       return;
     }
 
-    const cellsX = mosaicCells(drawnWidth, glitch.mosaicPx);
-    const cellsY = mosaicCells(drawnHeight, glitch.mosaicPx);
-    mosaic.width = cellsX;
-    mosaic.height = cellsY;
-    mosaicContext.imageSmoothingEnabled = true;
-    mosaicContext.clearRect(0, 0, cellsX, cellsY);
-    mosaicContext.drawImage(
+    drawMosaicImage(
+      context,
+      mosaic,
       sheet,
       clip.x,
       clip.y,
       clip.width,
       clip.height,
-      0,
-      0,
-      cellsX,
-      cellsY,
+      drawX,
+      drawY,
+      drawnWidth,
+      drawnHeight,
+      glitch,
     );
-    ditherMosaic(mosaicContext, cellsX, cellsY, glitch.dissolve, glitch.scatter);
-
-    context.imageSmoothingEnabled = false;
-    if (glitch.chromaPx > 0) {
-      context.globalAlpha = 0.45;
-      context.drawImage(mosaic, drawX + glitch.chromaPx, drawY, drawnWidth, drawnHeight);
-      context.drawImage(mosaic, drawX - glitch.chromaPx, drawY, drawnWidth, drawnHeight);
-      context.globalAlpha = 1;
-    }
-    context.drawImage(mosaic, drawX, drawY, drawnWidth, drawnHeight);
-    context.imageSmoothingEnabled = true;
     context.restore();
   }
 }
@@ -769,64 +729,6 @@ function bodyOverlap(a: Fish, b: Fish) {
   const smaller = Math.min(ra.area, rb.area);
   if (smaller <= 0) return 0;
   return (width * height) / smaller;
-}
-
-function glitchFromAge(age: number): Glitch {
-  const rest: Glitch = { mosaicPx: 0, dissolve: 0, scatter: 0, chromaPx: 0 };
-  if (age < 0) return rest;
-  for (const step of GLITCH_SEQUENCE) {
-    if (age < step.until) return step;
-  }
-  return rest;
-}
-
-function mosaicCells(drawnPx: number, mosaicPx: number) {
-  if (mosaicPx <= 0) return 1;
-  return Math.max(MIN_MOSAIC_CELLS, Math.round(drawnPx / mosaicPx));
-}
-
-function fract(value: number) {
-  return value - Math.floor(value);
-}
-
-function bayer2(x: number, y: number) {
-  const cellX = Math.floor(x);
-  const cellY = Math.floor(y);
-  return fract(cellX * 0.5 + cellY * cellY * 0.75);
-}
-
-function bayer4(x: number, y: number) {
-  return (bayer2(x * 0.5, y * 0.5) * 0.25 + bayer2(x, y)) * (16 / 15);
-}
-
-/* Ordered dither on the mosaic cells themselves, matching the gate's cell dropout. */
-function ditherMosaic(
-  context: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  dissolve: number,
-  scatter: number,
-) {
-  if (dissolve <= 0 && scatter <= 0) return;
-
-  const image = context.getImageData(0, 0, width, height);
-  const { data } = image;
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      const index = (y * width + x) * 4;
-      const alpha = data[index + 3];
-      if (alpha === undefined || alpha === 0) continue;
-
-      if (dissolve > 0 && bayer4(x, y) < dissolve) {
-        data[index + 3] = 0;
-        continue;
-      }
-
-      const grade = bayer4(y + 1, x + 3);
-      data[index + 3] = Math.round(alpha * (1 - scatter + scatter * grade));
-    }
-  }
-  context.putImageData(image, 0, 0);
 }
 
 /* Nearest way out of an obstacle that has been grown by how far the fish is drawn. */

@@ -1,3 +1,4 @@
+import { defineImageMosaic, ImageMosaic } from './image-mosaic';
 import { attachPressState } from './press-state';
 
 class CardInteraction extends HTMLElement {
@@ -9,10 +10,18 @@ class CardInteraction extends HTMLElement {
     const link = this.querySelector('a');
     if (!(link instanceof HTMLAnchorElement)) return;
 
+    const mosaic = this.querySelector('image-mosaic');
+    const imageMosaic = mosaic instanceof ImageMosaic ? mosaic : undefined;
+
     this.abortController = new AbortController();
     const { signal } = this.abortController;
 
     attachPressState(this, link, 'data-card-pressed', signal);
+
+    if (!imageMosaic) return;
+
+    link.addEventListener('pointerenter', () => imageMosaic.play(), { signal });
+    link.addEventListener('pointerleave', () => imageMosaic.onTriggerLeave(), { signal });
   }
 
   disconnectedCallback() {
@@ -22,6 +31,7 @@ class CardInteraction extends HTMLElement {
 }
 
 export function defineCardInteraction() {
+  defineImageMosaic();
   if (!customElements.get('card-interaction')) {
     customElements.define('card-interaction', CardInteraction);
   }
