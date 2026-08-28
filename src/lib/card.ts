@@ -1,6 +1,9 @@
 import { defineImageMosaic, ImageMosaic } from './image-mosaic';
 import { attachPressState } from './press-state';
 
+/* Temporarily disabled. Set to true to restore card image mosaic on hover. */
+const CARD_IMAGE_MOSAIC_ENABLED = false;
+
 class CardInteraction extends HTMLElement {
   private abortController?: AbortController;
 
@@ -18,7 +21,7 @@ class CardInteraction extends HTMLElement {
 
     attachPressState(this, link, 'data-card-pressed', signal);
 
-    if (!imageMosaic) return;
+    if (!CARD_IMAGE_MOSAIC_ENABLED || !imageMosaic) return;
 
     link.addEventListener('pointerenter', () => imageMosaic.play(), { signal });
     link.addEventListener('pointerleave', () => imageMosaic.onTriggerLeave(), { signal });
