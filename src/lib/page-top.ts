@@ -1,17 +1,12 @@
-import { gsap } from 'gsap';
-import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
-
 // Short pages settle faster; the cap keeps long articles from traveling too long.
 const SCROLL_DURATION_MIN_MS = 400;
 const SCROLL_DURATION_MAX_MS = 800;
 const SCROLL_MS_PER_PX = 0.5;
 
-gsap.registerPlugin(ScrollToPlugin);
-
 class PageTopLink extends HTMLElement {
   private abortController?: AbortController;
   private scrollInterruptionController?: AbortController;
-  private scrollTween?: gsap.core.Tween;
+  private scrollFrame?: number;
 
   connectedCallback() {
     if (this.abortController) return;
@@ -91,42 +86,38 @@ class PageTopLink extends HTMLElement {
     }
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      gsap.set(window, { scrollTo: { y: 0 } });
+      window.scrollTo({ top: 0 });
       this.focusMain();
       return;
     }
 
+    const startedAt = performance.now();
+    const duration = scrollDuration(distance);
     this.watchForScrollInterruption();
-    this.scrollTween = gsap.to(window, {
-      duration: scrollDuration(distance) / 1000,
-      ease: 'power3.out',
-      scrollTo: {
-        y: 0,
-        // Position-delta detection can mistake iOS scroll drift for user input.
-        autoKill: false,
-      },
-      onComplete: this.handleScrollComplete,
-      onInterrupt: this.handleScrollInterrupt,
-      overwrite: 'auto',
-    });
+    const step = (now: number) => {
+      const progress = Math.min((now - startedAt) / duration, 1);
+      const easedProgress = 1 - (1 - progress) ** 3;
+      window.scrollTo({ top: distance * (1 - easedProgress) });
+
+      if (progress < 1) {
+        this.scrollFrame = requestAnimationFrame(step);
+        return;
+      }
+
+      this.scrollFrame = undefined;
+      this.stopWatchingForScrollInterruption();
+      this.focusMain();
+    };
+    this.scrollFrame = requestAnimationFrame(step);
   }
 
   private cancelScroll() {
-    this.scrollTween?.kill();
-    this.scrollTween = undefined;
+    if (this.scrollFrame !== undefined) {
+      cancelAnimationFrame(this.scrollFrame);
+      this.scrollFrame = undefined;
+    }
     this.stopWatchingForScrollInterruption();
   }
-
-  private handleScrollInterrupt = () => {
-    this.scrollTween = undefined;
-    this.stopWatchingForScrollInterruption();
-  };
-
-  private handleScrollComplete = () => {
-    this.scrollTween = undefined;
-    this.stopWatchingForScrollInterruption();
-    this.focusMain();
-  };
 
   private watchForScrollInterruption() {
     this.scrollInterruptionController = new AbortController();
