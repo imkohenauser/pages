@@ -1,18 +1,3 @@
-import {
-  CanvasTexture,
-  DataTexture,
-  Mesh,
-  NearestFilter,
-  NoBlending,
-  OrthographicCamera,
-  PlaneGeometry,
-  RGBAFormat,
-  ShaderMaterial,
-  UnsignedByteType,
-  Vector2,
-  WebGLRenderer,
-} from 'three';
-
 const CELL_WIDTH = 8;
 const CELL_HEIGHT = 10;
 const GLYPH_COUNT = 2;
@@ -21,46 +6,10 @@ const MUTATION_RATIO = 0.045;
 const MAX_PIXEL_RATIO = 2;
 const MAX_RENDER_WIDTH = 3840;
 const GLYPH_ASSET_VERSION = 'white-v1';
-
-const vertexShader = `
-  varying vec2 vUv;
-
-  void main() {
-    vUv = uv;
-    gl_Position = vec4(position.xy, 0.0, 1.0);
-  }
-`;
-
-const fragmentShader = `
-  precision highp float;
-
-  uniform sampler2D uGlyphAtlas;
-  uniform sampler2D uCellState;
-  uniform vec2 uGridSize;
-  varying vec2 vUv;
-
-  void main() {
-    vec2 gridPosition = vUv * uGridSize;
-    vec2 cell = floor(gridPosition);
-    vec2 cellUv = fract(gridPosition);
-    vec2 stateUv = (cell + 0.5) / uGridSize;
-    vec4 state = texture2D(uCellState, stateUv);
-
-    float glyphIndex = floor(state.r * float(${GLYPH_COUNT - 1}) + 0.5);
-    vec2 atlasUv = vec2(
-      (glyphIndex + cellUv.x) / float(${GLYPH_COUNT}),
-      cellUv.y
-    );
-    float glyphAlpha = texture2D(uGlyphAtlas, atlasUv).a;
-
-    float distanceFromTop = 1.0 - vUv.y;
-    float fadeMask = 1.0 - smoothstep(0.36, 0.82, distanceFromTop);
-    float localOpacity = mix(0.09, 0.17, state.g);
-    float alpha = glyphAlpha * localOpacity * fadeMask;
-
-    gl_FragColor = vec4(vec3(alpha), alpha);
-  }
-`;
+const GLYPH_OPACITY_MIN = 0.09;
+const GLYPH_OPACITY_RANGE = 0.08;
+const FADE_START = 0.36;
+const FADE_END = 0.82;
 
 class BinaryBackground extends HTMLElement {
   private abortController?: AbortController;
@@ -68,16 +17,13 @@ class BinaryBackground extends HTMLElement {
   private intersectionObserver?: IntersectionObserver;
   private reducedMotionQuery?: MediaQueryList;
   private canvas?: HTMLCanvasElement;
-  private renderer?: WebGLRenderer;
-  private scene?: Mesh;
-  private camera?: OrthographicCamera;
-  private geometry?: PlaneGeometry;
-  private material?: ShaderMaterial;
-  private glyphAtlas?: CanvasTexture;
-  private cellState?: DataTexture;
+  private context?: CanvasRenderingContext2D;
+  private glyphAtlas?: HTMLCanvasElement;
   private cellData?: Uint8Array;
   private gridColumns = 0;
   private gridRows = 0;
+  private cssWidth = 0;
+  private cssHeight = 0;
   private mutationTimer?: number;
   private randomState = 0;
   private isIntersecting = false;
@@ -95,9 +41,6 @@ class BinaryBackground extends HTMLElement {
     const connectionId = ++this.connectionId;
 
     document.addEventListener('visibilitychange', this.updateActivity, {
-      signal,
-    });
-    canvas.addEventListener('webglcontextlost', this.handleContextLost, {
       signal,
     });
 
@@ -141,40 +84,12 @@ class BinaryBackground extends HTMLElement {
 
     try {
       const glyphAtlas = await createGlyphAtlas();
-      if (connectionId !== this.connectionId || !this.canvas) {
-        glyphAtlas.dispose();
-        return;
-      }
+      const context = this.canvas.getContext('2d', { alpha: true });
+      if (connectionId !== this.connectionId || !this.canvas) return;
+      if (!context) throw new Error('Unable to create the binary canvas.');
 
       this.glyphAtlas = glyphAtlas;
-      this.renderer = new WebGLRenderer({
-        canvas: this.canvas,
-        alpha: true,
-        antialias: false,
-        depth: false,
-      });
-      this.renderer.setClearColor(0x000000, 0);
-
-      this.geometry = new PlaneGeometry(2, 2);
-      this.material = new ShaderMaterial({
-        vertexShader,
-        fragmentShader,
-        uniforms: {
-          uGlyphAtlas: { value: glyphAtlas },
-          uCellState: { value: null },
-          uGridSize: { value: new Vector2(1, 1) },
-        },
-        transparent: true,
-        blending: NoBlending,
-        depthTest: false,
-        depthWrite: false,
-      });
-
-      const scene = new Mesh(this.geometry, this.material);
-      const camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
-      this.renderer.setAnimationLoop(null);
-      this.scene = scene;
-      this.camera = camera;
+      this.context = context;
 
       this.resize();
       this.toggleAttribute('data-binary-background-ready', true);
@@ -189,19 +104,29 @@ class BinaryBackground extends HTMLElement {
   };
 
   private resize() {
-    if (!this.canvas || !this.renderer || !this.material) return;
+    if (!this.canvas || !this.context) return;
 
     const { width, height } = this.canvas.getBoundingClientRect();
     if (width <= 0 || height <= 0) return;
 
-    // Keep the backing buffer within 4K so lower GPU limits do not reject it.
     const pixelRatio = Math.min(
       window.devicePixelRatio,
       MAX_PIXEL_RATIO,
       MAX_RENDER_WIDTH / width,
     );
-    this.renderer.setPixelRatio(pixelRatio);
-    this.renderer.setSize(width, height, false);
+    const backingWidth = Math.max(1, Math.round(width * pixelRatio));
+    const backingHeight = Math.max(1, Math.round(height * pixelRatio));
+    if (
+      this.canvas.width !== backingWidth ||
+      this.canvas.height !== backingHeight
+    ) {
+      this.canvas.width = backingWidth;
+      this.canvas.height = backingHeight;
+    }
+    this.context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
+    this.cssWidth = width;
+    this.cssHeight = height;
 
     const columns = Math.max(1, Math.ceil(width / CELL_WIDTH));
     const rows = Math.max(1, Math.ceil(height / CELL_HEIGHT));
@@ -209,11 +134,10 @@ class BinaryBackground extends HTMLElement {
       this.createCellState(columns, rows);
     }
 
-    this.render();
+    this.redrawAll();
   }
 
   private createCellState(columns: number, rows: number) {
-    this.cellState?.dispose();
     this.gridColumns = columns;
     this.gridRows = rows;
     this.randomState = (0x6d2b79f5 ^ (columns << 16) ^ rows) >>> 0;
@@ -229,24 +153,7 @@ class BinaryBackground extends HTMLElement {
       }
     }
 
-    const cellState = new DataTexture(
-      cellData,
-      columns,
-      rows,
-      RGBAFormat,
-      UnsignedByteType,
-    );
-    cellState.minFilter = NearestFilter;
-    cellState.magFilter = NearestFilter;
-    cellState.generateMipmaps = false;
-    cellState.needsUpdate = true;
-
     this.cellData = cellData;
-    this.cellState = cellState;
-    if (this.material) {
-      this.material.uniforms.uCellState.value = cellState;
-      this.material.uniforms.uGridSize.value.set(columns, rows);
-    }
   }
 
   private handleIntersection = (entries: IntersectionObserverEntry[]) => {
@@ -260,7 +167,7 @@ class BinaryBackground extends HTMLElement {
       this.isIntersecting &&
       !document.hidden &&
       !this.reducedMotionQuery?.matches &&
-      Boolean(this.renderer && this.cellData);
+      Boolean(this.context && this.cellData);
 
     if (shouldMutate) {
       this.startMutation();
@@ -284,7 +191,7 @@ class BinaryBackground extends HTMLElement {
   }
 
   private mutateCells = () => {
-    if (!this.cellData || !this.cellState) return;
+    if (!this.cellData) return;
 
     const cellCount = this.gridColumns * this.gridRows;
     const mutationCount = Math.max(1, Math.round(cellCount * MUTATION_RATIO));
@@ -292,10 +199,10 @@ class BinaryBackground extends HTMLElement {
       const cell = Math.floor(this.nextRandom() * cellCount);
       const offset = cell * 4;
       this.cellData[offset] = 255 - this.cellData[offset];
+      const row = Math.floor(cell / this.gridColumns);
+      const column = cell - row * this.gridColumns;
+      this.drawCell(column, row);
     }
-
-    this.cellState.needsUpdate = true;
-    this.render();
   };
 
   private nextRandom() {
@@ -307,34 +214,67 @@ class BinaryBackground extends HTMLElement {
     return this.randomState / 0x100000000;
   }
 
-  private render() {
-    if (!this.renderer || !this.cellState || !this.scene || !this.camera) return;
-    this.renderer.render(this.scene, this.camera);
+  private redrawAll() {
+    if (!this.context) return;
+
+    this.context.clearRect(0, 0, this.cssWidth, this.cssHeight);
+    for (let row = 0; row < this.gridRows; row += 1) {
+      for (let column = 0; column < this.gridColumns; column += 1) {
+        this.drawCell(column, row);
+      }
+    }
   }
 
-  private handleContextLost = () => {
-    this.stopMutation();
-    this.toggleAttribute('data-binary-background-fallback', true);
-  };
+  private drawCell(column: number, row: number) {
+    if (!this.context || !this.glyphAtlas || !this.cellData) return;
+
+    const cellWidth = this.cssWidth / this.gridColumns;
+    const cellHeight = this.cssHeight / this.gridRows;
+    /* Row 0 is the bottom edge, matching the previous WebGL texture layout. */
+    const x = column * cellWidth;
+    const y = (this.gridRows - 1 - row) * cellHeight;
+    const offset = (row * this.gridColumns + column) * 4;
+    const glyphIndex = this.cellData[offset] > 127 ? 1 : 0;
+    const localOpacity =
+      GLYPH_OPACITY_MIN +
+      GLYPH_OPACITY_RANGE * (this.cellData[offset + 1] / 255);
+    const fadeMask = cellFade(row, this.gridRows);
+
+    this.context.clearRect(x, y, cellWidth, cellHeight);
+    this.context.globalAlpha = localOpacity * fadeMask;
+    this.context.drawImage(
+      this.glyphAtlas,
+      glyphIndex * CELL_WIDTH,
+      0,
+      CELL_WIDTH,
+      CELL_HEIGHT,
+      x,
+      y,
+      cellWidth,
+      cellHeight,
+    );
+    this.context.globalAlpha = 1;
+  }
 
   private disposeScene() {
-    this.cellState?.dispose();
-    this.cellState = undefined;
     this.cellData = undefined;
-    this.glyphAtlas?.dispose();
     this.glyphAtlas = undefined;
-    this.material?.dispose();
-    this.material = undefined;
-    this.geometry?.dispose();
-    this.geometry = undefined;
-    this.renderer?.dispose();
-    this.renderer?.forceContextLoss();
-    this.renderer = undefined;
-    this.scene = undefined;
-    this.camera = undefined;
+    this.context = undefined;
     this.gridColumns = 0;
     this.gridRows = 0;
+    this.cssWidth = 0;
+    this.cssHeight = 0;
   }
+}
+
+function cellFade(row: number, rows: number) {
+  const distanceFromTop = 1 - (row + 0.5) / rows;
+  return 1 - smoothstep(FADE_START, FADE_END, distanceFromTop);
+}
+
+function smoothstep(edge0: number, edge1: number, value: number) {
+  const t = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
 }
 
 async function createGlyphAtlas() {
@@ -364,12 +304,7 @@ async function createGlyphAtlas() {
   context.fillStyle = '#fff';
   context.fillRect(0, 0, atlas.width, atlas.height);
 
-  const texture = new CanvasTexture(atlas);
-  texture.minFilter = NearestFilter;
-  texture.magFilter = NearestFilter;
-  texture.generateMipmaps = false;
-  texture.needsUpdate = true;
-  return texture;
+  return atlas;
 }
 
 function loadImage(source: string) {
