@@ -1,4 +1,18 @@
-<fish-scene class="fish-scene" aria-hidden="true">
+---
+interface Props {
+  obstacleRootId: string;
+  footerId: string;
+}
+
+const { obstacleRootId, footerId } = Astro.props;
+---
+
+<fish-scene
+  class="fish-scene"
+  aria-hidden="true"
+  data-fish-scene-obstacle-root={obstacleRootId}
+  data-fish-scene-footer={footerId}
+>
   <canvas class="fish-scene__canvas" data-fish-scene-canvas></canvas>
 </fish-scene>
 

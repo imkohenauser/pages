@@ -20,11 +20,11 @@ const projects = await getProjects();
   <BinaryBackground>
     <Hero title={site.title} description={site.bio} />
   </BinaryBackground>
-  <div class="section-container">
+  <div id="home-sections" class="section-container">
     <WritingSection writing={writing} />
     <ProjectsSection projects={projects} />
   </div>
-  <FishScene />
+  <FishScene obstacleRootId="home-sections" footerId="site-footer" />
 </Base>
 
 <style lang="scss">

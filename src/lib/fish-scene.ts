@@ -167,6 +167,8 @@ class FishScene extends HTMLElement {
   private hoverFineQuery?: MediaQueryList;
   private canvas?: HTMLCanvasElement;
   private context?: CanvasRenderingContext2D;
+  private obstacleRoot?: HTMLElement;
+  private footer?: HTMLElement;
   private mosaic?: HTMLCanvasElement;
   private mosaicContext?: CanvasRenderingContext2D;
   private sheets?: Record<FishKind, HTMLImageElement>;
@@ -208,12 +210,27 @@ class FishScene extends HTMLElement {
     const context = canvas.getContext('2d');
     if (!context) return;
 
+    const obstacleRootId = this.getAttribute('data-fish-scene-obstacle-root');
+    const footerId = this.getAttribute('data-fish-scene-footer');
+    const obstacleRoot = obstacleRootId
+      ? document.getElementById(obstacleRootId)
+      : undefined;
+    const footer = footerId ? document.getElementById(footerId) : undefined;
+    if (
+      !(obstacleRoot instanceof HTMLElement) ||
+      !(footer instanceof HTMLElement)
+    ) {
+      return;
+    }
+
     const mosaic = document.createElement('canvas');
     const mosaicContext = mosaic.getContext('2d');
     if (!mosaicContext) return;
 
     this.canvas = canvas;
     this.context = context;
+    this.obstacleRoot = obstacleRoot;
+    this.footer = footer;
     this.mosaic = mosaic;
     this.mosaicContext = mosaicContext;
     this.abortController = new AbortController();
@@ -234,6 +251,8 @@ class FishScene extends HTMLElement {
 
     this.resizeObserver = new ResizeObserver(this.scheduleResize);
     this.resizeObserver.observe(this);
+    this.resizeObserver.observe(obstacleRoot);
+    this.resizeObserver.observe(footer);
 
     this.intersectionObserver = new IntersectionObserver(this.handleIntersect, {
       rootMargin: `${LOAD_MARGIN_PX}px 0px`,
@@ -257,6 +276,8 @@ class FishScene extends HTMLElement {
     this.stop();
     this.canvas = undefined;
     this.context = undefined;
+    this.obstacleRoot = undefined;
+    this.footer = undefined;
     this.mosaic = undefined;
     this.mosaicContext = undefined;
     this.sheets = undefined;
@@ -315,20 +336,20 @@ class FishScene extends HTMLElement {
   };
 
   private resize() {
-    if (!this.canvas || !this.context) return;
+    if (!this.canvas || !this.context || !this.obstacleRoot || !this.footer) {
+      return;
+    }
 
     const rootRect = this.getBoundingClientRect();
     if (rootRect.width <= 0) return;
 
-    /* The band starts above the end of the page content and reaches through the footer, which lives
-       outside this component, so its lower edge is measured rather than duplicated as a length. */
-    const footer = document.querySelector('.site-footer');
-    const footerRect = footer?.getBoundingClientRect();
+    /* The band reaches through the footer, so its lower edge is measured rather than duplicated. */
+    const footerRect = this.footer.getBoundingClientRect();
     const bandTop = rootRect.top - BAND_RISE_PX;
     this.width = rootRect.width;
     this.height = BAND_RISE_PX + Math.max(
       FALLBACK_BAND_PX,
-      footerRect ? footerRect.bottom - rootRect.top : FALLBACK_BAND_PX,
+      footerRect.bottom - rootRect.top,
     );
 
     const pixelRatio = Math.min(window.devicePixelRatio, 2);
@@ -345,9 +366,13 @@ class FishScene extends HTMLElement {
     }
 
     /* Footer controls and cards inside the raised band stay clear of the school. */
-    const cardElements = this.previousElementSibling?.querySelectorAll('article') ?? [];
-    const footerElements = footer?.querySelectorAll('small, a') ?? [];
-    this.obstacles = [...cardElements, ...footerElements]
+    const contentObstacles = this.obstacleRoot.querySelectorAll(
+      '[data-fish-scene-obstacle]',
+    );
+    const footerObstacles = this.footer.querySelectorAll(
+      '[data-fish-scene-obstacle]',
+    );
+    this.obstacles = [...contentObstacles, ...footerObstacles]
       .map((element) => element.getBoundingClientRect())
       .map((rect) => ({
         left: rect.left - rootRect.left - OBSTACLE_PADDING,

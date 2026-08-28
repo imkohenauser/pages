@@ -3,11 +3,18 @@ import { site } from '../data/site';
 import ActionLink from './ActionLink.astro';
 ---
 
-<footer class="site-footer">
+<footer id="site-footer" class="site-footer">
   <div class="site-footer__inner">
-    <small class="site-footer__copyright">© {new Date().getFullYear()} {site.shortName}.</small>
+    <small class="site-footer__copyright" data-fish-scene-obstacle>
+      © {new Date().getFullYear()} {site.shortName}.
+    </small>
     <page-top-link>
-      <a href="#top" class="site-footer__page-top" aria-label="Page top">
+      <a
+        href="#top"
+        class="site-footer__page-top"
+        aria-label="Page top"
+        data-fish-scene-obstacle
+      >
         <ActionLink variant="page-top" decorative />
       </a>
     </page-top-link>
