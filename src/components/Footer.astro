@@ -18,6 +18,9 @@ import ActionLink from './ActionLink.astro';
   @use "tools" as *;
 
   .site-footer {
+    /* Keep the footer's blend group above the fish canvas that extends across this region. */
+    position: relative;
+    z-index: 2;
     mix-blend-mode: multiply;
     padding-block: var(--space-20) var(--space-10);
   }
