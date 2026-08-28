@@ -5,6 +5,7 @@ const MUTATION_INTERVAL_MS = 125;
 const MUTATION_RATIO = 0.045;
 const MAX_PIXEL_RATIO = 2;
 const MAX_RENDER_WIDTH = 3840;
+const GLYPH_ATLAS_SCALE = MAX_PIXEL_RATIO;
 const GLYPH_ASSET_VERSION = 'white-v1';
 const GLYPH_OPACITY_MIN = 0.09;
 const GLYPH_OPACITY_RANGE = 0.08;
@@ -90,6 +91,8 @@ class BinaryBackground extends HTMLElement {
 
       this.glyphAtlas = glyphAtlas;
       this.context = context;
+      // Match the previous WebGL glyph atlas nearest-neighbor sampling.
+      context.imageSmoothingEnabled = false;
 
       this.resize();
       this.toggleAttribute('data-binary-background-ready', true);
@@ -244,10 +247,10 @@ class BinaryBackground extends HTMLElement {
     this.context.globalAlpha = localOpacity * fadeMask;
     this.context.drawImage(
       this.glyphAtlas,
-      glyphIndex * CELL_WIDTH,
+      glyphIndex * CELL_WIDTH * GLYPH_ATLAS_SCALE,
       0,
-      CELL_WIDTH,
-      CELL_HEIGHT,
+      CELL_WIDTH * GLYPH_ATLAS_SCALE,
+      CELL_HEIGHT * GLYPH_ATLAS_SCALE,
       x,
       y,
       cellWidth,
@@ -283,9 +286,11 @@ async function createGlyphAtlas() {
     loadImage(`${baseUrl}glyph/0.svg?v=${GLYPH_ASSET_VERSION}`),
     loadImage(`${baseUrl}glyph/1.svg?v=${GLYPH_ASSET_VERSION}`),
   ]);
+  const glyphWidth = CELL_WIDTH * GLYPH_ATLAS_SCALE;
+  const glyphHeight = CELL_HEIGHT * GLYPH_ATLAS_SCALE;
   const atlas = document.createElement('canvas');
-  atlas.width = CELL_WIDTH * GLYPH_COUNT;
-  atlas.height = CELL_HEIGHT;
+  atlas.width = glyphWidth * GLYPH_COUNT;
+  atlas.height = glyphHeight;
 
   const context = atlas.getContext('2d');
   if (!context) throw new Error('Unable to create the binary glyph atlas.');
@@ -294,10 +299,10 @@ async function createGlyphAtlas() {
   glyphs.forEach((glyph, index) => {
     context.drawImage(
       glyph,
-      index * CELL_WIDTH,
+      index * glyphWidth,
       0,
-      CELL_WIDTH,
-      CELL_HEIGHT,
+      glyphWidth,
+      glyphHeight,
     );
   });
   context.globalCompositeOperation = 'source-in';
