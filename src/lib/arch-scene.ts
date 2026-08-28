@@ -261,7 +261,7 @@ class ArchScene extends HTMLElement {
 
     try {
       const texture = await new TextureLoader().loadAsync(
-        `${import.meta.env.BASE_URL}sprite-sheet/white-horse_v1.png`,
+        `${import.meta.env.BASE_URL}sprite-sheet/white-horse_v1.webp`,
       );
       if (connectionId !== this.connectionId || !this.canvas) {
         texture.dispose();
