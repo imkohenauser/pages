@@ -1,3 +1,5 @@
+import { attachPressState } from './press-state';
+
 // Short pages settle faster; the cap keeps long articles from traveling too long.
 const SCROLL_DURATION_MIN_MS = 400;
 const SCROLL_DURATION_MAX_MS = 800;
@@ -18,20 +20,13 @@ class PageTopLink extends HTMLElement {
     const { signal } = this.abortController;
 
     link.addEventListener('click', this.handleClick, { signal });
-    link.addEventListener('pointerdown', this.handlePointerDown, { signal });
-    link.addEventListener('pointerup', this.handlePointerUp, { signal });
-    link.addEventListener('pointercancel', this.handlePointerCancel, { signal });
-    link.addEventListener('pointerleave', this.handlePointerLeave, { signal });
-    link.addEventListener('keydown', this.handleKeyDown, { signal });
-    link.addEventListener('keyup', this.handleKeyUp, { signal });
-    link.addEventListener('blur', this.handleBlur, { signal });
+    attachPressState(this, link, 'data-page-top-pressed', signal);
   }
 
   disconnectedCallback() {
     this.abortController?.abort();
     this.abortController = undefined;
     this.cancelScroll();
-    this.removeAttribute('data-page-top-pressed');
   }
 
   private handleClick = (event: MouseEvent) => {
@@ -43,37 +38,6 @@ class PageTopLink extends HTMLElement {
 
     event.preventDefault();
     this.scrollToTop();
-  };
-
-  private handlePointerDown = (event: PointerEvent) => {
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    this.toggleAttribute('data-page-top-pressed', true);
-  };
-
-  private handlePointerUp = () => {
-    this.removeAttribute('data-page-top-pressed');
-  };
-
-  private handlePointerCancel = () => {
-    this.removeAttribute('data-page-top-pressed');
-  };
-
-  private handlePointerLeave = () => {
-    this.removeAttribute('data-page-top-pressed');
-  };
-
-  private handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key !== 'Enter' || event.repeat) return;
-    this.toggleAttribute('data-page-top-pressed', true);
-  };
-
-  private handleKeyUp = (event: KeyboardEvent) => {
-    if (event.key !== 'Enter') return;
-    this.removeAttribute('data-page-top-pressed');
-  };
-
-  private handleBlur = () => {
-    this.removeAttribute('data-page-top-pressed');
   };
 
   private scrollToTop() {
