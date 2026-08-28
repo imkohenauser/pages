@@ -68,4 +68,6 @@ draft: false
 
 ## Deploy
 
-`main` への push で GitHub Pages を更新します。GitHub の Settings → Pages → Source を `GitHub Actions` に設定してください。
+push と pull request では、GitHub Actions が `npm run check` と `npm run build` を実行します。
+
+GitHub Pages の公開は一時停止中です。公開するときは GitHub Actions の `Deploy` ワークフローを手動で実行します。GitHub の Settings → Pages → Source は `GitHub Actions` に設定してください。
