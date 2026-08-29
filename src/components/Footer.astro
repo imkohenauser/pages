@@ -61,10 +61,10 @@ import ActionLink from './ActionLink.astro';
     -webkit-tap-highlight-color: transparent;
 
     &:focus-visible {
-      --action-link-label: var(--sky-700);
-      --action-link-icon: var(--sky-700);
+      --action-link-label: var(--color-link);
+      --action-link-icon: var(--color-link);
 
-      outline: rem(3) solid var(--sky-400);
+      outline: rem(3) solid var(--color-focus);
       outline-offset: rem(2);
 
       @media (forced-colors: active) {
@@ -74,8 +74,8 @@ import ActionLink from './ActionLink.astro';
 
     @include hover {
       &:hover {
-        --action-link-label: var(--sky-700);
-        --action-link-icon: var(--sky-700);
+        --action-link-label: var(--color-link);
+        --action-link-icon: var(--color-link);
       }
     }
 

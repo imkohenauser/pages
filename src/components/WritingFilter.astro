@@ -67,7 +67,7 @@ const { options } = Astro.props;
   @use "tools" as *;
 
   @mixin writing-filter-focus-ring {
-    outline: rem(3) solid var(--sky-400);
+    outline: rem(3) solid var(--color-focus);
     outline-offset: rem(2);
 
     @media (forced-colors: active) {
@@ -147,7 +147,7 @@ const { options } = Astro.props;
 
     &:has(input:checked) {
       background: var(--neutral-50);
-      border-color: var(--sky-700);
+      border-color: var(--color-link);
     }
 
     &:has(input:focus-visible) {
@@ -160,7 +160,7 @@ const { options } = Astro.props;
 
     @include hover {
       &:hover .writing-filter__chip-label {
-        color: var(--sky-700);
+        color: var(--color-link);
       }
     }
 

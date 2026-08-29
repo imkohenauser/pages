@@ -44,7 +44,7 @@ const { currentPage } = Astro.props;
 
   .breadcrumbs__item {
     flex-shrink: 0;
-    color: var(--sky-700);
+    color: var(--color-link);
     white-space: nowrap;
   }
 
@@ -58,7 +58,7 @@ const { currentPage } = Astro.props;
     border-radius: var(--radius-1\.5);
 
     &:focus-visible {
-      outline: rem(3) solid var(--sky-400);
+      outline: rem(3) solid var(--color-focus);
       outline-offset: rem(2);
 
       @media (forced-colors: active) {
