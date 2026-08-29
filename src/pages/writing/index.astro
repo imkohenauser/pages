@@ -16,13 +16,15 @@ const description = `Writing by ${site.name}.`;
 
 <Base title={title} description={description}>
   <section class="writing-section" aria-labelledby="writing-title">
-    <h1 class="writing-title" id="writing-title">Writing</h1>
+    <h1 class="writing-title font-display" id="writing-title">Writing</h1>
     <writing-filter>
       <WritingFilter options={labelOptions} />
       <List variant="writing" headingLevel={2} items={items} />
-      <p data-writing-filter-empty hidden>
-        No writing matches the current filters.
-      </p>
+      <div class="writing-empty" data-writing-filter-empty hidden>
+        <p class="writing-empty__message">
+          No writing matches the current filters.
+        </p>
+      </div>
     </writing-filter>
   </section>
 </Base>
@@ -39,15 +41,26 @@ const description = `Writing by ${site.name}.`;
     padding: var(--space-4) var(--space-4) 0;
     font-size: var(--text-2xl);
     line-height: rem(32);
-    letter-spacing: -0.015em;
+    /* -0.36px at 24px and -0.48px at 32px. */
+    letter-spacing: rem(-0.36);
+    color: var(--color-text);
     overflow-wrap: break-word;
     text-wrap: balance;
 
     @include md {
-      padding-bottom: var(--space-2);
       font-size: var(--text-3xl);
       line-height: rem(40);
+      letter-spacing: rem(-0.48);
     }
+  }
+
+  .writing-empty {
+    padding-inline: var(--space-4);
+    padding-bottom: var(--space-10);
+  }
+
+  .writing-empty__message {
+    margin: 0;
   }
 </style>
 
