@@ -23,32 +23,41 @@
   .binary-background__surface {
     position: absolute;
     inset-block-start: calc(-1 * var(--space-16));
-    inset-inline: 0;
+    inset-inline-start: auto;
+    inset-inline-end: 0;
     z-index: -1;
-    height: auto;
-    aspect-ratio: 1 / 2;
+    width: rem(240);
+    height: rem(640);
     overflow: hidden;
     pointer-events: none;
-    mask-image: linear-gradient(
-      180deg,
+    /* The outer radii include the 100px feather around Figma's 280x480 ellipse. */
+    mask-image: radial-gradient(
+      ellipse #{rem(240)} #{rem(340)} at calc(100% + #{rem(20)}) #{rem(272)},
       #000 0%,
-      #000 50%,
+      #000 58%,
+      rgb(0 0 0 / 80%) 68%,
+      rgb(0 0 0 / 45%) 82%,
+      rgb(0 0 0 / 15%) 93%,
       transparent 100%
     );
     mask-repeat: no-repeat;
     mask-size: 100% 100%;
-    -webkit-mask-image: linear-gradient(
-      180deg,
+    -webkit-mask-image: radial-gradient(
+      ellipse #{rem(240)} #{rem(340)} at calc(100% + #{rem(20)}) #{rem(272)},
       #000 0%,
-      #000 50%,
+      #000 58%,
+      rgb(0 0 0 / 80%) 68%,
+      rgb(0 0 0 / 45%) 82%,
+      rgb(0 0 0 / 15%) 93%,
       transparent 100%
     );
     -webkit-mask-repeat: no-repeat;
     -webkit-mask-size: 100% 100%;
 
     @include md {
+      inset-inline: 0;
+      width: auto;
       height: rem(240);
-      aspect-ratio: auto;
       mask-image: none;
       -webkit-mask-image: none;
     }
@@ -66,23 +75,22 @@
   .binary-background__gradient {
     position: absolute;
     inset-block: 0;
-    inset-inline-end: 0;
-    width: 64%;
+    inset-inline: 0;
     background: linear-gradient(
-      90deg,
-      color-mix(in srgb, var(--neutral-50) 0%, transparent) 30%,
-      var(--sky-400) 90%,
-      var(--sky-500) 100%
+      260deg in oklab,
+      color-mix(in srgb, var(--sky-700) 90%, var(--neutral-50)) 0%,
+      color-mix(in srgb, var(--sky-500) 70%, var(--neutral-50)) 30%,
+      color-mix(in srgb, var(--sky-300) 30%, var(--neutral-50)) 50%,
+      var(--neutral-50) 80%
     );
 
     @include md {
-      inset-inline-start: 0;
-      width: 100%;
       background: linear-gradient(
-        180deg,
-        var(--sky-500) 0%,
-        var(--sky-100) 40%,
-        color-mix(in srgb, var(--neutral-50) 0%, transparent) 100%
+        180deg in oklab,
+        color-mix(in srgb, var(--sky-700) 90%, var(--neutral-50)) 0%,
+        color-mix(in srgb, var(--sky-500) 40%, var(--neutral-50)) 22%,
+        color-mix(in srgb, var(--sky-300) 30%, var(--neutral-50)) 33%,
+        var(--neutral-50) 50%
       );
     }
   }
