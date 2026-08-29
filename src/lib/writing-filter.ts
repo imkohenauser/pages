@@ -2,20 +2,40 @@ import { normalizeWritingQuery } from './writing-query';
 
 class WritingFilter extends HTMLElement {
   private abortController?: AbortController;
+  private queryInput?: HTMLInputElement;
+  private clearButton?: HTMLButtonElement;
+  private searchField?: HTMLElement;
 
   connectedCallback() {
     if (this.abortController) return;
+
+    const queryInput = this.querySelector('[data-writing-filter-query]');
+    if (!(queryInput instanceof HTMLInputElement)) return;
+
+    this.queryInput = queryInput;
+
+    const clearButton = this.querySelector('[data-writing-filter-clear]');
+    this.clearButton =
+      clearButton instanceof HTMLButtonElement ? clearButton : undefined;
+
+    const searchField = this.querySelector('[data-writing-filter-field]');
+    this.searchField =
+      searchField instanceof HTMLElement ? searchField : undefined;
 
     this.abortController = new AbortController();
     const { signal } = this.abortController;
 
     this.addEventListener('input', this.handleInput, { signal });
+    this.addEventListener('click', this.handleClick, { signal });
     this.sync();
   }
 
   disconnectedCallback() {
     this.abortController?.abort();
     this.abortController = undefined;
+    this.queryInput = undefined;
+    this.clearButton = undefined;
+    this.searchField = undefined;
   }
 
   private handleInput = (event: Event) => {
@@ -24,6 +44,26 @@ class WritingFilter extends HTMLElement {
     if (target.type !== 'checkbox' && target.type !== 'search') return;
     this.sync();
   };
+
+  private handleClick = (event: Event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (!target.closest('[data-writing-filter-clear]')) return;
+
+    const input = this.queryInput;
+    if (!input) return;
+
+    input.value = '';
+    input.focus();
+    this.sync();
+  };
+
+  private syncSearchField() {
+    const hasValue = Boolean(this.queryInput?.value.length);
+
+    this.clearButton?.toggleAttribute('hidden', !hasValue);
+    this.searchField?.toggleAttribute('data-writing-filter-filled', hasValue);
+  }
 
   private selectedLabels() {
     const selected: string[] = [];
@@ -38,14 +78,13 @@ class WritingFilter extends HTMLElement {
   }
 
   private queryTokens() {
-    const input = this.querySelector(
-      'input[type="search"][name="writing-query"]',
-    );
-    if (!(input instanceof HTMLInputElement)) return [];
+    const input = this.queryInput;
+    if (!input) return [];
     return normalizeWritingQuery(input.value).split(/\s+/).filter(Boolean);
   }
 
   private sync() {
+    this.syncSearchField();
     const selected = this.selectedLabels();
     const tokens = this.queryTokens();
     const showAllLabels = selected.length === 0;
