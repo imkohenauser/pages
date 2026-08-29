@@ -84,12 +84,55 @@ export function writingImageAlt(entry: Writing) {
   return entry.data.featuredImageAlt ?? site.ogImageAlt;
 }
 
+export function writingImageDimensions(entry: Writing) {
+  if (entry.data.featuredImage) {
+    return {
+      width: entry.data.featuredImage.width,
+      height: entry.data.featuredImage.height,
+    };
+  }
+
+  return {
+    width: site.ogImageWidth,
+    height: site.ogImageHeight,
+  };
+}
+
+export function writingListItemUrl(entry: Writing) {
+  return entry.data.externalUrl ?? absoluteUrl(`/${entry.id}/`);
+}
+
 export function writingCanonicalUrl(entry: Writing) {
   return entry.data.canonicalUrl ?? absoluteUrl(`/${entry.id}/`);
 }
 
 export function writingModifiedAt(entry: Writing) {
   return entry.data.updatedAt ?? entry.data.publishedAt;
+}
+
+type BreadcrumbItem = {
+  name: string;
+  url?: string;
+};
+
+export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      ...(item.url ? { item: item.url } : {}),
+    })),
+  };
+}
+
+export function writingBreadcrumbJsonLd(entry: Writing) {
+  return breadcrumbJsonLd([
+    { name: 'Home', url: absoluteUrl('/') },
+    { name: entry.data.title, url: writingCanonicalUrl(entry) },
+  ]);
 }
 
 export function writingJsonLd(entry: Writing) {
@@ -113,6 +156,31 @@ export function writingJsonLd(entry: Writing) {
     mainEntityOfPage: {
       '@type': 'WebPage',
       '@id': url,
+    },
+  };
+}
+
+export function writingCollectionJsonLd(
+  writing: Writing[],
+  title: string,
+  description: string,
+) {
+  const url = absoluteUrl('/writing/');
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: title,
+    description,
+    url,
+    inLanguage: site.lang,
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: writing.map((entry, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        url: writingListItemUrl(entry),
+      })),
     },
   };
 }

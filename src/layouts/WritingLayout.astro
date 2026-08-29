@@ -8,9 +8,12 @@ import { path } from '../lib/path';
 import { readingMinutes } from '../lib/reading-time';
 import { writingHref, type Writing } from '../lib/writing';
 import {
+  absoluteUrl,
+  writingBreadcrumbJsonLd,
   writingJsonLd,
   writingCanonicalUrl,
   writingImageAlt,
+  writingImageDimensions,
   writingImageUrl,
   writingModifiedAt,
 } from '../lib/seo';
@@ -31,6 +34,7 @@ const showModified = modifiedAt.valueOf() !== writing.data.publishedAt.valueOf()
 const body = writing.body ?? '';
 const minutes = readingMinutes(body, writing.data.lang);
 const canonicalUrl = writingCanonicalUrl(writing);
+const imageDimensions = writingImageDimensions(writing);
 const markdown = `# ${writing.data.title}\n\n${writing.data.description}\n\n${body}`;
 const tableOfContents = headings.filter((heading) => heading.depth === 2);
 const hasWritingNavigation = Boolean(older || newer);
@@ -44,11 +48,15 @@ const hasWritingNavigation = Boolean(older || newer);
   type="article"
   image={writingImageUrl(writing)}
   imageAlt={writingImageAlt(writing)}
+  imageWidth={imageDimensions.width}
+  imageHeight={imageDimensions.height}
+  authorUrl={absoluteUrl('/')}
   publishedTime={writing.data.publishedAt}
   modifiedTime={modifiedAt}
   lang={writing.data.lang}
 >
   <JsonLd slot="head" data={writingJsonLd(writing)} />
+  <JsonLd slot="head" data={writingBreadcrumbJsonLd(writing)} />
   <article class="writing-article">
     <header class="writing-article__header">
       <h1>{writing.data.title}</h1>

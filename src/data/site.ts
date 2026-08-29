@@ -9,7 +9,13 @@ export const site = {
   locale: 'ja_JP',
   ogImage: '/ogp.png',
   ogImageAlt: 'Kohei Saito, or Kohen',
-  sameAs: ['https://imkohenauser.com/'],
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
+  twitterSite: '@imkohenauser',
+  sameAs: [
+    'https://github.com/imkohenauser',
+    'https://x.com/imkohenauser',
+  ],
   externalLinks: [
     {
       url: 'mailto:imkohenauser@gmail.com',

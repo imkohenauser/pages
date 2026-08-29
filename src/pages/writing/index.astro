@@ -1,8 +1,10 @@
 ---
 import List from '../../components/List.astro';
 import WritingFilter from '../../components/WritingFilter.astro';
+import JsonLd from '../../components/JsonLd.astro';
 import Base from '../../layouts/Base.astro';
 import { site } from '../../data/site';
+import { writingCollectionJsonLd } from '../../lib/seo';
 import { writingListItem } from '../../lib/list';
 import { getWriting } from '../../lib/writing';
 import { writingLabelCounts } from '../../lib/writing-label';
@@ -15,6 +17,7 @@ const description = `Writing by ${site.name}.`;
 ---
 
 <Base title={title} description={description}>
+  <JsonLd slot="head" data={writingCollectionJsonLd(writing, title, description)} />
   <section class="writing-section" aria-labelledby="writing-title">
     <h1 class="writing-title font-display" id="writing-title">Writing</h1>
     <writing-filter>

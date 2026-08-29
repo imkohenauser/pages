@@ -5,8 +5,8 @@ import { defineConfig, fontProviders } from 'astro/config';
 import { includeInSitemap } from './src/lib/sitemap';
 
 export default defineConfig({
-  site: 'https://imkohenauser.github.io',
-  base: '/pages',
+  site: 'https://imkohenauser.com',
+  base: '/',
   trailingSlash: 'always',
   devToolbar: {
     enabled: false,

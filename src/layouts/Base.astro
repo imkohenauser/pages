@@ -17,6 +17,9 @@ interface Props {
   type?: 'website' | 'article';
   image?: string;
   imageAlt?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  authorUrl?: string;
   publishedTime?: Date;
   modifiedTime?: Date;
   lang?: string;
@@ -30,6 +33,9 @@ const {
   type = 'website',
   image,
   imageAlt,
+  imageWidth,
+  imageHeight,
+  authorUrl,
   publishedTime,
   modifiedTime,
   lang = site.lang,
@@ -47,6 +53,9 @@ const {
       type={type}
       image={image}
       imageAlt={imageAlt}
+      imageWidth={imageWidth}
+      imageHeight={imageHeight}
+      authorUrl={authorUrl}
       publishedTime={publishedTime}
       modifiedTime={modifiedTime}
       lang={lang}
