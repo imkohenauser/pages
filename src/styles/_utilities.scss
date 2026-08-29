@@ -7,18 +7,6 @@
   font-weight: 400;
 }
 
-/* Body copy: 14/24 on small screens, 16/24 from md. */
-.text-body {
-  margin: 0;
-  font-size: var(--text-sm);
-  line-height: rem(24);
-  text-wrap: balance;
-
-  @include md {
-    font-size: var(--text-md);
-  }
-}
-
 /* Hide visually without removing the content from the accessibility tree. */
 .visually-hidden,
 .skip-link:not(:focus-visible) {

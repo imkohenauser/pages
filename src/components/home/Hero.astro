@@ -13,7 +13,7 @@ const { title, description } = Astro.props;
   <div class="hero__inner">
     <h1 class="hero__title font-display">{title}</h1>
     <div class="hero__description">
-      <p class="text-body">{description}</p>
+      <p class="hero__description-text">{description}</p>
     </div>
     <div class="hero__frame">
       <ArchScene />
@@ -65,6 +65,18 @@ const { title, description } = Astro.props;
 
     @include md {
       text-align: center;
+    }
+  }
+
+  /* Body copy: 14/24 on small screens, 16/24 from md. */
+  .hero__description-text {
+    margin: 0;
+    font-size: var(--text-sm);
+    line-height: rem(24);
+    text-wrap: balance;
+
+    @include md {
+      font-size: var(--text-md);
     }
   }
 
