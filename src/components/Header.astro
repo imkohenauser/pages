@@ -74,9 +74,20 @@ import Icon from './Icon.astro';
     white-space: nowrap;
     border-radius: var(--radius-2);
 
+    @include hover-color-transition;
+
     @include hover {
       &:hover {
         color: var(--color-link);
+      }
+    }
+
+    @include hover-fine {
+      @include motion-safe {
+        &:hover {
+          animation: site-header-link-blink var(--motion-electronic-cycle)
+            steps(1, jump-end) both;
+        }
       }
     }
 
