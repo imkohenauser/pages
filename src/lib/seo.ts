@@ -44,8 +44,13 @@ export function toAbsoluteUrl(value: string) {
   return absoluteUrl(value.startsWith('/') ? value : `/${value}`);
 }
 
+function documentSiteName() {
+  return `${site.name} ${site.kanaName}`;
+}
+
 export function documentTitle(title?: string) {
-  return title ? `${title} — ${site.name}` : site.name;
+  const siteName = documentSiteName();
+  return title ? `${title} — ${siteName}` : siteName;
 }
 
 export function ogLocale(lang = site.lang) {
