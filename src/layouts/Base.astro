@@ -3,6 +3,7 @@ import { Font } from 'astro:assets';
 import '../styles.scss';
 import ActionLink from '../components/ActionLink.astro';
 import BinaryBackground from '../components/BinaryBackground.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import Seo from '../components/Seo.astro';
@@ -66,6 +67,7 @@ const {
             <slot />
           </main>
         </BinaryBackground>
+        {title && <Breadcrumbs currentPage={title} />}
         <Footer />
       </div>
     </div>
