@@ -8,6 +8,39 @@ import Base from '../layouts/Base.astro';
   canonicalUrl={null}
   noindex
 >
-  <h1>404</h1>
-  <p>Page not found.</p>
+  <section class="error-section" aria-labelledby="error-title">
+    <h1 class="error-title font-display" id="error-title">404</h1>
+    <p class="error-message">Page not found.</p>
+  </section>
 </Base>
+
+<style lang="scss">
+  @use "tools" as *;
+
+  .error-section {
+    padding: 0 var(--space-2) var(--space-2);
+  }
+
+  .error-title {
+    margin: 0;
+    padding: var(--space-4) var(--space-4) 0;
+    font-size: var(--text-2xl);
+    line-height: rem(32);
+    /* -0.36px at 24px and -0.48px at 32px. */
+    letter-spacing: rem(-0.36);
+    color: var(--color-text);
+    overflow-wrap: break-word;
+    text-wrap: balance;
+
+    @include md {
+      font-size: var(--text-3xl);
+      line-height: rem(40);
+      letter-spacing: rem(-0.48);
+    }
+  }
+
+  .error-message {
+    margin: 0;
+    padding: var(--space-6) var(--space-4) var(--space-10);
+  }
+</style>
