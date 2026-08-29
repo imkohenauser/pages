@@ -2,7 +2,7 @@
 title: "Why AI-Native Products Need a Motion Identity"
 description: "A shared framework for deciding how an interface should move, who owns that decision, and what should stay still."
 publishedAt: 2026-08-20
-updatedAt:
+updatedAt: 2026-08-29
 featuredImage:
 featuredImageAlt:
 externalUrl:

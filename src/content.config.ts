@@ -50,6 +50,7 @@ const markdownLoader = (base: string) =>
   glob({
     pattern: '**/*.md',
     base,
+    retainBody: true,
     generateId: ({ entry }) => contentEntryId(entry),
   });
 

@@ -1,0 +1,80 @@
+---
+interface Props {
+  markdown: string;
+  url: string;
+}
+
+const { markdown, url } = Astro.props;
+---
+
+<article-actions class="article-actions" data-article-actions-url={url}>
+  <div class="article-actions__buttons">
+    <button
+      class="article-actions__button"
+      type="button"
+      data-article-actions-copy="markdown"
+    >
+      <span data-article-actions-label>Copy Markdown</span>
+    </button>
+    <button
+      class="article-actions__button"
+      type="button"
+      data-article-actions-copy="url"
+    >
+      <span data-article-actions-label>Copy URL</span>
+    </button>
+  </div>
+  <textarea hidden data-article-actions-markdown>{markdown}</textarea>
+  <span class="visually-hidden" role="status" aria-live="polite" data-article-actions-status></span>
+</article-actions>
+
+<style lang="scss">
+  @use "tools" as *;
+
+  .article-actions {
+    display: block;
+  }
+
+  .article-actions__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .article-actions__button {
+    min-height: rem(36);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-xs);
+    line-height: rem(20);
+    color: var(--color-text);
+    cursor: pointer;
+    background: var(--color-canvas);
+    border: rem(1) solid var(--color-border-strong);
+    border-radius: var(--radius-1\.5);
+
+    @include hover-color-transition;
+
+    @include hover {
+      &:hover {
+        color: var(--color-link);
+        border-color: var(--sky-400);
+      }
+    }
+
+    &:focus-visible {
+      color: var(--color-link);
+      outline: rem(3) solid var(--color-focus);
+      outline-offset: rem(2);
+
+      @media (forced-colors: active) {
+        outline: rem(2) solid CanvasText;
+      }
+    }
+  }
+</style>
+
+<script>
+  import { defineArticleActions } from '../lib/article-actions';
+
+  defineArticleActions();
+</script>

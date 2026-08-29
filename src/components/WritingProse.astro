@@ -1,0 +1,257 @@
+<writing-prose class="writing-prose">
+  <slot />
+</writing-prose>
+
+<style lang="scss">
+  @use "tools" as *;
+
+  .writing-prose {
+    display: block;
+    font-size: var(--text-sm);
+    line-height: rem(24);
+
+    @include md {
+      font-size: var(--text-md);
+      line-height: rem(28);
+    }
+  }
+
+  .writing-prose :global(> :first-child) {
+    margin-block-start: 0;
+  }
+
+  .writing-prose :global(> :last-child) {
+    margin-block-end: 0;
+  }
+
+  .writing-prose :global(p) {
+    margin: 0 0 var(--space-5);
+  }
+
+  .writing-prose :global(h2),
+  .writing-prose :global(h3),
+  .writing-prose :global(h4),
+  .writing-prose :global(h5),
+  .writing-prose :global(h6) {
+    position: relative;
+    scroll-margin-block-start: var(--space-12);
+    color: var(--color-text);
+    text-wrap: balance;
+  }
+
+  .writing-prose :global(h2) {
+    margin: var(--space-16) 0 var(--space-5);
+    font-size: var(--text-2xl);
+    line-height: rem(32);
+  }
+
+  .writing-prose :global(h3) {
+    margin: var(--space-10) 0 var(--space-4);
+    font-size: var(--text-xl);
+    line-height: rem(28);
+  }
+
+  .writing-prose :global(h4),
+  .writing-prose :global(h5),
+  .writing-prose :global(h6) {
+    margin: var(--space-8) 0 var(--space-3);
+    font-size: var(--text-md);
+    line-height: rem(24);
+  }
+
+  .writing-prose :global([data-writing-prose-heading-link]) {
+    display: inline-flex;
+    margin-inline-start: var(--space-2);
+    font-size: 0.75em;
+    font-weight: 400;
+    color: var(--neutral-400);
+    text-decoration: none;
+    vertical-align: baseline;
+    border-radius: var(--radius-1\.5);
+
+    @include hover-color-transition;
+
+    @include hover {
+      &:hover {
+        color: var(--color-link);
+      }
+    }
+
+    &:focus-visible {
+      color: var(--color-link);
+      outline: rem(3) solid var(--color-focus);
+      outline-offset: rem(2);
+    }
+  }
+
+  .writing-prose :global(a:not([data-writing-prose-heading-link])) {
+    color: var(--color-link);
+    text-decoration-thickness: rem(1);
+    text-underline-offset: rem(3);
+    border-radius: rem(2);
+
+    &:focus-visible {
+      outline: rem(3) solid var(--color-focus);
+      outline-offset: rem(2);
+    }
+  }
+
+  .writing-prose :global(strong) {
+    font-weight: 700;
+  }
+
+  .writing-prose :global(ul),
+  .writing-prose :global(ol) {
+    margin: 0 0 var(--space-5);
+    padding-inline-start: var(--space-6);
+  }
+
+  .writing-prose :global(li + li) {
+    margin-block-start: var(--space-2);
+  }
+
+  .writing-prose :global(li > ul),
+  .writing-prose :global(li > ol) {
+    margin-block: var(--space-2) 0;
+  }
+
+  .writing-prose :global(blockquote) {
+    margin: var(--space-8) 0;
+    padding: var(--space-1) 0 var(--space-1) var(--space-5);
+    color: var(--color-text-muted);
+    border-inline-start: rem(2) solid var(--color-border-strong);
+  }
+
+  .writing-prose :global(blockquote > :last-child) {
+    margin-block-end: 0;
+  }
+
+  .writing-prose :global(hr) {
+    margin: var(--space-12) 0;
+    border: 0;
+    border-block-start: rem(1) solid var(--color-border-strong);
+  }
+
+  .writing-prose :global(hr + h2) {
+    margin-block-start: 0;
+  }
+
+  .writing-prose :global(code:not(pre code)) {
+    padding: rem(2) rem(5);
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background: var(--color-surface);
+    border: rem(1) solid var(--color-border);
+    border-radius: rem(4);
+  }
+
+  .writing-prose :global(pre:not(.expressive-code *)) {
+    max-width: 100%;
+    margin: var(--space-6) 0;
+    padding: var(--space-4);
+    overflow: auto;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: rem(20);
+    color: var(--color-text-inverse);
+    background: var(--neutral-900);
+    border-radius: var(--radius-2);
+  }
+
+  .writing-prose :global(.expressive-code) {
+    margin-block: var(--space-6);
+  }
+
+  .writing-prose :global(table) {
+    display: block;
+    width: 100%;
+    margin: var(--space-8) 0;
+    overflow-x: auto;
+    font-size: var(--text-sm);
+    line-height: rem(22);
+    border-collapse: collapse;
+  }
+
+  .writing-prose :global(th),
+  .writing-prose :global(td) {
+    padding: var(--space-3) var(--space-4);
+    text-align: start;
+    vertical-align: top;
+    border-block-end: rem(1) solid var(--color-border);
+  }
+
+  .writing-prose :global(th) {
+    font-weight: 700;
+    background: var(--color-surface);
+  }
+
+  .writing-prose :global(img),
+  .writing-prose :global(picture),
+  .writing-prose :global(video) {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-2);
+  }
+
+  .writing-prose :global(figure) {
+    margin: var(--space-10) 0;
+  }
+
+  .writing-prose :global(figcaption) {
+    margin-block-start: var(--space-3);
+    font-size: var(--text-xs);
+    line-height: rem(20);
+    color: var(--color-text-muted);
+  }
+
+  .writing-prose :global(details) {
+    margin: var(--space-6) 0;
+    padding: var(--space-4);
+    background: var(--color-surface);
+    border: rem(1) solid var(--color-border);
+    border-radius: var(--radius-2);
+  }
+
+  .writing-prose :global(summary) {
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .writing-prose :global(details[open] summary) {
+    margin-block-end: var(--space-4);
+  }
+
+  .writing-prose :global(kbd) {
+    padding: rem(1) rem(5);
+    font-family: var(--font-mono);
+    font-size: 0.8em;
+    background: var(--color-surface);
+    border: rem(1) solid var(--color-border-strong);
+    border-radius: rem(4);
+    box-shadow: 0 rem(1) 0 var(--color-border-strong);
+  }
+
+  .writing-prose :global(mark) {
+    color: inherit;
+    background: var(--sky-100);
+  }
+
+  .writing-prose :global(abbr[title]) {
+    text-decoration-style: dotted;
+    text-underline-offset: rem(3);
+    cursor: help;
+  }
+
+  .writing-prose :global([data-footnotes]) {
+    margin-block-start: var(--space-16);
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    border-block-start: rem(1) solid var(--color-border-strong);
+  }
+</style>
+
+<script>
+  import { defineWritingProse } from '../lib/writing-prose';
+
+  defineWritingProse();
+</script>
