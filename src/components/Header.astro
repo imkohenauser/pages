@@ -74,6 +74,22 @@ import Icon from './Icon.astro';
     white-space: nowrap;
     border-radius: var(--radius-2);
 
+    @include hover {
+      &:hover {
+        color: var(--sky-700);
+      }
+    }
+
+    &:focus-visible {
+      color: var(--sky-700);
+      outline: rem(3) solid var(--sky-400);
+      outline-offset: rem(2);
+
+      @media (forced-colors: active) {
+        outline: rem(2) solid CanvasText;
+      }
+    }
+
     @include ml {
       width: 90%;
       text-wrap: balance;
