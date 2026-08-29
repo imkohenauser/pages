@@ -8,5 +8,5 @@ featuredImageAlt: "Agent Skills repository preview"
 externalUrl: https://github.com/imkohenauser/skills
 externalIcon:
 lang: en
-draft: true
+draft: false
 ---
