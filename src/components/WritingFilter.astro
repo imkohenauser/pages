@@ -233,7 +233,7 @@ const { options } = Astro.props;
   .writing-filter__search-icon {
     flex-shrink: 0;
     width: rem(16);
-    margin-inline-end: var(--space-2);
+    margin-inline: rem(-4) var(--space-2);
     overflow: hidden;
     color: var(--color-text);
 
@@ -241,14 +241,14 @@ const { options } = Astro.props;
       transition:
         opacity var(--motion-hover-settle) ease-out,
         width var(--motion-hover-settle) ease-out,
-        margin-inline-end var(--motion-hover-settle) ease-out;
+        margin-inline var(--motion-hover-settle) ease-out;
     }
   }
 
   .writing-filter__search-field:is(:focus-within, [data-writing-filter-filled])
     .writing-filter__search-icon {
     width: 0;
-    margin-inline-end: 0;
+    margin-inline: 0;
     opacity: 0;
   }
 
@@ -284,7 +284,7 @@ const { options } = Astro.props;
     justify-content: center;
     width: rem(24);
     height: rem(24);
-    margin-inline-start: var(--space-2);
+    margin-inline: var(--space-2) rem(-8);
     padding: 0;
     color: var(--neutral-600);
     cursor: pointer;
