@@ -76,12 +76,12 @@
     position: absolute;
     inset-block: 0;
     inset-inline: 0;
-    background: linear-gradient(
-      260deg in oklab,
+    background: radial-gradient(
+      ellipse #{rem(240)} #{rem(480)} at calc(100% + #{rem(24)}) #{rem(360)},
       color-mix(in srgb, var(--sky-700) 90%, var(--neutral-50)) 0%,
-      color-mix(in srgb, var(--sky-500) 70%, var(--neutral-50)) 30%,
-      color-mix(in srgb, var(--sky-300) 30%, var(--neutral-50)) 50%,
-      var(--neutral-50) 80%
+      color-mix(in srgb, var(--sky-500) 70%, var(--neutral-50)) 40%,
+      color-mix(in srgb, var(--sky-300) 30%, var(--neutral-50)) 62%,
+      var(--neutral-50) 82%
     );
 
     @include md {
