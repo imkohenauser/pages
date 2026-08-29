@@ -66,7 +66,7 @@ const { href, ariaLabel } = Astro.props;
   .button-link {
     --button-link-inner-edge:
       inset 0 #{rem(1)} 0 rgb(255 255 255 / 20%),
-      inset 0 #{rem(-1)} 0 rgb(8 47 107 / 32%);
+      inset 0 #{rem(-1)} 0 color-mix(in srgb, var(--sky-950) 32%, transparent);
     --button-link-outer-shadow:
       0 #{rem(1)} #{rem(2)} rgb(0 0 0 / 16%),
       0 #{rem(5)} #{rem(9)} #{rem(-4)} rgb(0 0 0 / 14%);
@@ -154,7 +154,7 @@ const { href, ariaLabel } = Astro.props;
     box-shadow:
       inset 0 0 0 rem(1) rgb(255 255 255 / 14%),
       inset 0 rem(2) rem(2) rgb(255 255 255 / 16%),
-      inset 0 rem(-3) rem(4) rgb(8 47 107 / 42%);
+      inset 0 rem(-3) rem(4) color-mix(in srgb, var(--sky-950) 42%, transparent);
 
     @include motion-safe {
       transform: translateY(rem(1)) scale(0.97);
@@ -233,7 +233,7 @@ const { href, ariaLabel } = Astro.props;
       box-shadow:
         var(--button-link-inner-edge),
         var(--button-link-outer-shadow),
-        inset 0 0 rem(8) rgb(8 47 107 / 28%);
+        inset 0 0 rem(8) color-mix(in srgb, var(--sky-950) 28%, transparent);
     }
 
     20% {
@@ -330,7 +330,7 @@ const { href, ariaLabel } = Astro.props;
       filter:
         drop-shadow(0 0 rem(4) rgb(255 255 255 / 90%))
         drop-shadow(#{rem(-2)} 0 rem(1) rgb(255 255 255 / 58%))
-        drop-shadow(#{rem(-4)} 0 rem(2) rgb(198 228 245 / 32%))
+        drop-shadow(#{rem(-4)} 0 rem(2) color-mix(in srgb, var(--sky-200) 32%, transparent))
         drop-shadow(0 rem(1) rem(0.5) rgb(0 0 0 / 9%));
     }
   }

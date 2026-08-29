@@ -150,7 +150,7 @@ const cellMask = `--card-cell-mask: url("${path('/pattern/border-cell.svg')}")`;
 
     /* The lit surface is the only layer that holds a value at rest, so only it transitions. */
     &::before {
-      background: white;
+      background: var(--white);
 
       @include motion-safe {
         transition: opacity 160ms ease-out;
@@ -202,7 +202,8 @@ const cellMask = `--card-cell-mask: url("${path('/pattern/border-cell.svg')}")`;
   .card--project {
     --card-title: var(--color-text);
     --card-muted: var(--color-text-muted);
-    --card-shadow-hover: 0 #{rem(7)} #{rem(16)} #{rem(-10)} rgb(38 38 38 / 18%);
+    --card-shadow-hover: 0 #{rem(7)} #{rem(16)} #{rem(-10)}
+      color-mix(in srgb, var(--neutral-800) 18%, transparent);
     /*
      * The hard band stays hairline and the brightness comes from the diffuse halo,
      * so the peak reads as light rather than as a drawn blue border.
@@ -244,7 +245,7 @@ const cellMask = `--card-cell-mask: url("${path('/pattern/border-cell.svg')}")`;
     box-shadow:
       inset 0 0 0 1px transparent,
       0 0 0 1px var(--color-border),
-      inset 0 rem(2) rem(4) rgb(38 38 38 / 12%);
+      inset 0 rem(2) rem(4) color-mix(in srgb, var(--neutral-800) 12%, transparent);
 
     @include motion-safe {
       transform: translateY(rem(1)) scale(0.97);
@@ -259,7 +260,7 @@ const cellMask = `--card-cell-mask: url("${path('/pattern/border-cell.svg')}")`;
     box-shadow:
       inset 0 0 0 1px var(--card-title),
       0 0 0 1px transparent,
-      inset 0 rem(2) rem(4) rgb(38 38 38 / 12%);
+      inset 0 rem(2) rem(4) color-mix(in srgb, var(--neutral-800) 12%, transparent);
   }
 
   card-interaction[data-card-pressed] .card:has(.card__title-link):hover {
@@ -267,7 +268,7 @@ const cellMask = `--card-cell-mask: url("${path('/pattern/border-cell.svg')}")`;
       box-shadow:
         inset 0 0 0 1px var(--card-title),
         0 0 0 1px transparent,
-        inset 0 rem(2) rem(4) rgb(38 38 38 / 12%);
+        inset 0 rem(2) rem(4) color-mix(in srgb, var(--neutral-800) 12%, transparent);
     }
   }
 
