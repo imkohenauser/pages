@@ -1,3 +1,4 @@
+import { attachPressState } from './press-state';
 import { normalizeWritingQuery } from './writing-query';
 
 class WritingFilter extends HTMLElement {
@@ -27,6 +28,12 @@ class WritingFilter extends HTMLElement {
 
     this.addEventListener('input', this.handleInput, { signal });
     this.addEventListener('click', this.handleClick, { signal });
+
+    for (const chip of this.querySelectorAll('[data-writing-filter-chip]')) {
+      if (!(chip instanceof HTMLLabelElement)) continue;
+      attachPressState(chip, chip, 'data-writing-filter-chip-pressed', signal);
+    }
+
     this.sync();
   }
 

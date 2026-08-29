@@ -16,7 +16,7 @@ const { options } = Astro.props;
       {
         options.map(({ label, count }) => (
           <li class="writing-filter__label-item">
-            <label class="writing-filter__chip">
+            <label class="writing-filter__chip" data-writing-filter-chip>
               <input
                 class="visually-hidden"
                 type="checkbox"
@@ -87,21 +87,31 @@ const { options } = Astro.props;
     }
   }
 
+  .writing-filter__labels,
+  .writing-filter__search {
+    margin-inline: calc(-1 * var(--space-2));
+
+    @include md {
+      margin-inline: 0;
+    }
+  }
+
   .writing-filter__labels {
     flex: 1 1 0;
     min-width: 0;
-    margin: 0;
-    padding: 0 var(--space-4);
+    padding: 0;
     border: 0;
   }
 
   .writing-filter__label-list {
     display: flex;
     gap: var(--space-2);
-    margin: rem(-5);
-    padding: rem(5);
+    margin-block: rem(-5);
+    padding-block: rem(5);
+    padding-inline: var(--space-4);
     overflow-x: auto;
     list-style: none;
+    scroll-padding-inline: var(--space-4);
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
 
@@ -118,14 +128,16 @@ const { options } = Astro.props;
     display: inline-flex;
     gap: var(--space-2);
     align-items: center;
-    padding: var(--space-1\.5) var(--space-2) var(--space-1\.5) rem(10);
+    padding-block: var(--space-1\.5);
+    padding-inline: var(--space-4) var(--space-3);
     font-size: var(--text-xs);
     line-height: rem(20);
     color: var(--color-text);
     cursor: pointer;
     background: var(--neutral-100);
     border: rem(2) solid var(--neutral-100);
-    border-radius: var(--radius-1\.5);
+    border-radius: 9999px;
+    user-select: none;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
 
@@ -137,10 +149,38 @@ const { options } = Astro.props;
     &:has(input:focus-visible) {
       @include writing-filter-focus-ring;
     }
+
+    @include motion-safe {
+      transition: transform var(--motion-material-release) ease-out;
+    }
+
+    @include hover {
+      &:hover .writing-filter__chip-label {
+        color: var(--sky-700);
+      }
+    }
+
+    @include hover-fine {
+      @include motion-safe {
+        &:hover .writing-filter__chip-label {
+          animation: writing-filter-chip-label-blink var(--motion-electronic-cycle)
+            steps(1, jump-end) both;
+        }
+      }
+    }
+  }
+
+  .writing-filter__chip[data-writing-filter-chip-pressed] {
+    @include motion-safe {
+      transform: translateY(rem(1)) scale(0.97);
+      transition-duration: var(--motion-material-press);
+    }
   }
 
   .writing-filter__chip-label {
     text-transform: capitalize;
+
+    @include hover-color-transition;
   }
 
   .writing-filter__count {
@@ -148,11 +188,10 @@ const { options } = Astro.props;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    min-width: rem(22);
-    min-height: rem(20);
+    min-width: rem(20);
     padding-inline: var(--space-1\.5);
     overflow: hidden;
-    font-size: rem(11);
+    font-size: rem(10);
     font-weight: 700;
     line-height: rem(20);
     color: var(--color-text-inverse);
@@ -173,10 +212,10 @@ const { options } = Astro.props;
     align-items: center;
     min-width: 0;
     height: rem(32);
-    padding-inline: var(--space-2);
+    padding-inline: var(--space-4);
     background: #fff;
     border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-1\.5);
+    border-radius: 9999px;
 
     &:has(:focus-visible) {
       @include writing-filter-focus-ring;
@@ -218,7 +257,8 @@ const { options } = Astro.props;
     height: 100%;
     padding: 0;
     font: inherit;
-    font-size: var(--text-sm);
+    /* iOS Safari zooms focused inputs below 16px. */
+    font-size: var(--text-md);
     line-height: rem(20);
     color: var(--color-text);
     appearance: none;
@@ -242,12 +282,31 @@ const { options } = Astro.props;
     cursor: pointer;
     background: transparent;
     border: 0;
-    border-radius: var(--radius-1\.5);
+    border-radius: 9999px;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
 
     &:not([hidden]) {
       display: flex;
+    }
+  }
+
+  @keyframes writing-filter-chip-label-blink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    12% {
+      opacity: 0.68;
+    }
+
+    30% {
+      opacity: 1;
+    }
+
+    48% {
+      opacity: 0.82;
     }
   }
 </style>
