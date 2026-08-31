@@ -45,3 +45,4 @@ export const SITE_LOADER_GLYPH_FILES = [
 export const SITE_LOADER_COUNTER_MAX = 100;
 export const SITE_LOADER_DURATION_MS = 400;
 export const SITE_LOADER_COMPLETE_HOLD_MS = 120;
+export const SITE_LOADER_MAX_WAIT_MS = 8000;

@@ -2,6 +2,7 @@ import {
   SITE_LOADER_COMPLETE_HOLD_MS,
   SITE_LOADER_COUNTER_MAX,
   SITE_LOADER_DURATION_MS,
+  SITE_LOADER_MAX_WAIT_MS,
   SITE_LOADER_SESSION_KEY,
 } from './site-loader-data';
 
@@ -156,6 +157,7 @@ class SiteLoader extends HTMLElement {
   }
 
   private async waitForPageReady(signal: AbortSignal) {
+    let maxWaitTimer: number | undefined;
     const pageReady = new Promise<void>((resolve) => {
       if (document.readyState === 'complete') {
         resolve();
@@ -172,8 +174,19 @@ class SiteLoader extends HTMLElement {
     const aborted = new Promise<void>((resolve) => {
       signal.addEventListener('abort', () => resolve(), { once: true });
     });
+    const maxWait = new Promise<void>((resolve) => {
+      maxWaitTimer = window.setTimeout(resolve, SITE_LOADER_MAX_WAIT_MS);
+    });
 
-    await Promise.race([Promise.all([pageReady, fontsReady]), aborted]);
+    await Promise.race([
+      Promise.all([pageReady, fontsReady]),
+      aborted,
+      maxWait,
+    ]);
+
+    if (maxWaitTimer !== undefined) {
+      window.clearTimeout(maxWaitTimer);
+    }
   }
 
   private showComplete(digits: CounterDigits, signal: AbortSignal) {
