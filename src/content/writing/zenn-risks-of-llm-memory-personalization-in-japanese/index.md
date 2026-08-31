@@ -5,6 +5,7 @@ publishedAt: "2026-07-07 07:07"
 updatedAt:
 featuredImage:
 featuredImageAlt:
+includeInLlmsTxt: true
 externalUrl: "https://zenn.dev/imkohenauser/articles/risks-of-llm-memory-personalization-in-japanese"
 label: zenn
 lang: ja

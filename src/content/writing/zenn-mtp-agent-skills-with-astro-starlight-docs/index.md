@@ -5,6 +5,7 @@ publishedAt: "2026-05-16 22:33"
 updatedAt:
 featuredImage:
 featuredImageAlt:
+includeInLlmsTxt: true
 externalUrl: "https://zenn.dev/imkohenauser/articles/mtp-agent-skills-with-astro-starlight-docs"
 label: zenn
 lang: ja

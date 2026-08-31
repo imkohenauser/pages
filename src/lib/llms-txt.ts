@@ -1,6 +1,6 @@
 import { site } from '../data/site';
 import { getProjects, projectHref } from './projects';
-import { absoluteUrl } from './seo';
+import { absoluteUrl, toAbsoluteUrl } from './seo';
 import { getWriting, writingHref } from './writing';
 
 function linkItem(title: string, url: string, description?: string) {
@@ -17,10 +17,14 @@ function section(title: string, items: string[]) {
 
 export async function renderLlmsTxt() {
   const [writing, projects] = await Promise.all([getWriting(), getProjects()]);
-  const localWriting = writing.filter(
-    (entry) => !entry.data.externalUrl && !entry.data.noindex,
+  const selectedWriting = writing.filter(
+    (entry) =>
+      (!entry.data.externalUrl && !entry.data.noindex) ||
+      entry.data.includeInLlmsTxt,
   );
-  const localProjects = projects.filter((entry) => !entry.data.externalUrl);
+  const selectedProjects = projects.filter(
+    (entry) => !entry.data.externalUrl || entry.data.includeInLlmsTxt,
+  );
 
   const lines = [
     `# ${site.name}`,
@@ -35,14 +39,22 @@ export async function renderLlmsTxt() {
     ]),
     section(
       'Writing',
-      localWriting.map((entry) =>
-        linkItem(entry.data.title, absoluteUrl(writingHref(entry)), entry.data.description),
+      selectedWriting.map((entry) =>
+        linkItem(
+          entry.data.title,
+          toAbsoluteUrl(writingHref(entry)),
+          entry.data.description,
+        ),
       ),
     ),
     section(
       'Projects',
-      localProjects.map((entry) =>
-        linkItem(entry.data.title, absoluteUrl(projectHref(entry)), entry.data.description),
+      selectedProjects.map((entry) =>
+        linkItem(
+          entry.data.title,
+          toAbsoluteUrl(projectHref(entry)),
+          entry.data.description,
+        ),
       ),
     ),
     section('Optional', [

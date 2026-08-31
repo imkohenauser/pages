@@ -61,6 +61,7 @@ const entryFields = ({ image }: SchemaContext) => ({
   updatedAt: z.preprocess(empty, z.coerce.date().optional()),
   featuredImage: z.preprocess(empty, image().optional()),
   featuredImageAlt: z.preprocess(empty, z.string().optional()),
+  includeInLlmsTxt: z.boolean().default(false),
   lang: z.string().default('ja'),
   draft: z.boolean().default(false),
 });

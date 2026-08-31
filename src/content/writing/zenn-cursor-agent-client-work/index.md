@@ -5,6 +5,7 @@ publishedAt: "2026-06-06 18:18"
 updatedAt:
 featuredImage:
 featuredImageAlt:
+includeInLlmsTxt: true
 externalUrl: "https://zenn.dev/imkohenauser/articles/cursor-agent-client-work"
 label: zenn
 lang: ja

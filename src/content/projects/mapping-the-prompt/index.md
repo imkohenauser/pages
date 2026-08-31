@@ -5,6 +5,7 @@ publishedAt: 2026-08-18
 updatedAt:
 featuredImage: ./ogp.png
 featuredImageAlt: "Mapping the Prompt interface preview"
+includeInLlmsTxt: true
 externalUrl: https://mappingtheprompt.com/
 externalIcon: ./icon.svg
 lang: en

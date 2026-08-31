@@ -5,6 +5,7 @@ publishedAt: "2026-08-02 21:39"
 updatedAt:
 featuredImage:
 featuredImageAlt:
+includeInLlmsTxt: true
 externalUrl: https://zenn.dev/imkohenauser/articles/motion-identity
 label: zenn
 lang: ja

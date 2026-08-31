@@ -5,6 +5,7 @@ publishedAt: "2026-01-12 22:44"
 updatedAt:
 featuredImage:
 featuredImageAlt:
+includeInLlmsTxt: true
 externalUrl: "https://zenn.dev/imkohenauser/articles/c9e2557e2d8166"
 label: zenn
 lang: ja
