@@ -1,0 +1,23 @@
+---
+import { site } from '../data/site';
+
+const measurementId = site.gaMeasurementId;
+const enabled = import.meta.env.PROD && Boolean(measurementId);
+const gtagSrc = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+---
+
+{
+  enabled && (
+    <>
+      <script is:inline async src={gtagSrc}></script>
+      <script is:inline define:vars={{ measurementId }}>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+          window.dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+        gtag('config', measurementId);
+      </script>
+    </>
+  )
+}

@@ -13,6 +13,7 @@ export const site = {
   ogImageWidth: 1200,
   ogImageHeight: 630,
   twitterSite: '@imkohenauser',
+  gaMeasurementId: 'G-0842RSM4YH',
   sameAs: [
     'https://github.com/imkohenauser',
     'https://x.com/imkohenauser',

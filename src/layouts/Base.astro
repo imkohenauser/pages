@@ -6,6 +6,7 @@ import BinaryBackground from '../components/BinaryBackground.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
+import Analytics from '../components/Analytics.astro';
 import Seo from '../components/Seo.astro';
 import SiteLoader from '../components/SiteLoader.astro';
 import { site } from '../data/site';
@@ -51,6 +52,7 @@ const {
 <!doctype html>
 <html lang={lang}>
   <head>
+    <Analytics />
     <Seo
       title={title}
       description={description}
