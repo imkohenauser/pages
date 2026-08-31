@@ -1,0 +1,124 @@
+---
+import { path } from '../lib/path';
+import {
+  SITE_LOADER_PREFIX_GLYPHS,
+  SITE_LOADER_SUFFIX_GLYPHS,
+} from '../lib/site-loader-data';
+---
+
+<site-loader role="status">
+  <div class="site-loader__overlay">
+    <div class="site-loader__frame">
+      <div class="site-loader__shell">
+        <div class="site-loader__line" aria-hidden="true">
+          {
+            SITE_LOADER_PREFIX_GLYPHS.map((item) => {
+              if (item === 'space') {
+                return <span class="site-loader__space"></span>;
+              }
+
+              return (
+                <span
+                  class="site-loader__glyph"
+                  style={`--site-loader-glyph: url("${path(`/glyph/${item}`)}")`}
+                ></span>
+              );
+            })
+          }
+          <span
+            class="site-loader__glyph"
+            style={`--site-loader-glyph: url("${path('/glyph/bracket-left.svg')}")`}
+          ></span>
+          <span
+            class="site-loader__glyph"
+            data-site-loader-digit="hundreds"
+            style={`--site-loader-glyph: url("${path('/glyph/0.svg')}")`}
+          ></span>
+          <span
+            class="site-loader__glyph"
+            data-site-loader-digit="tens"
+            style={`--site-loader-glyph: url("${path('/glyph/0.svg')}")`}
+          ></span>
+          <span
+            class="site-loader__glyph"
+            data-site-loader-digit="ones"
+            style={`--site-loader-glyph: url("${path('/glyph/0.svg')}")`}
+          ></span>
+          {
+            SITE_LOADER_SUFFIX_GLYPHS.map((item) => (
+              <span
+                class="site-loader__glyph"
+                style={`--site-loader-glyph: url("${path(`/glyph/${item}`)}")`}
+              ></span>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+    <span class="visually-hidden">読み込み中</span>
+  </div>
+</site-loader>
+
+<style lang="scss">
+  @use "tools" as *;
+
+  site-loader {
+    display: none;
+  }
+
+  html[data-site-loader='active'] site-loader:not([hidden]) {
+    display: block;
+  }
+
+  .site-loader__overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background-color: var(--neutral-50);
+  }
+
+  .site-loader__frame {
+    @include ml {
+      width: min(100%, rem(1024));
+      margin: 0 auto;
+      padding: 0 var(--space-5);
+    }
+  }
+
+  .site-loader__shell {
+    padding: var(--space-6) var(--space-4);
+
+    @include ml {
+      width: rem(200);
+      padding: var(--space-20) var(--space-4) var(--space-2);
+    }
+  }
+
+  .site-loader__line {
+    display: flex;
+    align-items: center;
+    width: fit-content;
+    padding: var(--space-2);
+  }
+
+  .site-loader__glyph {
+    flex-shrink: 0;
+    width: rem(8);
+    height: rem(10);
+    background-color: var(--color-text);
+    mask: var(--site-loader-glyph) center / contain no-repeat;
+    -webkit-mask: var(--site-loader-glyph) center / contain no-repeat;
+  }
+
+  .site-loader__space {
+    flex-shrink: 0;
+    width: rem(8);
+    height: rem(10);
+  }
+</style>
+
+<script>
+  import { defineSiteLoader } from '../lib/site-loader';
+
+  defineSiteLoader();
+</script>

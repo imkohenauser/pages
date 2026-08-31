@@ -7,7 +7,13 @@ import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import Seo from '../components/Seo.astro';
+import SiteLoader from '../components/SiteLoader.astro';
 import { site } from '../data/site';
+import {
+  SITE_LOADER_GLYPH_FILES,
+  SITE_LOADER_SESSION_KEY,
+} from '../lib/site-loader-data';
+import { path } from '../lib/path';
 
 interface Props {
   title?: string;
@@ -62,9 +68,31 @@ const {
     />
     <Font cssVariable="--font-line-seed-jp" />
     <Font cssVariable="--font-michroma" />
+    {
+      SITE_LOADER_GLYPH_FILES.map((file) => (
+        <link
+          rel="preload"
+          as="image"
+          href={path(`/glyph/${file}`)}
+          type="image/svg+xml"
+        />
+      ))
+    }
+    <script is:inline define:vars={{ sessionKey: SITE_LOADER_SESSION_KEY }}>
+      try {
+        if (sessionStorage.getItem(sessionKey)) {
+          document.documentElement.dataset.siteLoader = 'skip';
+        } else {
+          document.documentElement.dataset.siteLoader = 'active';
+        }
+      } catch (_) {
+        document.documentElement.dataset.siteLoader = 'active';
+      }
+    </script>
     <slot name="head" />
   </head>
   <body id="top">
+    <SiteLoader />
     <a class="skip-link" href="#main-content" aria-label="Skip to content">
       <ActionLink variant="skip-to-content" decorative />
     </a>
