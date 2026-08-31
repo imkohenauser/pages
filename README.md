@@ -1,73 +1,27 @@
-# pages
+# imkohenauser.com
 
-Astro で構築する Markdown 投稿型の個人サイトです。
+Kohei Saito の個人サイトです。Astro で構築し、GitHub Pages から配信します。
 
-## Requirements
-
-- Node.js 24.19.0
-- npm 11.19.0
-
-Volta は `package.json` の pin を自動的に使用します。その他のバージョンマネージャーは `.node-version` を使用できます。
-
-## Commands
+## Development
 
 ```sh
 npm ci
 npm run dev
-npm run dev:host
-npm run stop
-npm run build
 npm run check
+npm run build
 ```
 
-`npm run dev:host` はローカルネットワークからも確認できます。起動ログの Network URL（例: `http://192.168.0.183:4321/pages/`）を使います。
+投稿は `src/content/writing/<slug>/index.md`、プロジェクトは `src/content/projects/<slug>/index.md` に置きます。プロフィールとサイト情報は `src/data/site.ts` で管理します。
 
-## Content
+## Trust boundary
 
-投稿は `src/content/writing/<slug>/index.md` に置きます。同じディレクトリの画像は相対パスで参照できます。公開 URL は `/{slug}/` です（本番では `base` が前置されます）。`/posts/{slug}/` は互換のため `/{slug}/` へリダイレクトします。`writing`、`posts`、`projects` は予約済みのためスラッグに使えません。
+- オーナーは、コンテンツ、リポジトリ、GitHub の設定、デプロイを管理します。
+- ローカルの AI エージェントは、オーナーが許可した作業範囲で、追跡対象外のローカルファイルを含むワークスペースを扱う場合があります。秘密情報はリポジトリへ保存しません。
+- GitHub 上のエージェントと Actions は、コミットされた内容と、明示的に付与された権限だけを扱います。CI は読み取り専用で、Pages の書き込み権限はデプロイ時だけ使用します。
+- サイト訪問者にはビルド成果物が配信されます。リポジトリ閲覧者にはコミットと履歴が公開されるため、コミットした内容はすべて公開情報として扱います。
 
-`externalUrl` がある投稿は外部リンクとして一覧にだけ表示され、投稿ページを生成しません。ホスト名から Medium / Zenn / GitHub を判定して action-link の表示を切り替えます。
-
-プロジェクトは `src/content/projects/<slug>/index.md` に置きます。詳細ページと `/projects` はまだ生成しません。`externalUrl` で外部リンク先を指定します。ホスト名が Medium / Zenn / GitHub 以外でカスタムアイコンを出す場合は `externalIcon` にリモート URL、またはエントリ隣の `./icon.svg` のような相対パスを設定します。
-
-```yaml
----
-title: "Title"
-description: "Description"
-publishedAt: 2026-08-12
-updatedAt:
-featuredImage:
-featuredImageAlt:
-externalUrl:
-externalIcon:
-lang: ja
-canonicalUrl:
-noindex: false
-draft: false
----
-```
-
-```yaml
----
-title: "Project"
-description: "Description"
-publishedAt: 2026-08-18
-updatedAt:
-featuredImage:
-featuredImageAlt:
-externalUrl: https://example.com/
-externalIcon: ./icon.svg
-lang: en
-draft: false
----
-```
-
-プロフィールとサイト情報は `src/data/site.ts` で管理します。
-
-初期値のサイト名・紹介文、サンプル投稿・プロジェクトは公開前に差し替えてください。
+`draft: true` はサイトへの出力を止めるだけで、公開リポジトリ上のファイルを非公開にはしません。
 
 ## Deploy
 
-push と pull request では、GitHub Actions が `npm run check` と `npm run build` を実行します。
-
-GitHub Pages の公開は一時停止中です。公開するときは GitHub Actions の `Deploy` ワークフローを手動で実行します。GitHub の Settings → Pages → Source は `GitHub Actions` に設定してください。
+`Deploy` workflow を手動実行すると、`imkohenauser.com` 向けの GitHub Pages を公開します。
