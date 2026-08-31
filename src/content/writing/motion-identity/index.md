@@ -10,7 +10,7 @@ label: blog
 lang: en
 canonicalUrl:
 noindex: false
-draft: false
+draft: true
 ---
 
 Design tools and coding agents have made it much faster to prototype and implement motion. That speed has not settled a more basic question: who decides how an interface should move, and who owns that decision across design, frontend engineering, and product?
