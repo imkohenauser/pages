@@ -50,7 +50,11 @@ export function includeInSitemap(page: string) {
     return false;
   }
 
-  if (pathname.endsWith('rss.xml') || pathname.endsWith('robots.txt')) {
+  if (
+    pathname.endsWith('rss.xml') ||
+    pathname.endsWith('robots.txt') ||
+    pathname.endsWith('llms.txt')
+  ) {
     return false;
   }
 

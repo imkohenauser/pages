@@ -1,13 +1,17 @@
 ---
 import { site } from '../data/site';
+import { path } from '../lib/path';
 import ActionLink from './ActionLink.astro';
 ---
 
 <footer id="site-footer" class="site-footer">
   <div class="site-footer__inner">
-    <small class="site-footer__copyright" data-fish-scene-obstacle>
-      © {new Date().getFullYear()} {site.shortName}.
-    </small>
+    <div class="site-footer__meta" data-fish-scene-obstacle>
+      <small class="site-footer__copyright">
+        © {new Date().getFullYear()} {site.shortName}.
+      </small>
+      <a class="site-footer__llms" href={path('/llms.txt')}>llms.txt</a>
+    </div>
     <page-top-link>
       <a
         href="#top"
@@ -39,12 +43,44 @@ import ActionLink from './ActionLink.astro';
     padding-inline: var(--space-4);
   }
 
-  .site-footer__copyright {
+  .site-footer__meta {
+    display: flex;
+    gap: var(--space-3);
+    align-items: baseline;
     padding-inline: var(--space-2);
+    white-space: nowrap;
+  }
+
+  .site-footer__copyright {
     font-size: var(--text-xs);
     line-height: rem(20);
     color: var(--color-text-muted);
-    white-space: nowrap;
+  }
+
+  .site-footer__llms {
+    font-size: var(--text-xs);
+    line-height: rem(20);
+    color: var(--color-text-muted);
+    text-decoration: none;
+    border-radius: rem(2);
+
+    @include hover-color-transition;
+
+    @include hover {
+      &:hover {
+        color: var(--color-link);
+      }
+    }
+
+    &:focus-visible {
+      color: var(--color-link);
+      outline: rem(3) solid var(--color-focus);
+      outline-offset: rem(2);
+
+      @media (forced-colors: active) {
+        outline: rem(2) solid CanvasText;
+      }
+    }
   }
 
   page-top-link {
