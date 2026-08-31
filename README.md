@@ -24,7 +24,7 @@ npm run build
 
 ## Deploy
 
-`Deploy` workflow を手動実行すると、`imkohenauser.com` 向けの GitHub Pages を公開します。
+`main` への push、または `Deploy` workflow の手動実行で、`imkohenauser.com` 向けの GitHub Pages を公開します。
 
 ## License
 
