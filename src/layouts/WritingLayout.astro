@@ -1,5 +1,4 @@
 ---
-import { Image } from 'astro:assets';
 import { render } from 'astro:content';
 import ArticleActions from '../components/ArticleActions.astro';
 import JsonLd from '../components/JsonLd.astro';
@@ -81,13 +80,6 @@ const hasWritingNavigation = Boolean(older || newer);
       </p>
       <ArticleActions markdown={markdown} url={canonicalUrl} />
     </header>
-
-    {writing.data.featuredImage && (
-      <Image
-        src={writing.data.featuredImage}
-        alt={writing.data.featuredImageAlt ?? ''}
-      />
-    )}
 
     {tableOfContents.length > 0 && (
       <nav class="writing-toc" aria-label="Table of contents">

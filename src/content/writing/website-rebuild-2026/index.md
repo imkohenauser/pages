@@ -3,8 +3,8 @@ title: "2026年8月のホームページリニューアル"
 description: "個人サイトをAstroとMarkdownで再構築し、AIエージェントを介して更新するための運用環境を整えました。"
 publishedAt: "2026-08-31T17:49:43+09:00"
 updatedAt:
-featuredImage:
-featuredImageAlt:
+featuredImage: ./ogp.png
+featuredImageAlt: "2026年8月のホームページリニューアル"
 externalUrl:
 label: blog
 lang: ja
