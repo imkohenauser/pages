@@ -14,14 +14,104 @@ const { markdown, url } = Astro.props;
       type="button"
       data-article-actions-copy="markdown"
     >
-      <span data-article-actions-label>Copy Markdown</span>
+      <span class="article-actions__icon" aria-hidden="true">
+        <svg
+          class="article-actions__icon-glyph article-actions__icon-glyph--action"
+          viewBox="0 0 16 16"
+          width="16"
+          height="16"
+        >
+          <path
+            d="M2 4.66667C2 4.31304 2.14048 3.97391 2.39052 3.72386C2.64057 3.47381 2.97971 3.33333 3.33333 3.33333H12.6667C13.0203 3.33333 13.3594 3.47381 13.6095 3.72386C13.8595 3.97391 14 4.31304 14 4.66667V11.3333C14 11.687 13.8595 12.0261 13.6095 12.2761C13.3594 12.5262 13.0203 12.6667 12.6667 12.6667H3.33333C2.97971 12.6667 2.64057 12.5262 2.39052 12.2761C2.14048 12.0261 2 11.687 2 11.3333V4.66667Z"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></path>
+          <path
+            d="M4.66667 10V6L6 7.33333L7.33333 6V10"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></path>
+          <path
+            d="M12 8.66667L10.6667 10L9.33333 8.66667M10.6667 10V6"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></path>
+        </svg>
+        <svg
+          class="article-actions__icon-glyph article-actions__icon-glyph--check"
+          viewBox="0 0 16 16"
+          width="16"
+          height="16"
+        >
+          <path
+            d="M3.33333 8L6.66667 11.3333L13.3333 4.66667"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></path>
+        </svg>
+      </span>
+      <span class="article-actions__label" data-article-actions-label>Copy Markdown</span>
     </button>
     <button
       class="article-actions__button"
       type="button"
       data-article-actions-copy="url"
     >
-      <span data-article-actions-label>Copy URL</span>
+      <span class="article-actions__icon" aria-hidden="true">
+        <svg
+          class="article-actions__icon-glyph article-actions__icon-glyph--action"
+          viewBox="0 0 16 16"
+          width="16"
+          height="16"
+        >
+          <path
+            d="M6 10L10 6"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></path>
+          <path
+            d="M7.33333 4L7.642 3.64267C8.2672 3.01755 9.11513 2.6664 9.99924 2.66646C10.8833 2.66653 11.7312 3.0178 12.3563 3.643C12.9814 4.2682 13.3326 5.11613 13.3325 6.00024C13.3325 6.88435 12.9812 7.73222 12.356 8.35733L12 8.66667"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></path>
+          <path
+            d="M8.66667 12L8.402 12.356C7.7695 12.9815 6.91586 13.3323 6.02633 13.3323C5.13681 13.3323 4.28317 12.9815 3.65067 12.356C3.3389 12.0477 3.0914 11.6807 2.92247 11.2761C2.75355 10.8715 2.66657 10.4374 2.66657 9.999C2.66657 9.56057 2.75355 9.12649 2.92247 8.7219C3.0914 8.31732 3.3389 7.95027 3.65067 7.642L4 7.33333"
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></path>
+        </svg>
+        <svg
+          class="article-actions__icon-glyph article-actions__icon-glyph--check"
+          viewBox="0 0 16 16"
+          width="16"
+          height="16"
+        >
+          <path
+            d="M3.33333 8L6.66667 11.3333L13.3333 4.66667"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></path>
+        </svg>
+      </span>
+      <span class="article-actions__label" data-article-actions-label>Copy URL</span>
     </button>
   </div>
   <textarea hidden data-article-actions-markdown>{markdown}</textarea>
@@ -32,6 +122,8 @@ const { markdown, url } = Astro.props;
   @use "tools" as *;
 
   .article-actions {
+    --article-actions-check-color: #16a34a;
+
     display: block;
   }
 
@@ -42,27 +134,32 @@ const { markdown, url } = Astro.props;
   }
 
   .article-actions__button {
-    min-height: rem(36);
-    padding: var(--space-2) var(--space-3);
+    display: inline-flex;
+    gap: var(--space-1\.5);
+    align-items: center;
+    padding: var(--space-1\.5) var(--space-2);
     font-size: var(--text-xs);
     line-height: rem(20);
     color: var(--color-text);
     cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
     background: var(--color-canvas);
-    border: rem(1) solid var(--color-border-strong);
+    border: rem(1) solid var(--color-border);
     border-radius: var(--radius-1\.5);
+    -webkit-tap-highlight-color: transparent;
 
-    @include hover-color-transition;
+    @include motion-safe {
+      transition: transform var(--motion-material-release) ease-out;
+    }
 
     @include hover {
-      &:hover {
+      &:hover .article-actions__label {
         color: var(--color-link);
-        border-color: var(--sky-400);
       }
     }
 
     &:focus-visible {
-      color: var(--color-link);
       outline: rem(3) solid var(--color-focus);
       outline-offset: rem(2);
 
@@ -70,6 +167,57 @@ const { markdown, url } = Astro.props;
         outline: rem(2) solid CanvasText;
       }
     }
+  }
+
+  .article-actions__button[data-article-actions-pressed] {
+    @include motion-safe {
+      transform: scale(0.97);
+      transition-duration: var(--motion-material-press);
+    }
+  }
+
+  .article-actions__icon {
+    position: relative;
+    flex-shrink: 0;
+    width: rem(16);
+    height: rem(16);
+  }
+
+  .article-actions__icon-glyph {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    color: var(--neutral-800);
+
+    @include motion-safe {
+      transition:
+        transform var(--motion-material-press) ease-out,
+        opacity var(--motion-material-release) ease-out;
+    }
+  }
+
+  .article-actions__icon-glyph--check {
+    color: var(--article-actions-check-color);
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  .article-actions__button[data-article-actions-copied] .article-actions__icon-glyph--action {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  .article-actions__button[data-article-actions-copied] .article-actions__icon-glyph--check {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .article-actions__label {
+    white-space: nowrap;
+
+    @include hover-color-transition;
   }
 </style>
 
