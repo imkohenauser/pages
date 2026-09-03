@@ -3,9 +3,12 @@ interface FishClip {
   y: number;
   width: number;
   height: number;
-  /* Point inside the clip that stays put between frames, found by aligning the frame masks. */
+  /* Frame-alignment point, 96px toward the tail from the eye on the right-facing sheet. */
   anchorX: number;
   anchorY: number;
+  /* Eye. Travel and flips use this so the head leads and does not teleport. */
+  headX: number;
+  headY: number;
 }
 
 type FishKind = 'male' | 'female';
@@ -51,25 +54,25 @@ interface Fish {
 /* The sheet is not a regular grid: these rectangles follow the Figma clip markers and leave the
    frame numbers outside every rect. */
 const maleClips: FishClip[] = [
-  { x: 0, y: 100, width: 402, height: 330, anchorX: 278, anchorY: 206 },
-  { x: 402, y: 100, width: 376, height: 330, anchorX: 255, anchorY: 206 },
-  { x: 778, y: 100, width: 384, height: 330, anchorX: 258, anchorY: 212 },
-  { x: 1162, y: 100, width: 370, height: 330, anchorX: 240, anchorY: 208 },
-  { x: 0, y: 530, width: 392, height: 340, anchorX: 264, anchorY: 222 },
-  { x: 392, y: 530, width: 392, height: 340, anchorX: 268, anchorY: 225 },
-  { x: 784, y: 530, width: 354, height: 340, anchorX: 227, anchorY: 226 },
-  { x: 1138, y: 530, width: 394, height: 340, anchorX: 269, anchorY: 222 },
+  { x: 0, y: 100, width: 402, height: 330, anchorX: 278, anchorY: 206, headX: 374, headY: 206 },
+  { x: 402, y: 100, width: 376, height: 330, anchorX: 255, anchorY: 206, headX: 351, headY: 206 },
+  { x: 778, y: 100, width: 384, height: 330, anchorX: 258, anchorY: 212, headX: 354, headY: 212 },
+  { x: 1162, y: 100, width: 370, height: 330, anchorX: 240, anchorY: 208, headX: 336, headY: 207 },
+  { x: 0, y: 530, width: 392, height: 340, anchorX: 264, anchorY: 222, headX: 360, headY: 222 },
+  { x: 392, y: 530, width: 392, height: 340, anchorX: 268, anchorY: 225, headX: 364, headY: 225 },
+  { x: 784, y: 530, width: 354, height: 340, anchorX: 227, anchorY: 226, headX: 323, headY: 226 },
+  { x: 1138, y: 530, width: 394, height: 340, anchorX: 269, anchorY: 222, headX: 365, headY: 222 },
 ];
 
 const femaleClips: FishClip[] = [
-  { x: 0, y: 130, width: 402, height: 330, anchorX: 253, anchorY: 173 },
-  { x: 402, y: 130, width: 376, height: 330, anchorX: 245, anchorY: 171 },
-  { x: 778, y: 130, width: 384, height: 330, anchorX: 245, anchorY: 172 },
-  { x: 1162, y: 130, width: 370, height: 330, anchorX: 230, anchorY: 173 },
-  { x: 0, y: 560, width: 392, height: 340, anchorX: 254, anchorY: 182 },
-  { x: 392, y: 560, width: 392, height: 340, anchorX: 251, anchorY: 187 },
-  { x: 784, y: 560, width: 354, height: 340, anchorX: 231, anchorY: 180 },
-  { x: 1138, y: 560, width: 394, height: 340, anchorX: 252, anchorY: 182 },
+  { x: 0, y: 130, width: 402, height: 330, anchorX: 253, anchorY: 173, headX: 349, headY: 172 },
+  { x: 402, y: 130, width: 376, height: 330, anchorX: 245, anchorY: 171, headX: 341, headY: 171 },
+  { x: 778, y: 130, width: 384, height: 330, anchorX: 245, anchorY: 172, headX: 341, headY: 172 },
+  { x: 1162, y: 130, width: 370, height: 330, anchorX: 230, anchorY: 173, headX: 326, headY: 173 },
+  { x: 0, y: 560, width: 392, height: 340, anchorX: 254, anchorY: 182, headX: 350, headY: 182 },
+  { x: 392, y: 560, width: 392, height: 340, anchorX: 251, anchorY: 187, headX: 347, headY: 187 },
+  { x: 784, y: 560, width: 354, height: 340, anchorX: 231, anchorY: 180, headX: 327, headY: 180 },
+  { x: 1138, y: 560, width: 394, height: 340, anchorX: 252, anchorY: 182, headX: 348, headY: 182 },
 ];
 
 const clipSets: Record<FishKind, FishClip[]> = {
@@ -95,13 +98,13 @@ const formation: readonly Pick<
   },
 ];
 
-/* How far the drawn fish reaches from its anchor, so it can be kept inside the canvas. */
+/* How far the drawn fish reaches from its head, so the tail stays on the canvas. */
 const extent = [...maleClips, ...femaleClips].reduce(
   (current, clip) => ({
-    left: Math.max(current.left, clip.anchorX),
-    right: Math.max(current.right, clip.width - clip.anchorX),
-    top: Math.max(current.top, clip.anchorY),
-    bottom: Math.max(current.bottom, clip.height - clip.anchorY),
+    left: Math.max(current.left, clip.headX),
+    right: Math.max(current.right, clip.width - clip.headX),
+    top: Math.max(current.top, clip.headY),
+    bottom: Math.max(current.bottom, clip.height - clip.headY),
   }),
   { left: 0, right: 0, top: 0, bottom: 0 },
 );
@@ -354,7 +357,8 @@ class FishScene extends HTMLElement {
       fish.scale = this.scale * fish.sizeFactor;
     }
 
-    /* Footer controls and cards inside the raised band stay clear of the school. */
+    /* Footer controls stay clear of the school. Cards in the raised band are a ceiling, not a
+       swim path: a side-view fish does not float up onto them. */
     const contentObstacles = this.obstacleRoot.querySelectorAll(
       '[data-fish-scene-obstacle]',
     );
@@ -379,8 +383,8 @@ class FishScene extends HTMLElement {
       this.placed = true;
       for (const fish of this.school) {
         fish.x = this.width * (0.66 + fish.slotX) + fish.offsetX;
-        /* The resting reduced-motion frame remains below the preceding cards. */
-        fish.y = BAND_RISE_PX + (this.height - BAND_RISE_PX) * (0.34 + fish.slotY);
+        /* Rest in the footer padding, below the cards and above the footer type. */
+        fish.y = BAND_RISE_PX + (this.height - BAND_RISE_PX) * (0.22 + fish.slotY);
       }
     }
 
@@ -474,7 +478,10 @@ class FishScene extends HTMLElement {
 
     /* One drifting point the whole group hangs off, which is what makes them read as a group. */
     let schoolX = this.width * (0.5 + 0.24 * Math.sin(this.elapsed * 0.17));
-    let schoolY = this.height * (0.56 + 0.22 * Math.sin(this.elapsed * 0.27 + 1.1));
+    /* Horizontal travel in the footer padding. Vertical is a small bob, not a climb onto the cards. */
+    let schoolY =
+      BAND_RISE_PX +
+      (this.height - BAND_RISE_PX) * (0.22 + 0.08 * Math.sin(this.elapsed * 0.27 + 1.1));
 
     if (this.attraction) {
       const remaining = this.attraction.until - this.elapsed;
@@ -493,10 +500,29 @@ class FishScene extends HTMLElement {
       }
     }
 
-    /* The lead fish supplies one shared direction so the pair always face the same way. */
+    /* Face the way the head must go before thrusting, so a stroke cannot reverse the body. */
     const lead = this.school[0];
     const towardPointerX =
       pointerX === undefined || !lead ? undefined : pointerX - lead.x;
+    if (lead) {
+      const leadMinX = extent.left * lead.scale + EDGE_MARGIN;
+      const leadMaxX = Math.max(leadMinX, this.width - extent.right * lead.scale - EDGE_MARGIN);
+      const leadTargetX = clamp(schoolX + this.width * lead.slotX + lead.offsetX, leadMinX, leadMaxX);
+      let heading: number | undefined;
+      if (Math.abs(leadTargetX - lead.x) > POINTER_TURN_HYSTERESIS) {
+        heading = leadTargetX > lead.x ? 1 : -1;
+      } else if (Math.abs(lead.vx) > MOVEMENT_FACING_THRESHOLD) {
+        heading = lead.vx > 0 ? 1 : -1;
+      } else if (
+        towardPointerX !== undefined &&
+        Math.abs(towardPointerX) > POINTER_TURN_HYSTERESIS
+      ) {
+        heading = towardPointerX > 0 ? 1 : -1;
+      }
+      if (heading !== undefined) {
+        for (const fish of this.school) fish.heading = heading;
+      }
+    }
 
     for (const fish of this.school) {
       const minX = extent.left * fish.scale + EDGE_MARGIN;
@@ -514,8 +540,11 @@ class FishScene extends HTMLElement {
 
       let accelerationX = 0;
       let accelerationY = 0;
-      accelerationX += (targetX - fish.x) * COHESION;
-      accelerationY += (targetY - fish.y) * COHESION;
+      const towardX = targetX - fish.x;
+      const towardY = targetY - fish.y;
+      /* Cohesion may trim speed; it must not drag the fish tail-first. */
+      accelerationX += (towardX * fish.heading > 0 ? towardX : towardX * 0.15) * COHESION;
+      accelerationY += towardY * COHESION * 0.35;
 
       for (const other of this.school) {
         if (other === fish) continue;
@@ -530,9 +559,11 @@ class FishScene extends HTMLElement {
         accelerationY += (awayY / distance) * SEPARATION_PUSH * strength;
       }
 
-      /* Obstacles are grown by how far this fish is drawn, so the whole body stays off the text. */
-      const reachX = Math.max(extent.left, extent.right) * fish.scale;
-      const reachY = Math.max(extent.top, extent.bottom) * fish.scale;
+      /* Grow obstacles by the solid body, not the sprite clip, so transparent padding
+         does not close the remaining corridor. */
+      const bodyWidth = REFERENCE_BODY_WIDTH * fish.scale;
+      const reachX = bodyWidth / 2;
+      const reachY = (bodyWidth * BODY_HEIGHT_RATIO) / 2;
       for (const obstacle of this.obstacles) {
         const exit = findExit(fish.x, fish.y, obstacle, reachX, reachY);
         if (!exit) continue;
@@ -563,17 +594,6 @@ class FishScene extends HTMLElement {
         if (exit.x === 0) fish.vy = 0;
         else fish.vx = 0;
       }
-    }
-
-    let heading: number | undefined;
-    if (lead && Math.abs(lead.vx) > MOVEMENT_FACING_THRESHOLD) {
-      heading = lead.vx > 0 ? 1 : -1;
-    } else if (towardPointerX !== undefined && Math.abs(towardPointerX) > POINTER_TURN_HYSTERESIS) {
-      /* Looking at the cursor is reserved for a near-stop so it cannot oppose visible travel. */
-      heading = towardPointerX > 0 ? 1 : -1;
-    }
-    if (heading !== undefined) {
-      for (const fish of this.school) fish.heading = heading;
     }
 
     /* Only the farther fish mosaics, so the nearer one stays intact through the crossing. */
@@ -632,15 +652,12 @@ class FishScene extends HTMLElement {
   private beginStroke(fish: Fish, targetX: number, targetY: number) {
     fish.clip = (fish.clip + 1) % clipSets[fish.kind].length;
 
-    const towardX = targetX - fish.x;
-    const towardY = targetY - fish.y;
-    const distance = Math.hypot(towardX, towardY);
-    if (distance > 0.001) {
-      /* Long way to go means a harder push, but only up to a full stroke. */
-      const reach = Math.min(distance / (REFERENCE_BODY_WIDTH * fish.scale), 1);
-      fish.vx += (towardX / distance) * STROKE_IMPULSE * reach;
-      fish.vy += (towardY / distance) * STROKE_IMPULSE * reach * 0.6;
-    }
+    /* Thrust leaves through the head. Distance only scales how hard the beat is. */
+    const ahead = Math.max(0, (targetX - fish.x) * fish.heading);
+    const reach = Math.min(ahead / (REFERENCE_BODY_WIDTH * fish.scale), 1);
+    fish.vx += fish.heading * STROKE_IMPULSE * (0.4 + 0.6 * reach);
+    const lift = clamp(targetY - fish.y, -40, 40);
+    fish.vy += (lift / 40) * STROKE_IMPULSE * 0.16;
 
     const variation = 0.97 + 0.05 * Math.sin(this.elapsed * 0.9 + fish.phase * 7);
     fish.strokeTimer = STROKE_INTERVAL_S * variation;
@@ -673,12 +690,12 @@ class FishScene extends HTMLElement {
 
     const drawnWidth = clip.width * fish.scale;
     const drawnHeight = clip.height * fish.scale;
-    const drawX = -clip.anchorX * fish.scale;
-    const drawY = -clip.anchorY * fish.scale;
+    const drawX = -clip.headX * fish.scale;
+    const drawY = -clip.headY * fish.scale;
 
     context.save();
     context.translate(fish.x, fish.y);
-    /* The sheet faces right, so swimming or looking left is the mirrored draw. */
+    /* The sheet faces right, so swimming left is a flip around the eye. */
     if (fish.heading < 0) context.scale(-1, 1);
 
     const mosaic = this.mosaic;
@@ -712,9 +729,12 @@ function clamp(value: number, min: number, max: number) {
 function bodyRect(fish: Fish) {
   const width = REFERENCE_BODY_WIDTH * fish.scale;
   const height = width * BODY_HEIGHT_RATIO;
+  /* The solid body hangs behind the eye. */
+  const left = fish.heading < 0 ? fish.x : fish.x - width;
+  const right = fish.heading < 0 ? fish.x + width : fish.x;
   return {
-    left: fish.x - width / 2,
-    right: fish.x + width / 2,
+    left,
+    right,
     top: fish.y - height / 2,
     bottom: fish.y + height / 2,
     area: width * height,
@@ -731,7 +751,7 @@ function bodyOverlap(a: Fish, b: Fish) {
   return (width * height) / smaller;
 }
 
-/* Nearest way out of an obstacle that has been grown by how far the fish is drawn. */
+/* Nearest way out of an obstacle that has been grown by the solid body. */
 function findExit(x: number, y: number, obstacle: Obstacle, reachX: number, reachY: number) {
   const left = obstacle.left - reachX;
   const right = obstacle.right + reachX;
