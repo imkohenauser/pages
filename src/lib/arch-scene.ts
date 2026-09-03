@@ -27,6 +27,7 @@ class ArchScene extends HTMLElement {
   private connectionId = 0;
   private resizeFrame?: number;
   private wasAtTop = false;
+  private replayAtTopWhenIntersecting = false;
 
   connectedCallback() {
     if (this.abortController) return;
@@ -88,6 +89,7 @@ class ArchScene extends HTMLElement {
     this.reducedMotionQuery = undefined;
     this.isIntersecting = false;
     this.wasAtTop = false;
+    this.replayAtTopWhenIntersecting = false;
     this.removeAttribute('data-arch-scene-ready');
     this.removeAttribute('data-arch-scene-fallback');
     this.removeAttribute('data-arch-scene-running');
@@ -112,8 +114,18 @@ class ArchScene extends HTMLElement {
   private handleIntersection = (entries: IntersectionObserverEntry[]) => {
     const [entry] = entries;
     this.isIntersecting = entry?.isIntersecting ?? false;
-    if (!this.isIntersecting || this.waitingForPaint) return;
+    if (!this.isIntersecting) return;
     if (this.reducedMotionQuery?.matches) return;
+
+    if (this.replayAtTopWhenIntersecting) {
+      this.replayAtTopWhenIntersecting = false;
+      if (this.isAtPageTop() && !document.hidden) {
+        this.requestReplay();
+        return;
+      }
+    }
+
+    if (this.waitingForPaint) return;
     void this.ensureRenderer();
   };
 
@@ -126,12 +138,18 @@ class ArchScene extends HTMLElement {
     const reachedTop = isAtTop && !this.wasAtTop;
     this.wasAtTop = isAtTop;
 
+    if (!isAtTop) this.replayAtTopWhenIntersecting = false;
+
     if (
       !reachedTop ||
-      !this.isIntersecting ||
       document.hidden ||
       this.reducedMotionQuery?.matches
     ) {
+      return;
+    }
+
+    if (!this.isIntersecting) {
+      this.replayAtTopWhenIntersecting = true;
       return;
     }
 
@@ -148,13 +166,16 @@ class ArchScene extends HTMLElement {
   }
 
   private handleVisibility = () => {
-    if (document.hidden) this.renderer?.stop();
+    if (!document.hidden) return;
+    this.replayAtTopWhenIntersecting = false;
+    this.renderer?.stop();
   };
 
   private handleMotionPreference = () => {
     this.renderer?.stop();
     if (this.reducedMotionQuery?.matches) {
       this.pendingPlay = undefined;
+      this.replayAtTopWhenIntersecting = false;
       return;
     }
     if (this.isIntersecting) void this.ensureRenderer();
