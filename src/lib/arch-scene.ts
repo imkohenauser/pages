@@ -5,6 +5,8 @@ const START_DELAY_MS = 600;
 /* Ignore only implausibly rapid input; an intentional second activation adds another run. */
 const REPLAY_COOLDOWN_MS = 150;
 const INITIAL_PLAY_MAX_SCROLL_PX = 48;
+/* Fractional scroll positions can stop just above zero, so use a small tolerance. */
+const PAGE_TOP_MAX_SCROLL_PX = 1;
 const HORSE_SPRITE = 'sprite-sheet/white-horse_v1.webp';
 
 type PendingPlay = 'initial' | 'replay';
@@ -24,6 +26,7 @@ class ArchScene extends HTMLElement {
   private lastReplayAt = -Infinity;
   private connectionId = 0;
   private resizeFrame?: number;
+  private wasAtTop = false;
 
   connectedCallback() {
     if (this.abortController) return;
@@ -40,7 +43,10 @@ class ArchScene extends HTMLElement {
     this.connectionId += 1;
     this.connectedAt = performance.now();
 
+    this.wasAtTop = this.isAtPageTop();
+
     window.addEventListener('resize', this.scheduleResize, { signal });
+    window.addEventListener('scroll', this.handleScroll, { passive: true, signal });
     document.addEventListener('visibilitychange', this.handleVisibility, { signal });
     trigger.addEventListener('click', this.handleReplay, { signal });
 
@@ -81,6 +87,7 @@ class ArchScene extends HTMLElement {
     this.canvas = undefined;
     this.reducedMotionQuery = undefined;
     this.isIntersecting = false;
+    this.wasAtTop = false;
     this.removeAttribute('data-arch-scene-ready');
     this.removeAttribute('data-arch-scene-fallback');
     this.removeAttribute('data-arch-scene-running');
@@ -111,13 +118,34 @@ class ArchScene extends HTMLElement {
   };
 
   private handleReplay = () => {
+    this.requestReplay();
+  };
+
+  private handleScroll = () => {
+    const isAtTop = this.isAtPageTop();
+    const reachedTop = isAtTop && !this.wasAtTop;
+    this.wasAtTop = isAtTop;
+
+    if (
+      !reachedTop ||
+      !this.isIntersecting ||
+      document.hidden ||
+      this.reducedMotionQuery?.matches
+    ) {
+      return;
+    }
+
+    this.requestReplay();
+  };
+
+  private requestReplay() {
     const now = performance.now();
     if (now - this.lastReplayAt < REPLAY_COOLDOWN_MS) return;
 
     this.lastReplayAt = now;
     if (this.reducedMotionQuery?.matches) return;
     void this.ensureRenderer('replay');
-  };
+  }
 
   private handleVisibility = () => {
     if (document.hidden) this.renderer?.stop();
@@ -134,6 +162,10 @@ class ArchScene extends HTMLElement {
 
   private canAutoPlay() {
     return window.scrollY <= INITIAL_PLAY_MAX_SCROLL_PX;
+  }
+
+  private isAtPageTop() {
+    return window.scrollY <= PAGE_TOP_MAX_SCROLL_PX;
   }
 
   private async ensureRenderer(play?: PendingPlay) {
