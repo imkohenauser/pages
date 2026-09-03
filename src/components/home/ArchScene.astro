@@ -31,6 +31,7 @@ const { avatarSrc = path('/avatar.svg') } = Astro.props;
     display: block;
     /* The gate is a 1:2 portrait, so it fits the available width on small screens. */
     width: 100%;
+    max-width: rem(200);
     aspect-ratio: 1 / 2;
 
     @include md {
