@@ -1,16 +1,18 @@
 ---
 interface Props {
   obstacleRootId: string;
+  swimStartId: string;
   footerId: string;
 }
 
-const { obstacleRootId, footerId } = Astro.props;
+const { obstacleRootId, swimStartId, footerId } = Astro.props;
 ---
 
 <fish-scene
   class="fish-scene"
   aria-hidden="true"
   data-fish-scene-obstacle-root={obstacleRootId}
+  data-fish-scene-swim-start={swimStartId}
   data-fish-scene-footer={footerId}
 >
   <canvas class="fish-scene__canvas" data-fish-scene-canvas></canvas>
@@ -29,7 +31,7 @@ const { obstacleRootId, footerId } = Astro.props;
   .fish-scene__canvas {
     position: absolute;
     inset-block-start: rem(-200);
-    inset-inline: 0;
+    inset-inline-start: 0;
     /* Above the footer and the lower part of the preceding content. */
     z-index: 1;
     display: block;

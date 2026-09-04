@@ -20,6 +20,12 @@ interface Obstacle {
   bottom: number;
 }
 
+interface Avoidance {
+  x: number;
+  y: number;
+  strength: number;
+}
+
 import { drawMosaicImage, glitchFromAge, type Glitch } from './mosaic-glitch';
 
 interface Attraction {
@@ -31,13 +37,18 @@ interface Attraction {
 interface Fish {
   kind: FishKind;
   sizeFactor: number;
-  /* Place in the loose formation, as a fraction of the band. */
-  slotX: number;
-  slotY: number;
-  /* Fixed rendered offset keeps the pair's spacing stable across viewport widths. */
-  offsetX: number;
-  /* Tiny offset from the shared stroke, so the pair beat almost together. */
+  startX: number;
+  startY: number;
+  entryX: number;
+  entryY: number;
+  pathCenterX: number;
+  pathRangeX: number;
+  pathRateX: number;
+  pathCenterY: number;
+  pathRangeY: number;
+  pathRateY: number;
   phase: number;
+  strokeInterval: number;
   clip: number;
   scale: number;
   x: number;
@@ -80,20 +91,58 @@ const clipSets: Record<FishKind, FishClip[]> = {
   female: femaleClips,
 };
 
-/* Slots sit close enough that the pair cross now and then, and the phases are near enough to beat
-   as one. */
-const formation: readonly Pick<
+/* Each fish follows its own deterministic current. Their ranges overlap so they still meet, but
+   their different periods keep either fish from becoming the other's shadow. */
+const swimmers: readonly Pick<
   Fish,
-  'kind' | 'sizeFactor' | 'slotX' | 'slotY' | 'offsetX' | 'phase' | 'clip'
+  | 'kind'
+  | 'sizeFactor'
+  | 'startX'
+  | 'startY'
+  | 'entryX'
+  | 'entryY'
+  | 'pathCenterX'
+  | 'pathRangeX'
+  | 'pathRateX'
+  | 'pathCenterY'
+  | 'pathRangeY'
+  | 'pathRateY'
+  | 'phase'
+  | 'strokeInterval'
+  | 'clip'
 >[] = [
-  { kind: 'male', sizeFactor: 1, slotX: 0, slotY: 0, offsetX: 0, phase: 0, clip: 0 },
+  {
+    kind: 'male',
+    sizeFactor: 1,
+    startX: 0.68,
+    startY: 0.8,
+    entryX: 0.56,
+    entryY: 0.8,
+    pathCenterX: 0.5,
+    pathRangeX: 0.42,
+    pathRateX: 0.13,
+    pathCenterY: 0.54,
+    pathRangeY: 0.32,
+    pathRateY: 0.19,
+    phase: 0.2,
+    strokeInterval: 1.5,
+    clip: 0,
+  },
   {
     kind: 'female',
     sizeFactor: 0.8,
-    slotX: 0.082,
-    slotY: -0.042,
-    offsetX: 12,
-    phase: 0.08,
+    startX: 0.71,
+    startY: 0.77,
+    entryX: 0.61,
+    entryY: 0.77,
+    pathCenterX: 0.5,
+    pathRangeX: 0.4,
+    pathRateX: 0.095,
+    pathCenterY: 0.48,
+    pathRangeY: 0.3,
+    pathRateY: 0.145,
+    phase: 2.25,
+    strokeInterval: 1.9,
     clip: 2,
   },
 ];
@@ -118,13 +167,16 @@ const MAX_DELTA_S = 0.05;
 const FALLBACK_BAND_PX = 148;
 const BAND_RISE_PX = 200;
 /* Each stroke is one push followed by a glide, and the glide is what damps the push out. */
-const STROKE_INTERVAL_S = 1.5;
-const STROKE_IMPULSE = 62;
-const GLIDE_DRAG = 1.7;
-const COHESION = 1.1;
+const STROKE_IMPULSE = 55;
+const HORIZONTAL_GLIDE_DRAG = 1.85;
+const VERTICAL_GLIDE_DRAG = 3;
+const HORIZONTAL_COHESION = 0.95;
+const VERTICAL_COHESION = 0.13;
+const VERTICAL_STROKE_LIFT = 0.06;
 const ATTRACTION_DURATION_S = 1.8;
 const ATTRACTION_RELEASE_S = 0.6;
 const ATTRACTION_MAX_OFFSET_PX = 160;
+const ENTRY_DURATION_S = 10;
 /* Weak enough that the pair can pass through each other instead of bouncing apart. */
 const SEPARATION_PUSH = 10;
 const BODY_HEIGHT_RATIO = 0.48;
@@ -141,6 +193,10 @@ const MOVEMENT_FACING_THRESHOLD = 2;
 const POINTER_TURN_HYSTERESIS = 10;
 const OBSTACLE_PUSH = 900;
 const OBSTACLE_PADDING = 20;
+const DESKTOP_OBSTACLE_INSET = 18;
+const SOFT_AVOIDANCE_RANGE = 72;
+const SOFT_AVOIDANCE_PUSH = 90;
+const SOFT_INWARD_VELOCITY_RETAIN = 0.45;
 const EDGE_MARGIN = 6;
 const LOAD_MARGIN_PX = 400;
 const INTERACTIVE_SELECTOR = [
@@ -164,7 +220,9 @@ class FishScene extends HTMLElement {
   private hoverFineQuery?: MediaQueryList;
   private canvas?: HTMLCanvasElement;
   private context?: CanvasRenderingContext2D;
+  private boundary?: HTMLElement;
   private obstacleRoot?: HTMLElement;
+  private swimStart?: HTMLElement;
   private footer?: HTMLElement;
   private mosaic?: HTMLCanvasElement;
   private sheets?: Record<FishKind, HTMLImageElement>;
@@ -178,13 +236,15 @@ class FishScene extends HTMLElement {
   private height = 0;
   private scale = 1;
   private placed = false;
+  private usesSoftContentAvoidance = false;
+  private desktopContentBottom?: number;
   private pointerClientX?: number;
   private pointerClientY?: number;
   private attraction?: Attraction;
   /* The fish the fine pointer is over, so a stay does not retrigger the sequence. */
   private hoveredFish?: Fish;
   private obstacles: Obstacle[] = [];
-  private school: Fish[] = formation.map((member) => ({
+  private school: Fish[] = swimmers.map((member) => ({
     ...member,
     scale: 1,
     x: 0,
@@ -192,7 +252,7 @@ class FishScene extends HTMLElement {
     vx: 0,
     vy: 0,
     heading: -1,
-    strokeTimer: member.phase * STROKE_INTERVAL_S,
+    strokeTimer: (member.phase % 1) * member.strokeInterval,
     glitchArmed: true,
     glitchAt: -1,
   }));
@@ -207,13 +267,18 @@ class FishScene extends HTMLElement {
     if (!context) return;
 
     const obstacleRootId = this.getAttribute('data-fish-scene-obstacle-root');
+    const swimStartId = this.getAttribute('data-fish-scene-swim-start');
     const footerId = this.getAttribute('data-fish-scene-footer');
+    const boundary = this.closest('[data-fish-scene-boundary]');
     const obstacleRoot = obstacleRootId
       ? document.getElementById(obstacleRootId)
       : undefined;
+    const swimStart = swimStartId ? document.getElementById(swimStartId) : undefined;
     const footer = footerId ? document.getElementById(footerId) : undefined;
     if (
+      !(boundary instanceof HTMLElement) ||
       !(obstacleRoot instanceof HTMLElement) ||
+      !(swimStart instanceof HTMLElement) ||
       !(footer instanceof HTMLElement)
     ) {
       return;
@@ -223,7 +288,9 @@ class FishScene extends HTMLElement {
 
     this.canvas = canvas;
     this.context = context;
+    this.boundary = boundary;
     this.obstacleRoot = obstacleRoot;
+    this.swimStart = swimStart;
     this.footer = footer;
     this.mosaic = mosaic;
     this.abortController = new AbortController();
@@ -244,8 +311,13 @@ class FishScene extends HTMLElement {
 
     this.resizeObserver = new ResizeObserver(this.scheduleResize);
     this.resizeObserver.observe(this);
+    this.resizeObserver.observe(boundary);
     this.resizeObserver.observe(obstacleRoot);
+    this.resizeObserver.observe(swimStart);
     this.resizeObserver.observe(footer);
+
+    /* Size the expanded desktop band before intersection testing decides when to load the sheets. */
+    this.resize();
 
     this.intersectionObserver = new IntersectionObserver(this.handleIntersect, {
       rootMargin: `${LOAD_MARGIN_PX}px 0px`,
@@ -269,7 +341,9 @@ class FishScene extends HTMLElement {
     this.stop();
     this.canvas = undefined;
     this.context = undefined;
+    this.boundary = undefined;
     this.obstacleRoot = undefined;
+    this.swimStart = undefined;
     this.footer = undefined;
     this.mosaic = undefined;
     this.sheets = undefined;
@@ -277,6 +351,8 @@ class FishScene extends HTMLElement {
     this.hoverFineQuery = undefined;
     this.hoveredFish = undefined;
     this.attraction = undefined;
+    this.usesSoftContentAvoidance = false;
+    this.desktopContentBottom = undefined;
     this.removeAttribute('data-fish-scene-ready');
   }
 
@@ -328,24 +404,44 @@ class FishScene extends HTMLElement {
   };
 
   private resize() {
-    if (!this.canvas || !this.context || !this.obstacleRoot || !this.footer) {
+    if (
+      !this.canvas ||
+      !this.context ||
+      !this.boundary ||
+      !this.obstacleRoot ||
+      !this.swimStart ||
+      !this.footer
+    ) {
       return;
     }
 
     const rootRect = this.getBoundingClientRect();
     if (rootRect.width <= 0) return;
 
-    /* The band reaches through the footer, so its lower edge is measured rather than duplicated. */
+    const previousWidth = this.width;
+    const previousHeight = this.height;
+    const boundaryRect = this.boundary.getBoundingClientRect();
+    const obstacleRootRect = this.obstacleRoot.getBoundingClientRect();
+    const swimStartRect = this.swimStart.getBoundingClientRect();
     const footerRect = this.footer.getBoundingClientRect();
-    const bandTop = rootRect.top - BAND_RISE_PX;
-    this.width = rootRect.width;
-    this.height = BAND_RISE_PX + Math.max(
-      FALLBACK_BAND_PX,
-      footerRect.bottom - rootRect.top,
-    );
+    const usesDesktopBoundary = boundaryRect.width > rootRect.width + 1;
+    this.usesSoftContentAvoidance = usesDesktopBoundary;
+    const bandLeft = usesDesktopBoundary ? 0 : rootRect.left;
+    const bandTop = usesDesktopBoundary
+      ? swimStartRect.top
+      : rootRect.top - BAND_RISE_PX;
+    this.width = usesDesktopBoundary
+      ? document.documentElement.clientWidth
+      : rootRect.width;
+    this.height = Math.max(FALLBACK_BAND_PX, footerRect.bottom - bandTop);
+    this.desktopContentBottom = usesDesktopBoundary
+      ? obstacleRootRect.bottom - bandTop + OBSTACLE_PADDING
+      : undefined;
 
     const pixelRatio = Math.min(window.devicePixelRatio, 2);
-    this.canvas.style.insetBlockStart = `${-BAND_RISE_PX}px`;
+    this.canvas.style.insetInlineStart = `${bandLeft - rootRect.left}px`;
+    this.canvas.style.insetBlockStart = `${bandTop - rootRect.top}px`;
+    this.canvas.style.width = `${this.width}px`;
     this.canvas.style.height = `${this.height}px`;
     this.canvas.width = Math.round(this.width * pixelRatio);
     this.canvas.height = Math.round(this.height * pixelRatio);
@@ -357,21 +453,20 @@ class FishScene extends HTMLElement {
       fish.scale = this.scale * fish.sizeFactor;
     }
 
-    /* Footer controls stay clear of the school. Cards in the raised band are a ceiling, not a
-       swim path: a side-view fish does not float up onto them. */
-    const contentObstacles = this.obstacleRoot.querySelectorAll(
-      '[data-fish-scene-obstacle]',
-    );
-    const footerObstacles = this.footer.querySelectorAll(
-      '[data-fish-scene-obstacle]',
-    );
-    this.obstacles = [...contentObstacles, ...footerObstacles]
+    /* Desktop treats the content column as one barrier; mobile keeps the existing card barriers. */
+    const contentObstacles = usesDesktopBoundary
+      ? [this.obstacleRoot]
+      : [...this.obstacleRoot.querySelectorAll('[data-fish-scene-obstacle]')];
+    const obstaclePadding = usesDesktopBoundary
+      ? -DESKTOP_OBSTACLE_INSET
+      : OBSTACLE_PADDING;
+    this.obstacles = contentObstacles
       .map((element) => element.getBoundingClientRect())
       .map((rect) => ({
-        left: rect.left - rootRect.left - OBSTACLE_PADDING,
-        top: rect.top - bandTop - OBSTACLE_PADDING,
-        right: rect.right - rootRect.left + OBSTACLE_PADDING,
-        bottom: rect.bottom - bandTop + OBSTACLE_PADDING,
+        left: rect.left - bandLeft - obstaclePadding,
+        top: rect.top - bandTop - obstaclePadding,
+        right: rect.right - bandLeft + obstaclePadding,
+        bottom: rect.bottom - bandTop + obstaclePadding,
       }));
 
     if (this.attraction) {
@@ -382,9 +477,16 @@ class FishScene extends HTMLElement {
     if (!this.placed) {
       this.placed = true;
       for (const fish of this.school) {
-        fish.x = this.width * (0.66 + fish.slotX) + fish.offsetX;
-        /* Rest in the footer padding, below the cards and above the footer type. */
-        fish.y = BAND_RISE_PX + (this.height - BAND_RISE_PX) * (0.22 + fish.slotY);
+        fish.x = this.width * fish.startX;
+        fish.y = this.entryLaneY(fish, fish.startY);
+      }
+    } else if (previousWidth > 0 && previousHeight > 0) {
+      for (const fish of this.school) {
+        fish.x = (fish.x / previousWidth) * this.width;
+        fish.y = (fish.y / previousHeight) * this.height;
+        if (this.elapsed < ENTRY_DURATION_S) {
+          fish.y = this.entryLaneY(fish, fish.startY);
+        }
       }
     }
 
@@ -445,16 +547,24 @@ class FishScene extends HTMLElement {
     const target = event.target;
     if (target instanceof Element && target.closest(INTERACTIVE_SELECTOR)) return;
 
-    const rootRect = this.getBoundingClientRect();
-    const x = event.clientX - rootRect.left;
-    const y = event.clientY - (rootRect.top - BAND_RISE_PX);
+    const canvasRect = this.canvas?.getBoundingClientRect();
+    if (!canvasRect) return;
+
+    const x = event.clientX - canvasRect.left;
+    const y = event.clientY - canvasRect.top;
     if (x < 0 || x > this.width || y < 0 || y > this.height) return;
 
     this.attraction = { x, y, until: this.elapsed + ATTRACTION_DURATION_S };
-    for (const fish of this.school) fish.strokeTimer = 0;
   };
 
   private tick = (time: number) => {
+    if (document.documentElement.dataset.siteLoader === 'active') {
+      this.lastFrameAt = time;
+      this.draw();
+      this.animationFrame = requestAnimationFrame(this.tick);
+      return;
+    }
+
     const previous = this.lastFrameAt ?? time;
     this.lastFrameAt = time;
 
@@ -468,70 +578,79 @@ class FishScene extends HTMLElement {
   private step(delta: number) {
     this.elapsed += delta;
 
-    const rootRect = this.getBoundingClientRect();
+    const canvasRect = this.canvas?.getBoundingClientRect();
+    if (!canvasRect) return;
+
     const pointerX =
-      this.pointerClientX === undefined ? undefined : this.pointerClientX - rootRect.left;
+      this.pointerClientX === undefined ? undefined : this.pointerClientX - canvasRect.left;
     const pointerY =
       this.pointerClientY === undefined
         ? undefined
-        : this.pointerClientY - (rootRect.top - BAND_RISE_PX);
+        : this.pointerClientY - canvasRect.top;
 
-    /* One drifting point the whole group hangs off, which is what makes them read as a group. */
-    let schoolX = this.width * (0.5 + 0.24 * Math.sin(this.elapsed * 0.17));
-    /* Horizontal travel in the footer padding. Vertical is a small bob, not a climb onto the cards. */
-    let schoolY =
-      BAND_RISE_PX +
-      (this.height - BAND_RISE_PX) * (0.22 + 0.08 * Math.sin(this.elapsed * 0.27 + 1.1));
-
-    if (this.attraction) {
-      const remaining = this.attraction.until - this.elapsed;
-      if (remaining <= 0) {
-        this.attraction = undefined;
-      } else {
-        const towardX = this.attraction.x - schoolX;
-        const towardY = this.attraction.y - schoolY;
-        const distance = Math.hypot(towardX, towardY);
-        if (distance > 0.001) {
-          const release = Math.min(remaining / ATTRACTION_RELEASE_S, 1);
-          const offset = Math.min(distance, ATTRACTION_MAX_OFFSET_PX) * release;
-          schoolX += (towardX / distance) * offset;
-          schoolY += (towardY / distance) * offset;
-        }
-      }
-    }
-
-    /* Face the way the head must go before thrusting, so a stroke cannot reverse the body. */
-    const lead = this.school[0];
-    const towardPointerX =
-      pointerX === undefined || !lead ? undefined : pointerX - lead.x;
-    if (lead) {
-      const leadMinX = extent.left * lead.scale + EDGE_MARGIN;
-      const leadMaxX = Math.max(leadMinX, this.width - extent.right * lead.scale - EDGE_MARGIN);
-      const leadTargetX = clamp(schoolX + this.width * lead.slotX + lead.offsetX, leadMinX, leadMaxX);
-      let heading: number | undefined;
-      if (Math.abs(leadTargetX - lead.x) > POINTER_TURN_HYSTERESIS) {
-        heading = leadTargetX > lead.x ? 1 : -1;
-      } else if (Math.abs(lead.vx) > MOVEMENT_FACING_THRESHOLD) {
-        heading = lead.vx > 0 ? 1 : -1;
-      } else if (
-        towardPointerX !== undefined &&
-        Math.abs(towardPointerX) > POINTER_TURN_HYSTERESIS
-      ) {
-        heading = towardPointerX > 0 ? 1 : -1;
-      }
-      if (heading !== undefined) {
-        for (const fish of this.school) fish.heading = heading;
-      }
-    }
+    const attractionRemaining = this.attraction
+      ? this.attraction.until - this.elapsed
+      : 0;
+    if (this.attraction && attractionRemaining <= 0) this.attraction = undefined;
+    const entryRatio = clamp(this.elapsed / ENTRY_DURATION_S, 0, 1);
+    const entryProgress = entryRatio * entryRatio * (3 - 2 * entryRatio);
 
     for (const fish of this.school) {
       const minX = extent.left * fish.scale + EDGE_MARGIN;
       const maxX = Math.max(minX, this.width - extent.right * fish.scale - EDGE_MARGIN);
       const minY = extent.top * fish.scale + EDGE_MARGIN;
       const maxY = Math.max(minY, this.height - extent.bottom * fish.scale - EDGE_MARGIN);
+      const bodyWidth = REFERENCE_BODY_WIDTH * fish.scale;
+      const reachX = bodyWidth / 2;
+      const reachY = (bodyWidth * BODY_HEIGHT_RATIO) / 2;
 
-      const targetX = clamp(schoolX + this.width * fish.slotX + fish.offsetX, minX, maxX);
-      const targetY = clamp(schoolY + this.height * fish.slotY, minY, maxY);
+      const currentX =
+        fish.pathCenterX +
+        fish.pathRangeX *
+          (0.76 * Math.sin(this.elapsed * fish.pathRateX + fish.phase) +
+            0.24 * Math.sin(this.elapsed * fish.pathRateX * 0.43 + fish.phase * 1.7));
+      const currentY =
+        fish.pathCenterY +
+        fish.pathRangeY *
+          (0.68 * Math.sin(this.elapsed * fish.pathRateY + fish.phase * 1.3) +
+            0.32 * Math.sin(this.elapsed * fish.pathRateY * 0.57 + fish.phase * 2.1));
+      let targetX = this.width * currentX;
+      let targetY = this.height * currentY;
+
+      /* Enter as a close pair, then release each fish into its own current without a jump. */
+      const entryTargetX = this.width * fish.entryX;
+      const entryTargetY = this.entryLaneY(fish, fish.entryY);
+      targetX = entryTargetX + (targetX - entryTargetX) * entryProgress;
+      targetY = entryTargetY + (targetY - entryTargetY) * entryProgress;
+
+      if (this.attraction && attractionRemaining > 0) {
+        const towardAttractionX = this.attraction.x - targetX;
+        const towardAttractionY = this.attraction.y - targetY;
+        const distance = Math.hypot(towardAttractionX, towardAttractionY);
+        if (distance > 0.001) {
+          const release = Math.min(attractionRemaining / ATTRACTION_RELEASE_S, 1);
+          const offset = Math.min(distance, ATTRACTION_MAX_OFFSET_PX) * release;
+          targetX += (towardAttractionX / distance) * offset;
+          targetY += (towardAttractionY / distance) * offset;
+        }
+      }
+
+      targetX = clamp(targetX, minX, maxX);
+      targetY = clamp(targetY, minY, maxY);
+
+      const towardPointerX = pointerX === undefined ? undefined : pointerX - fish.x;
+      let heading: number | undefined;
+      if (Math.abs(targetX - fish.x) > POINTER_TURN_HYSTERESIS) {
+        heading = targetX > fish.x ? 1 : -1;
+      } else if (Math.abs(fish.vx) > MOVEMENT_FACING_THRESHOLD) {
+        heading = fish.vx > 0 ? 1 : -1;
+      } else if (
+        towardPointerX !== undefined &&
+        Math.abs(towardPointerX) > POINTER_TURN_HYSTERESIS
+      ) {
+        heading = towardPointerX > 0 ? 1 : -1;
+      }
+      if (heading !== undefined) fish.heading = heading;
 
       fish.strokeTimer -= delta;
       if (fish.strokeTimer <= 0) {
@@ -540,11 +659,13 @@ class FishScene extends HTMLElement {
 
       let accelerationX = 0;
       let accelerationY = 0;
+      let softAvoidance: Avoidance | undefined;
       const towardX = targetX - fish.x;
       const towardY = targetY - fish.y;
       /* Cohesion may trim speed; it must not drag the fish tail-first. */
-      accelerationX += (towardX * fish.heading > 0 ? towardX : towardX * 0.15) * COHESION;
-      accelerationY += towardY * COHESION * 0.35;
+      accelerationX +=
+        (towardX * fish.heading > 0 ? towardX : towardX * 0.15) * HORIZONTAL_COHESION;
+      accelerationY += towardY * VERTICAL_COHESION;
 
       for (const other of this.school) {
         if (other === fish) continue;
@@ -561,10 +682,25 @@ class FishScene extends HTMLElement {
 
       /* Grow obstacles by the solid body, not the sprite clip, so transparent padding
          does not close the remaining corridor. */
-      const bodyWidth = REFERENCE_BODY_WIDTH * fish.scale;
-      const reachX = bodyWidth / 2;
-      const reachY = (bodyWidth * BODY_HEIGHT_RATIO) / 2;
       for (const obstacle of this.obstacles) {
+        if (this.usesSoftContentAvoidance) {
+          const avoidance = findAvoidance(
+            fish.x,
+            fish.y,
+            obstacle,
+            reachX,
+            reachY,
+            SOFT_AVOIDANCE_RANGE,
+          );
+          if (
+            avoidance &&
+            (!softAvoidance || avoidance.strength > softAvoidance.strength)
+          ) {
+            softAvoidance = avoidance;
+          }
+          continue;
+        }
+
         const exit = findExit(fish.x, fish.y, obstacle, reachX, reachY);
         if (!exit) continue;
 
@@ -573,26 +709,47 @@ class FishScene extends HTMLElement {
         accelerationY += exit.y * OBSTACLE_PUSH * strength;
       }
 
+      if (softAvoidance) {
+        const inwardAcceleration =
+          accelerationX * softAvoidance.x + accelerationY * softAvoidance.y;
+        if (inwardAcceleration < 0) {
+          accelerationX -= softAvoidance.x * inwardAcceleration;
+          accelerationY -= softAvoidance.y * inwardAcceleration;
+        }
+        accelerationX += softAvoidance.x * SOFT_AVOIDANCE_PUSH * softAvoidance.strength;
+        accelerationY += softAvoidance.y * SOFT_AVOIDANCE_PUSH * softAvoidance.strength;
+      }
+
       fish.vx += accelerationX * delta;
       fish.vy += accelerationY * delta;
 
-      /* Water takes the push back, so a stroke becomes a glide instead of a constant speed. */
-      const damping = Math.exp(-GLIDE_DRAG * delta);
-      fish.vx *= damping;
-      fish.vy *= damping;
+      /* Vertical movement meets more drag, so depth changes lag behind forward travel. */
+      fish.vx *= Math.exp(-HORIZONTAL_GLIDE_DRAG * delta);
+      fish.vy *= Math.exp(-VERTICAL_GLIDE_DRAG * delta);
+
+      if (softAvoidance) {
+        const inwardVelocity = fish.vx * softAvoidance.x + fish.vy * softAvoidance.y;
+        if (inwardVelocity < 0) {
+          const reduction = inwardVelocity * (1 - SOFT_INWARD_VELOCITY_RETAIN);
+          fish.vx -= softAvoidance.x * reduction;
+          fish.vy -= softAvoidance.y * reduction;
+        }
+      }
 
       fish.x = clamp(fish.x + fish.vx * delta, minX, maxX);
       fish.y = clamp(fish.y + fish.vy * delta, minY, maxY);
 
       /* A stroke can still carry a fish into the text, so the text keeps the last word. */
-      for (const obstacle of this.obstacles) {
-        const exit = findExit(fish.x, fish.y, obstacle, reachX, reachY);
-        if (!exit) continue;
+      if (!this.usesSoftContentAvoidance) {
+        for (const obstacle of this.obstacles) {
+          const exit = findExit(fish.x, fish.y, obstacle, reachX, reachY);
+          if (!exit) continue;
 
-        fish.x = clamp(fish.x + exit.x * exit.depth, minX, maxX);
-        fish.y = clamp(fish.y + exit.y * exit.depth, minY, maxY);
-        if (exit.x === 0) fish.vy = 0;
-        else fish.vx = 0;
+          fish.x = clamp(fish.x + exit.x * exit.depth, minX, maxX);
+          fish.y = clamp(fish.y + exit.y * exit.depth, minY, maxY);
+          if (exit.x === 0) fish.vy = 0;
+          else fish.vx = 0;
+        }
       }
     }
 
@@ -611,6 +768,21 @@ class FishScene extends HTMLElement {
     }
 
     this.sparkHoverGlitch(pointerX, pointerY);
+  }
+
+  private entryLaneY(fish: Fish, fallbackRatio: number) {
+    if (this.desktopContentBottom === undefined) {
+      return this.height * fallbackRatio;
+    }
+
+    const minY = extent.top * fish.scale + EDGE_MARGIN;
+    const maxY = Math.max(minY, this.height - extent.bottom * fish.scale - EDGE_MARGIN);
+    const bodyHeight = REFERENCE_BODY_WIDTH * fish.scale * BODY_HEIGHT_RATIO;
+    return clamp(
+      this.desktopContentBottom + bodyHeight / 2 + EDGE_MARGIN,
+      minY,
+      maxY,
+    );
   }
 
   /* The canvas keeps pointer-events none so footer links stay clickable; hit-testing uses the page pointer. */
@@ -657,10 +829,10 @@ class FishScene extends HTMLElement {
     const reach = Math.min(ahead / (REFERENCE_BODY_WIDTH * fish.scale), 1);
     fish.vx += fish.heading * STROKE_IMPULSE * (0.4 + 0.6 * reach);
     const lift = clamp(targetY - fish.y, -40, 40);
-    fish.vy += (lift / 40) * STROKE_IMPULSE * 0.16;
+    fish.vy += (lift / 40) * STROKE_IMPULSE * VERTICAL_STROKE_LIFT;
 
-    const variation = 0.97 + 0.05 * Math.sin(this.elapsed * 0.9 + fish.phase * 7);
-    fish.strokeTimer = STROKE_INTERVAL_S * variation;
+    const variation = 0.9 + 0.12 * Math.sin(this.elapsed * 0.72 + fish.phase * 3.7);
+    fish.strokeTimer = fish.strokeInterval * variation;
   }
 
   private draw() {
@@ -749,6 +921,60 @@ function bodyOverlap(a: Fish, b: Fish) {
   const smaller = Math.min(ra.area, rb.area);
   if (smaller <= 0) return 0;
   return (width * height) / smaller;
+}
+
+/* Start turning before contact. Inside the field, keep pushing toward the nearest open water
+   without snapping the fish back to the boundary. */
+function findAvoidance(
+  x: number,
+  y: number,
+  obstacle: Obstacle,
+  reachX: number,
+  reachY: number,
+  range: number,
+): Avoidance | undefined {
+  const left = obstacle.left - reachX;
+  const right = obstacle.right + reachX;
+  const top = obstacle.top - reachY;
+  const bottom = obstacle.bottom + reachY;
+  const inside = x > left && x < right && y > top && y < bottom;
+
+  if (inside) {
+    const exits = [
+      { x: -1, y: 0, distance: x - left },
+      { x: 1, y: 0, distance: right - x },
+      { x: 0, y: -1, distance: y - top },
+      { x: 0, y: 1, distance: bottom - y },
+    ];
+    const nearest = exits.reduce((current, candidate) =>
+      candidate.distance < current.distance ? candidate : current,
+    );
+    return {
+      x: nearest.x,
+      y: nearest.y,
+      strength: 1 + Math.min(nearest.distance / range, 1),
+    };
+  }
+
+  const nearestX = clamp(x, left, right);
+  const nearestY = clamp(y, top, bottom);
+  const awayX = x - nearestX;
+  const awayY = y - nearestY;
+  const distance = Math.hypot(awayX, awayY);
+  if (distance >= range) return undefined;
+
+  if (distance > 0.001) {
+    return {
+      x: awayX / distance,
+      y: awayY / distance,
+      strength: 1 - distance / range,
+    };
+  }
+
+  if (x <= left) return { x: -1, y: 0, strength: 1 };
+  if (x >= right) return { x: 1, y: 0, strength: 1 };
+  if (y <= top) return { x: 0, y: -1, strength: 1 };
+  return { x: 0, y: 1, strength: 1 };
 }
 
 /* Nearest way out of an obstacle that has been grown by the solid body. */
