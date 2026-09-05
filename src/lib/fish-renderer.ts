@@ -1,5 +1,5 @@
 import { drawMosaicImage, glitchFromAge, type Glitch } from './mosaic-glitch';
-import { clipSets, type FishKind } from './fish-sprites';
+import { clipSets, swimClipIndex, type FishKind } from './fish-sprites';
 import { GLITCH_SEQUENCE, type Fish, type FishSimulation } from './fish-simulation';
 
 export function drawFishSchool(
@@ -31,7 +31,7 @@ function drawFish(
   glitch: Glitch,
 ) {
   const sheet = sheets[fish.config.kind];
-  const clip = clipSets[fish.config.kind][fish.clip];
+  const clip = clipSets[fish.config.kind][swimClipIndex(fish.swimPhase)];
   if (!context || !sheet || !clip) return;
 
   const drawnWidth = clip.width * fish.scale;

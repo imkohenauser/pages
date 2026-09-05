@@ -55,3 +55,12 @@ export const extent = [...maleClips, ...femaleClips].reduce(
 
 /* Width of the solid body in the first frame, used to size every frame from one number. */
 export const REFERENCE_BODY_WIDTH = 256;
+
+// Keep the sheet order and equal exposure; these poses do not justify invented in-between timing.
+const swimClipOrder = [0, 1, 2, 3, 4, 5, 6, 7] as const;
+
+/** Samples a normalized cycle without making its duration or thrust depend on the frame count. */
+export function swimClipIndex(swimPhase: number, order: readonly number[] = swimClipOrder) {
+  const phase = swimPhase - Math.floor(swimPhase);
+  return order[Math.floor(phase * order.length)] ?? 0;
+}

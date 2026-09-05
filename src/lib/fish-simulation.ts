@@ -1,4 +1,5 @@
-import { clipSets, extent, REFERENCE_BODY_WIDTH, type FishKind } from './fish-sprites';
+import { advanceSwimPhase } from './fish-swim-cycle';
+import { extent, REFERENCE_BODY_WIDTH, type FishKind } from './fish-sprites';
 
 export interface Obstacle {
   left: number;
@@ -33,20 +34,20 @@ export interface FishConfig {
   readonly pathRangeY: number;
   readonly pathRateY: number;
   readonly phase: number;
-  readonly strokeInterval: number;
-  readonly initialClip: number;
+  readonly swimCycleSeconds: number;
+  readonly swimCycleImpulse: number;
+  readonly initialSwimPhase: number;
 }
 
 export interface Fish {
   readonly config: FishConfig;
-  clip: number;
+  swimPhase: number;
   scale: number;
   x: number;
   y: number;
   vx: number;
   vy: number;
   heading: number;
-  strokeTimer: number;
   /* Rearms once the fish has cleared its neighbours, so a crossing can spark another glitch. */
   glitchArmed: boolean;
   glitchAt: number;
@@ -54,6 +55,7 @@ export interface Fish {
 
 /* Each fish follows its own deterministic current. Their ranges overlap so they still meet, but
    their different periods keep either fish from becoming the other's shadow. */
+// Cycle duration and impulse preserve the mean rate of two former strokes.
 const swimmers: readonly FishConfig[] = [
   {
     kind: 'male',
@@ -69,8 +71,9 @@ const swimmers: readonly FishConfig[] = [
     pathRangeY: 0.32,
     pathRateY: 0.19,
     phase: 0.2,
-    strokeInterval: 1.5,
-    initialClip: 0,
+    swimCycleSeconds: 2.7,
+    swimCycleImpulse: 110,
+    initialSwimPhase: 0,
   },
   {
     kind: 'female',
@@ -86,16 +89,15 @@ const swimmers: readonly FishConfig[] = [
     pathRangeY: 0.3,
     pathRateY: 0.145,
     phase: 2.25,
-    strokeInterval: 1.9,
-    initialClip: 2,
+    swimCycleSeconds: 3.42,
+    swimCycleImpulse: 110,
+    initialSwimPhase: 0.25,
   },
 ];
 
 const BODY_WIDTH_PX = 58;
 const NARROW_BODY_WIDTH_PX = 46;
 const NARROW_WIDTH_PX = 520;
-/* Each stroke is one push followed by a glide, and the glide is what damps the push out. */
-const STROKE_IMPULSE = 55;
 const HORIZONTAL_GLIDE_DRAG = 1.85;
 const VERTICAL_GLIDE_DRAG = 3;
 const HORIZONTAL_COHESION = 0.95;
@@ -145,14 +147,13 @@ export class FishSimulation {
   obstacles: Obstacle[] = [];
   school: Fish[] = swimmers.map((member) => ({
     config: member,
-    clip: member.initialClip,
+    swimPhase: member.initialSwimPhase,
     scale: 1,
     x: 0,
     y: 0,
     vx: 0,
     vy: 0,
     heading: -1,
-    strokeTimer: (member.phase % 1) * member.strokeInterval,
     glitchArmed: true,
     glitchAt: -1,
   }));
@@ -262,10 +263,9 @@ export class FishSimulation {
       }
       if (heading !== undefined) fish.heading = heading;
 
-      fish.strokeTimer -= delta;
-      if (fish.strokeTimer <= 0) {
-        this.beginStroke(fish, targetX, targetY);
-      }
+      const cycle = advanceSwimPhase(fish.swimPhase, delta, fish.config.swimCycleSeconds);
+      fish.swimPhase = cycle.swimPhase;
+      this.applySwimImpulse(fish, targetX, targetY, cycle.impulseFraction);
 
       let accelerationX = 0;
       let accelerationY = 0;
@@ -433,19 +433,14 @@ export class FishSimulation {
     fish.glitchAt = this.elapsed;
   }
 
-  /* A stroke is the only thing that changes the clip, so the pose holds for the whole glide. */
-  private beginStroke(fish: Fish, targetX: number, targetY: number) {
-    fish.clip = (fish.clip + 1) % clipSets[fish.config.kind].length;
-
-    /* Thrust leaves through the head. Distance only scales how hard the beat is. */
+  private applySwimImpulse(fish: Fish, targetX: number, targetY: number, fraction: number) {
+    // Integrating the phase profile avoids losing a beat when a frame crosses its boundary.
+    const impulse = fish.config.swimCycleImpulse * fraction;
     const ahead = Math.max(0, (targetX - fish.x) * fish.heading);
     const reach = Math.min(ahead / (REFERENCE_BODY_WIDTH * fish.scale), 1);
-    fish.vx += fish.heading * STROKE_IMPULSE * (0.4 + 0.6 * reach);
+    fish.vx += fish.heading * impulse * (0.4 + 0.6 * reach);
     const lift = clamp(targetY - fish.y, -40, 40);
-    fish.vy += (lift / 40) * STROKE_IMPULSE * VERTICAL_STROKE_LIFT;
-
-    const variation = 0.9 + 0.12 * Math.sin(this.elapsed * 0.72 + fish.config.phase * 3.7);
-    fish.strokeTimer = fish.config.strokeInterval * variation;
+    fish.vy += (lift / 40) * impulse * VERTICAL_STROKE_LIFT;
   }
 
 }
