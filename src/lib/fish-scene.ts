@@ -161,7 +161,7 @@ class FishScene extends HTMLElement {
     male.decoding = 'async';
     female.decoding = 'async';
     male.src = `${import.meta.env.BASE_URL}sprite-sheet/sacura-margaritacea_male_v2.webp`;
-    female.src = `${import.meta.env.BASE_URL}sprite-sheet/sacura-margaritacea_female_v1.webp`;
+    female.src = `${import.meta.env.BASE_URL}sprite-sheet/sacura-margaritacea_female_v2.webp`;
 
     try {
       await Promise.all([male.decode(), female.decode()]);

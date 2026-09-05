@@ -25,16 +25,16 @@ const maleClips: FishClip[] = [
   { x: 1086, y: 600, width: 362, height: 320, anchorX: 233, anchorY: 199, headX: 329, headY: 199 },
 ];
 
-// The female sheet retains its irregular Figma clip rectangles, excluding frame numbers.
+// Female v2 uses the same reading order, with independently aligned eyes.
 const femaleClips: FishClip[] = [
-  { x: 0, y: 130, width: 402, height: 330, anchorX: 253, anchorY: 173, headX: 349, headY: 172 },
-  { x: 402, y: 130, width: 376, height: 330, anchorX: 245, anchorY: 171, headX: 341, headY: 171 },
-  { x: 778, y: 130, width: 384, height: 330, anchorX: 245, anchorY: 172, headX: 341, headY: 172 },
-  { x: 1162, y: 130, width: 370, height: 330, anchorX: 230, anchorY: 173, headX: 326, headY: 173 },
-  { x: 0, y: 560, width: 392, height: 340, anchorX: 254, anchorY: 182, headX: 350, headY: 182 },
-  { x: 392, y: 560, width: 392, height: 340, anchorX: 251, anchorY: 187, headX: 347, headY: 187 },
-  { x: 784, y: 560, width: 354, height: 340, anchorX: 231, anchorY: 180, headX: 327, headY: 180 },
-  { x: 1138, y: 560, width: 394, height: 340, anchorX: 252, anchorY: 182, headX: 348, headY: 182 },
+  { x: 0, y: 60, width: 444, height: 350, anchorX: 302, anchorY: 174, headX: 398, headY: 174 },
+  { x: 444, y: 60, width: 443, height: 350, anchorX: 298, anchorY: 175, headX: 394, headY: 175 },
+  { x: 887, y: 60, width: 444, height: 350, anchorX: 295, anchorY: 175, headX: 391, headY: 175 },
+  { x: 1331, y: 60, width: 443, height: 350, anchorX: 290, anchorY: 174, headX: 386, headY: 174 },
+  { x: 0, y: 480, width: 444, height: 350, anchorX: 302, anchorY: 179, headX: 398, headY: 179 },
+  { x: 444, y: 480, width: 443, height: 350, anchorX: 299, anchorY: 177, headX: 395, headY: 177 },
+  { x: 887, y: 480, width: 444, height: 350, anchorX: 298, anchorY: 178, headX: 394, headY: 178 },
+  { x: 1331, y: 480, width: 443, height: 350, anchorX: 296, anchorY: 180, headX: 392, headY: 180 },
 ];
 
 export const clipSets: Record<FishKind, FishClip[]> = {
@@ -43,14 +43,16 @@ export const clipSets: Record<FishKind, FishClip[]> = {
 };
 
 // Normalize source body widths to the simulation's original 256px reference.
-export const spriteScale: Record<FishKind, number> = { male: 256 / 210, female: 1 };
+export const spriteScale: Record<FishKind, number> = { male: 256 / 210, female: 256 / 290 };
 
 /* How far the drawn fish reaches from its head, so the tail stays on the canvas. */
 export const extent = [
   ...maleClips.map((clip) => ({ ...clip, headX: clip.headX * spriteScale.male,
     headY: clip.headY * spriteScale.male, width: clip.width * spriteScale.male,
     height: clip.height * spriteScale.male })),
-  ...femaleClips,
+  ...femaleClips.map((clip) => ({ ...clip, headX: clip.headX * spriteScale.female,
+    headY: clip.headY * spriteScale.female, width: clip.width * spriteScale.female,
+    height: clip.height * spriteScale.female })),
 ].reduce(
   (current, clip) => ({
     left: Math.max(current.left, clip.headX),
