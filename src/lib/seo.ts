@@ -44,13 +44,18 @@ export function toAbsoluteUrl(value: string) {
   return absoluteUrl(value.startsWith('/') ? value : `/${value}`);
 }
 
-function documentSiteName() {
+export function documentSiteName() {
   return `${site.name} ${site.kanaName}`;
 }
 
 export function documentTitle(title?: string) {
   const siteName = documentSiteName();
-  return title ? `${title} — ${siteName}` : siteName;
+  return title ? `${title} — ${siteName}` : `${siteName} — ${site.title}`;
+}
+
+function siteEmail() {
+  const mailto = site.externalLinks.find((link) => link.url.startsWith('mailto:'));
+  return mailto ? mailto.url.slice('mailto:'.length) : undefined;
 }
 
 export function ogLocale(lang = site.lang) {
@@ -193,6 +198,7 @@ export function writingCollectionJsonLd(
 export function homeJsonLd() {
   const url = absoluteUrl('/');
   const personId = `${url}#person`;
+  const email = siteEmail();
 
   return {
     '@context': 'https://schema.org',
@@ -209,8 +215,11 @@ export function homeJsonLd() {
         '@type': 'Person',
         '@id': personId,
         name: site.name,
+        alternateName: 'Kohen',
+        jobTitle: site.title,
         url,
-        description: site.title,
+        description: site.bio,
+        ...(email ? { email } : {}),
         ...(site.sameAs.length > 0 ? { sameAs: [...site.sameAs] } : {}),
       },
       {
