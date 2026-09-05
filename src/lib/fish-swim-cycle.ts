@@ -1,6 +1,11 @@
 const PUSH_START = 0.125;
 const PUSH_END = 0.375;
 
+export function isSwimGliding(swimPhase: number) {
+  const beatPhase = swimPhase - Math.floor(swimPhase * 2) / 2;
+  return beatPhase < PUSH_START || beatPhase >= PUSH_END;
+}
+
 // Two equal beats share one cycle's impulse, regardless of sprite sampling.
 function cumulativeImpulse(phase: number) {
   const cycles = Math.floor(phase);

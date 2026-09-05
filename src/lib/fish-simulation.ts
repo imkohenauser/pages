@@ -1,4 +1,5 @@
 import { advanceSwimPhase } from './fish-swim-cycle';
+import { brakeFishTurn, updateFishTurn, type FishHeading, type FishTurnState } from './fish-turn';
 import { extent, REFERENCE_BODY_WIDTH, type FishKind } from './fish-sprites';
 
 export interface Obstacle {
@@ -39,7 +40,7 @@ export interface FishConfig {
   readonly initialSwimPhase: number;
 }
 
-export interface Fish {
+export interface Fish extends FishTurnState {
   readonly config: FishConfig;
   swimPhase: number;
   scale: number;
@@ -47,7 +48,7 @@ export interface Fish {
   y: number;
   vx: number;
   vy: number;
-  heading: number;
+  avoidanceHeading?: FishHeading;
   /* Rearms once the fish has cleared its neighbours, so a crossing can spark another glitch. */
   glitchArmed: boolean;
   glitchAt: number;
@@ -119,13 +120,13 @@ export const GLITCH_SEQUENCE = [
   { until: 0.28, mosaicPx: 8, dissolve: 0.18, scatter: 0.24, chromaPx: 1.5 },
 ] as const;
 const GLITCH_DURATION_S = GLITCH_SEQUENCE[GLITCH_SEQUENCE.length - 1].until;
-const MOVEMENT_FACING_THRESHOLD = 2;
 const POINTER_TURN_HYSTERESIS = 10;
 const SOFT_AVOIDANCE_RANGE = 80;
 const SOFT_AVOIDANCE_PUSH = 90;
 const SOFT_INWARD_VELOCITY_RETAIN = 0.45;
 const EDGE_AVOIDANCE_RANGE = 56;
 const AVOIDANCE_TURN_STRENGTH = 0.28;
+const AVOIDANCE_TURN_RELEASE = 0.16;
 const AVOIDANCE_IMPULSE_DAMP = 0.72;
 const EDGE_MARGIN = 6;
 
@@ -154,6 +155,10 @@ export class FishSimulation {
     vx: 0,
     vy: 0,
     heading: -1,
+    desiredHeading: -1,
+    headingRequestAge: 0,
+    turnMode: 'swimming',
+    recoveryAge: 0,
     glitchArmed: true,
     glitchAt: -1,
   }));
@@ -262,29 +267,31 @@ export class FishSimulation {
       );
 
       const towardPointerX = pointerX === undefined ? undefined : pointerX - fish.x;
-      const headingIntoAvoidance =
-        softAvoidance !== undefined &&
-        softAvoidance.x !== 0 &&
-        fish.heading * softAvoidance.x < 0 &&
-        softAvoidance.strength >= AVOIDANCE_TURN_STRENGTH;
-      let heading: number | undefined;
-      if (headingIntoAvoidance && softAvoidance) {
-        heading = softAvoidance.x > 0 ? 1 : -1;
+      // Hold the escape request independently of the displayed heading until the field clears.
+      const horizontalAvoidance = softAvoidance ? softAvoidance.x * softAvoidance.strength : 0;
+      if (Math.abs(horizontalAvoidance) >= AVOIDANCE_TURN_STRENGTH) {
+        fish.avoidanceHeading = horizontalAvoidance > 0 ? 1 : -1;
+      } else if (
+        fish.avoidanceHeading !== undefined &&
+        horizontalAvoidance * fish.avoidanceHeading < AVOIDANCE_TURN_RELEASE
+      ) {
+        fish.avoidanceHeading = undefined;
+      }
+      let heading: FishHeading = fish.heading;
+      if (fish.avoidanceHeading !== undefined) {
+        heading = fish.avoidanceHeading;
       } else if (Math.abs(targetX - fish.x) > POINTER_TURN_HYSTERESIS) {
         heading = targetX > fish.x ? 1 : -1;
-      } else if (Math.abs(fish.vx) > MOVEMENT_FACING_THRESHOLD) {
-        heading = fish.vx > 0 ? 1 : -1;
       } else if (
         towardPointerX !== undefined &&
         Math.abs(towardPointerX) > POINTER_TURN_HYSTERESIS
       ) {
         heading = towardPointerX > 0 ? 1 : -1;
       }
-      if (heading !== undefined) fish.heading = heading;
-
+      const propulsionGain = updateFishTurn(fish, heading, delta);
       const cycle = advanceSwimPhase(fish.swimPhase, delta, fish.config.swimCycleSeconds);
       fish.swimPhase = cycle.swimPhase;
-      this.applySwimImpulse(fish, targetX, targetY, cycle.impulseFraction, softAvoidance);
+      this.applySwimImpulse(fish, targetX, targetY, cycle.impulseFraction * propulsionGain, softAvoidance);
 
       let accelerationX = 0;
       let accelerationY = 0;
@@ -292,7 +299,7 @@ export class FishSimulation {
       const towardY = targetY - fish.y;
       /* Cohesion may trim speed; it must not drag the fish tail-first. */
       accelerationX +=
-        (towardX * fish.heading > 0 ? towardX : towardX * 0.15) * HORIZONTAL_COHESION;
+        (towardX * fish.heading > 0 ? towardX : towardX * 0.15) * HORIZONTAL_COHESION * propulsionGain;
       accelerationY += towardY * VERTICAL_COHESION;
 
       for (const other of this.school) {
@@ -321,6 +328,8 @@ export class FishSimulation {
         accelerationY += softAvoidance.y * SOFT_AVOIDANCE_PUSH * softAvoidance.strength;
       }
 
+      // Braking keeps external forces from accelerating the fish along its old heading.
+      if (fish.turnMode === 'braking' && accelerationX * fish.heading > 0) accelerationX = 0;
       fish.vx += accelerationX * delta;
       fish.vy += accelerationY * delta;
 
@@ -337,6 +346,7 @@ export class FishSimulation {
         }
       }
 
+      brakeFishTurn(fish, delta);
       const integratedX = integrateAxis(fish.x, fish.vx, delta, minX, maxX);
       const integratedY = integrateAxis(fish.y, fish.vy, delta, minY, maxY);
       fish.x = integratedX.position;
@@ -623,4 +633,3 @@ function findExit(x: number, y: number, obstacle: Obstacle, reachX: number, reac
   if (shortest === toTop) return { x: 0, y: -1, depth: toTop, span: reachY };
   return { x: 0, y: 1, depth: toBottom, span: reachY };
 }
-
