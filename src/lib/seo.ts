@@ -215,7 +215,7 @@ export function homeJsonLd() {
         '@type': 'Person',
         '@id': personId,
         name: site.name,
-        alternateName: [...site.alternateNames],
+        alternateName: 'Kohen',
         jobTitle: site.title,
         url,
         description: site.bio,
