@@ -2,7 +2,9 @@ import { FishSimulation, ATTRACTION_DURATION_S } from './fish-simulation';
 import { drawFishSchool } from './fish-renderer';
 import type { FishKind } from './fish-sprites';
 
-const MAX_DELTA_S = 0.05;
+const SIMULATION_STEP_S = 1 / 60;
+// Bound catch-up after a stalled frame without slowing normal 15–144Hz rendering.
+const MAX_DELTA_S = 0.1;
 const SWIM_BAND_HEIGHT_PX = 320;
 const OBSTACLE_PADDING = 20;
 const LOAD_MARGIN_PX = 400;
@@ -36,6 +38,7 @@ class FishScene extends HTMLElement {
   private animationFrame?: number;
   private resizeFrame?: number;
   private lastFrameAt?: number;
+  private pendingTime = 0;
   private connectionId = 0;
   private inView = false;
   private simulation = new FishSimulation();
@@ -243,6 +246,7 @@ class FishScene extends HTMLElement {
     if (!this.sheets || document.hidden || this.reducedMotionQuery?.matches) return;
 
     this.lastFrameAt = undefined;
+    this.pendingTime = 0;
     this.animationFrame = requestAnimationFrame(this.tick);
   }
 
@@ -309,6 +313,7 @@ class FishScene extends HTMLElement {
   private tick = (time: number) => {
     if (document.documentElement.dataset.siteLoader === 'active') {
       this.lastFrameAt = time;
+      this.pendingTime = 0;
       this.draw();
       this.animationFrame = requestAnimationFrame(this.tick);
       return;
@@ -317,8 +322,12 @@ class FishScene extends HTMLElement {
     const previous = this.lastFrameAt ?? time;
     this.lastFrameAt = time;
 
-    const delta = Math.min((time - previous) / 1000, MAX_DELTA_S);
-    if (delta > 0) this.step(delta);
+    const delta = Math.max(0, Math.min((time - previous) / 1000, MAX_DELTA_S));
+    this.pendingTime += delta;
+    // Keep avoidance, turns and swim impulses on the same clock at every refresh rate.
+    const steps = Math.floor((this.pendingTime + 1e-9) / SIMULATION_STEP_S);
+    for (let index = 0; index < steps; index += 1) this.step(SIMULATION_STEP_S);
+    this.pendingTime = Math.max(0, this.pendingTime - steps * SIMULATION_STEP_S);
     this.draw();
 
     this.animationFrame = requestAnimationFrame(this.tick);
