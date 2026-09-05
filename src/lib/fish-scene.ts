@@ -3,10 +3,8 @@ import { drawFishSchool } from './fish-renderer';
 import type { FishKind } from './fish-sprites';
 
 const MAX_DELTA_S = 0.05;
-const FALLBACK_BAND_PX = 148;
-const BAND_RISE_PX = 200;
+const SWIM_BAND_HEIGHT_PX = 320;
 const OBSTACLE_PADDING = 20;
-const DESKTOP_OBSTACLE_INSET = 18;
 const LOAD_MARGIN_PX = 400;
 const INTERACTIVE_SELECTOR = [
   'a',
@@ -138,8 +136,6 @@ class FishScene extends HTMLElement {
     this.hoverFineQuery = undefined;
     this.simulation.hoveredFish = undefined;
     this.simulation.attraction = undefined;
-    this.simulation.usesSoftContentAvoidance = false;
-    this.simulation.desktopContentBottom = undefined;
     this.removeAttribute('data-fish-scene-ready');
   }
 
@@ -206,22 +202,14 @@ class FishScene extends HTMLElement {
     if (rootRect.width <= 0) return;
 
     const boundaryRect = this.boundary.getBoundingClientRect();
-    const obstacleRootRect = this.obstacleRoot.getBoundingClientRect();
-    const swimStartRect = this.swimStart.getBoundingClientRect();
     const footerRect = this.footer.getBoundingClientRect();
     const usesDesktopBoundary = boundaryRect.width > rootRect.width + 1;
-    this.simulation.usesSoftContentAvoidance = usesDesktopBoundary;
     const bandLeft = usesDesktopBoundary ? 0 : rootRect.left;
-    const bandTop = usesDesktopBoundary
-      ? swimStartRect.top
-      : rootRect.top - BAND_RISE_PX;
+    const bandTop = footerRect.bottom - SWIM_BAND_HEIGHT_PX;
     const width = usesDesktopBoundary
       ? document.documentElement.clientWidth
       : rootRect.width;
-    const height = Math.max(FALLBACK_BAND_PX, footerRect.bottom - bandTop);
-    this.simulation.desktopContentBottom = usesDesktopBoundary
-      ? obstacleRootRect.bottom - bandTop + OBSTACLE_PADDING
-      : undefined;
+    const height = SWIM_BAND_HEIGHT_PX;
 
     const pixelRatio = Math.min(window.devicePixelRatio, 2);
     this.canvas.style.insetInlineStart = `${bandLeft - rootRect.left}px`;
@@ -232,20 +220,17 @@ class FishScene extends HTMLElement {
     this.canvas.height = Math.round(height * pixelRatio);
     this.context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
-    /* Desktop treats the content column as one barrier; mobile keeps the existing card barriers. */
-    const contentObstacles = usesDesktopBoundary
-      ? [this.obstacleRoot]
-      : [...this.obstacleRoot.querySelectorAll('[data-fish-scene-obstacle]')];
-    const obstaclePadding = usesDesktopBoundary
-      ? -DESKTOP_OBSTACLE_INSET
-      : OBSTACLE_PADDING;
+    /* Cards stay clickable; fish may swim over the column but steer around each card. */
+    const contentObstacles = [
+      ...this.obstacleRoot.querySelectorAll('[data-fish-scene-obstacle]'),
+    ];
     this.simulation.obstacles = contentObstacles
       .map((element) => element.getBoundingClientRect())
       .map((rect) => ({
-        left: rect.left - bandLeft - obstaclePadding,
-        top: rect.top - bandTop - obstaclePadding,
-        right: rect.right - bandLeft + obstaclePadding,
-        bottom: rect.bottom - bandTop + obstaclePadding,
+        left: rect.left - bandLeft - OBSTACLE_PADDING,
+        top: rect.top - bandTop - OBSTACLE_PADDING,
+        right: rect.right - bandLeft + OBSTACLE_PADDING,
+        bottom: rect.bottom - bandTop + OBSTACLE_PADDING,
       }));
 
     this.simulation.resize(width, height);

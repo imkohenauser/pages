@@ -67,8 +67,8 @@ const swimmers: readonly FishConfig[] = [
     pathCenterX: 0.5,
     pathRangeX: 0.42,
     pathRateX: 0.13,
-    pathCenterY: 0.54,
-    pathRangeY: 0.32,
+    pathCenterY: 0.72,
+    pathRangeY: 0.22,
     pathRateY: 0.19,
     phase: 0.2,
     swimCycleSeconds: 2.7,
@@ -85,8 +85,8 @@ const swimmers: readonly FishConfig[] = [
     pathCenterX: 0.5,
     pathRangeX: 0.4,
     pathRateX: 0.095,
-    pathCenterY: 0.48,
-    pathRangeY: 0.3,
+    pathCenterY: 0.68,
+    pathRangeY: 0.2,
     pathRateY: 0.145,
     phase: 2.25,
     swimCycleSeconds: 3.42,
@@ -121,10 +121,12 @@ export const GLITCH_SEQUENCE = [
 const GLITCH_DURATION_S = GLITCH_SEQUENCE[GLITCH_SEQUENCE.length - 1].until;
 const MOVEMENT_FACING_THRESHOLD = 2;
 const POINTER_TURN_HYSTERESIS = 10;
-const OBSTACLE_PUSH = 900;
-const SOFT_AVOIDANCE_RANGE = 72;
+const SOFT_AVOIDANCE_RANGE = 80;
 const SOFT_AVOIDANCE_PUSH = 90;
 const SOFT_INWARD_VELOCITY_RETAIN = 0.45;
+const EDGE_AVOIDANCE_RANGE = 56;
+const AVOIDANCE_TURN_STRENGTH = 0.28;
+const AVOIDANCE_IMPULSE_DAMP = 0.72;
 const EDGE_MARGIN = 6;
 
 export interface FishInput {
@@ -139,8 +141,6 @@ export class FishSimulation {
   height = 0;
   scale = 1;
   placed = false;
-  usesSoftContentAvoidance = false;
-  desktopContentBottom?: number;
   attraction?: Attraction;
   /* The fish the fine pointer is over, so a stay does not retrigger the sequence. */
   hoveredFish?: Fish;
@@ -249,9 +249,28 @@ export class FishSimulation {
       targetX = clamp(targetX, minX, maxX);
       targetY = clamp(targetY, minY, maxY);
 
+      let softAvoidance: Avoidance | undefined;
+      for (const obstacle of this.obstacles) {
+        softAvoidance = mergeAvoidance(
+          softAvoidance,
+          findAvoidance(fish.x, fish.y, obstacle, reachX, reachY, SOFT_AVOIDANCE_RANGE),
+        );
+      }
+      softAvoidance = mergeAvoidance(
+        softAvoidance,
+        findEdgeAvoidance(fish.x, fish.y, minX, maxX, minY, maxY, EDGE_AVOIDANCE_RANGE),
+      );
+
       const towardPointerX = pointerX === undefined ? undefined : pointerX - fish.x;
+      const headingIntoAvoidance =
+        softAvoidance !== undefined &&
+        softAvoidance.x !== 0 &&
+        fish.heading * softAvoidance.x < 0 &&
+        softAvoidance.strength >= AVOIDANCE_TURN_STRENGTH;
       let heading: number | undefined;
-      if (Math.abs(targetX - fish.x) > POINTER_TURN_HYSTERESIS) {
+      if (headingIntoAvoidance && softAvoidance) {
+        heading = softAvoidance.x > 0 ? 1 : -1;
+      } else if (Math.abs(targetX - fish.x) > POINTER_TURN_HYSTERESIS) {
         heading = targetX > fish.x ? 1 : -1;
       } else if (Math.abs(fish.vx) > MOVEMENT_FACING_THRESHOLD) {
         heading = fish.vx > 0 ? 1 : -1;
@@ -265,11 +284,10 @@ export class FishSimulation {
 
       const cycle = advanceSwimPhase(fish.swimPhase, delta, fish.config.swimCycleSeconds);
       fish.swimPhase = cycle.swimPhase;
-      this.applySwimImpulse(fish, targetX, targetY, cycle.impulseFraction);
+      this.applySwimImpulse(fish, targetX, targetY, cycle.impulseFraction, softAvoidance);
 
       let accelerationX = 0;
       let accelerationY = 0;
-      let softAvoidance: Avoidance | undefined;
       const towardX = targetX - fish.x;
       const towardY = targetY - fish.y;
       /* Cohesion may trim speed; it must not drag the fish tail-first. */
@@ -292,33 +310,6 @@ export class FishSimulation {
 
       /* Grow obstacles by the solid body, not the sprite clip, so transparent padding
          does not close the remaining corridor. */
-      for (const obstacle of this.obstacles) {
-        if (this.usesSoftContentAvoidance) {
-          const avoidance = findAvoidance(
-            fish.x,
-            fish.y,
-            obstacle,
-            reachX,
-            reachY,
-            SOFT_AVOIDANCE_RANGE,
-          );
-          if (
-            avoidance &&
-            (!softAvoidance || avoidance.strength > softAvoidance.strength)
-          ) {
-            softAvoidance = avoidance;
-          }
-          continue;
-        }
-
-        const exit = findExit(fish.x, fish.y, obstacle, reachX, reachY);
-        if (!exit) continue;
-
-        const strength = Math.min(exit.depth / Math.max(exit.span, 1), 1);
-        accelerationX += exit.x * OBSTACLE_PUSH * strength;
-        accelerationY += exit.y * OBSTACLE_PUSH * strength;
-      }
-
       if (softAvoidance) {
         const inwardAcceleration =
           accelerationX * softAvoidance.x + accelerationY * softAvoidance.y;
@@ -346,21 +337,24 @@ export class FishSimulation {
         }
       }
 
-      fish.x = clamp(fish.x + fish.vx * delta, minX, maxX);
-      fish.y = clamp(fish.y + fish.vy * delta, minY, maxY);
+      const integratedX = integrateAxis(fish.x, fish.vx, delta, minX, maxX);
+      const integratedY = integrateAxis(fish.y, fish.vy, delta, minY, maxY);
+      fish.x = integratedX.position;
+      fish.y = integratedY.position;
+      fish.vx = integratedX.velocity;
+      fish.vy = integratedY.velocity;
 
-      /* A stroke can still carry a fish into the text, so the text keeps the last word. */
-      if (!this.usesSoftContentAvoidance) {
-        for (const obstacle of this.obstacles) {
-          const exit = findExit(fish.x, fish.y, obstacle, reachX, reachY);
-          if (!exit) continue;
-
-          fish.x = clamp(fish.x + exit.x * exit.depth, minX, maxX);
-          fish.y = clamp(fish.y + exit.y * exit.depth, minY, maxY);
-          if (exit.x === 0) fish.vy = 0;
-          else fish.vx = 0;
-        }
-      }
+      /* A stroke can still carry a fish into a card, so the card keeps the last word. */
+      resolveObstaclePenetration(
+        fish,
+        this.obstacles,
+        reachX,
+        reachY,
+        minX,
+        maxX,
+        minY,
+        maxY,
+      );
     }
 
     /* Only the farther fish mosaics, so the nearer one stays intact through the crossing. */
@@ -381,18 +375,9 @@ export class FishSimulation {
   }
 
   private entryLaneY(fish: Fish, fallbackRatio: number) {
-    if (this.desktopContentBottom === undefined) {
-      return this.height * fallbackRatio;
-    }
-
     const minY = extent.top * fish.scale + EDGE_MARGIN;
     const maxY = Math.max(minY, this.height - extent.bottom * fish.scale - EDGE_MARGIN);
-    const bodyHeight = REFERENCE_BODY_WIDTH * fish.scale * BODY_HEIGHT_RATIO;
-    return clamp(
-      this.desktopContentBottom + bodyHeight / 2 + EDGE_MARGIN,
-      minY,
-      maxY,
-    );
+    return clamp(this.height * fallbackRatio, minY, maxY);
   }
 
   /* The canvas keeps pointer-events none so footer links stay clickable; hit-testing uses the page pointer. */
@@ -433,11 +418,24 @@ export class FishSimulation {
     fish.glitchAt = this.elapsed;
   }
 
-  private applySwimImpulse(fish: Fish, targetX: number, targetY: number, fraction: number) {
+  private applySwimImpulse(
+    fish: Fish,
+    targetX: number,
+    targetY: number,
+    fraction: number,
+    softAvoidance?: Avoidance,
+  ) {
     // Integrating the phase profile avoids losing a beat when a frame crosses its boundary.
     const impulse = fish.config.swimCycleImpulse * fraction;
     const ahead = Math.max(0, (targetX - fish.x) * fish.heading);
-    const reach = Math.min(ahead / (REFERENCE_BODY_WIDTH * fish.scale), 1);
+    let reach = Math.min(ahead / (REFERENCE_BODY_WIDTH * fish.scale), 1);
+    if (
+      softAvoidance &&
+      softAvoidance.x !== 0 &&
+      fish.heading * softAvoidance.x < 0
+    ) {
+      reach *= 1 - softAvoidance.strength * AVOIDANCE_IMPULSE_DAMP;
+    }
     fish.vx += fish.heading * impulse * (0.4 + 0.6 * reach);
     const lift = clamp(targetY - fish.y, -40, 40);
     fish.vy += (lift / 40) * impulse * VERTICAL_STROKE_LIFT;
@@ -447,6 +445,84 @@ export class FishSimulation {
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
+}
+
+function mergeAvoidance(
+  current: Avoidance | undefined,
+  candidate: Avoidance | undefined,
+): Avoidance | undefined {
+  if (!candidate) return current;
+  if (!current || candidate.strength > current.strength) return candidate;
+  return current;
+}
+
+function integrateAxis(
+  position: number,
+  velocity: number,
+  delta: number,
+  min: number,
+  max: number,
+) {
+  const next = position + velocity * delta;
+  if (next < min) {
+    return { position: min, velocity: Math.max(velocity, 0) };
+  }
+  if (next > max) {
+    return { position: max, velocity: Math.min(velocity, 0) };
+  }
+  return { position: next, velocity };
+}
+
+function resolveObstaclePenetration(
+  fish: Fish,
+  obstacles: Obstacle[],
+  reachX: number,
+  reachY: number,
+  minX: number,
+  maxX: number,
+  minY: number,
+  maxY: number,
+) {
+  for (const obstacle of obstacles) {
+    const exit = findExit(fish.x, fish.y, obstacle, reachX, reachY);
+    if (!exit) continue;
+
+    fish.x = clamp(fish.x + exit.x * exit.depth, minX, maxX);
+    fish.y = clamp(fish.y + exit.y * exit.depth, minY, maxY);
+    if (exit.x !== 0) {
+      fish.vx = exit.x > 0 ? Math.max(fish.vx, 0) : Math.min(fish.vx, 0);
+    }
+    if (exit.y !== 0) {
+      fish.vy = exit.y > 0 ? Math.max(fish.vy, 0) : Math.min(fish.vy, 0);
+    }
+  }
+}
+
+function findEdgeAvoidance(
+  x: number,
+  y: number,
+  minX: number,
+  maxX: number,
+  minY: number,
+  maxY: number,
+  range: number,
+): Avoidance | undefined {
+  const edges = [
+    { x: 1, y: 0, distance: x - minX },
+    { x: -1, y: 0, distance: maxX - x },
+    { x: 0, y: 1, distance: y - minY },
+    { x: 0, y: -1, distance: maxY - y },
+  ];
+
+  let strongest: Avoidance | undefined;
+  for (const edge of edges) {
+    if (edge.distance >= range) continue;
+    const strength = 1 - edge.distance / range;
+    if (!strongest || strength > strongest.strength) {
+      strongest = { x: edge.x, y: edge.y, strength };
+    }
+  }
+  return strongest;
 }
 
 function bodyRect(fish: Fish) {
