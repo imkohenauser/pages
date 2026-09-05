@@ -5,12 +5,13 @@ import Hero from '../components/home/Hero.astro';
 import JsonLd from '../components/JsonLd.astro';
 import ProjectsSection from '../components/home/ProjectsSection.astro';
 import WritingSection from '../components/home/WritingSection.astro';
-import { getWriting } from '../lib/writing';
+import { getWriting, pickLatestWritingByLabels } from '../lib/writing';
 import { getProjects } from '../lib/projects';
 import { site } from '../data/site';
 import { homeJsonLd } from '../lib/seo';
 
 const writing = await getWriting();
+const homeWriting = pickLatestWritingByLabels(writing);
 const projects = await getProjects();
 ---
 
@@ -18,7 +19,10 @@ const projects = await getProjects();
   <JsonLd slot="head" data={homeJsonLd()} />
   <Hero title={site.title} description={site.bio} />
   <div id="home-sections" class="section-container">
-    <WritingSection writing={writing} />
+    <WritingSection
+      writing={homeWriting}
+      hasMore={writing.length > homeWriting.length}
+    />
     <ProjectsSection projects={projects} />
   </div>
   <FishScene

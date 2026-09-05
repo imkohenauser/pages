@@ -1,5 +1,6 @@
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { assertContentSlug } from './content-id';
+import type { WritingLabel } from './writing-label';
 
 export type Writing = CollectionEntry<'writing'>;
 
@@ -15,6 +16,25 @@ export async function getWriting() {
     assertWritingSlug(entry.id);
   }
   return writing.sort(
+    (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf(),
+  );
+}
+
+export const homeWritingLabels = [
+  'blog',
+  'zenn',
+  'medium',
+] as const satisfies readonly WritingLabel[];
+
+export function pickLatestWritingByLabels(
+  writing: Writing[],
+  labels: readonly WritingLabel[] = homeWritingLabels,
+) {
+  const selected = labels
+    .map((label) => writing.find((entry) => entry.data.label === label))
+    .filter((entry): entry is Writing => entry !== undefined);
+
+  return selected.sort(
     (a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf(),
   );
 }

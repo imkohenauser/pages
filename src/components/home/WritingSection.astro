@@ -8,20 +8,17 @@ import type { Writing } from '../../lib/writing';
 
 interface Props {
   writing: Writing[];
+  hasMore: boolean;
 }
 
-const DISPLAY_LIMIT = 3;
-
-const { writing } = Astro.props;
-const visibleWriting = writing.slice(0, DISPLAY_LIMIT);
-const hasMore = writing.length > DISPLAY_LIMIT;
+const { writing, hasMore } = Astro.props;
 ---
 
 <Section title="Writing" titleId="writing-title">
   <List
     variant="writing"
     headingLevel={3}
-    items={visibleWriting.map(writingListItem)}
+    items={writing.map(writingListItem)}
   />
   {
     hasMore && (
