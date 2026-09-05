@@ -8,7 +8,7 @@ import WritingSection from '../components/home/WritingSection.astro';
 import { getWriting } from '../lib/writing';
 import { getProjects } from '../lib/projects';
 import { site } from '../data/site';
-import { homeJsonLd } from '../lib/seo';
+import { documentSiteName, homeJsonLd } from '../lib/seo';
 
 const writing = await getWriting();
 const projects = await getProjects();
@@ -16,7 +16,7 @@ const projects = await getProjects();
 
 <Base description={site.bio}>
   <JsonLd slot="head" data={homeJsonLd()} />
-  <Hero title={site.title} description={site.bio} />
+  <Hero title={documentSiteName()} description={site.bio} />
   <div id="home-sections" class="section-container">
     <WritingSection writing={writing} />
     <ProjectsSection projects={projects} />
