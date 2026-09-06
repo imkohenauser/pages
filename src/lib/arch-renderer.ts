@@ -31,7 +31,7 @@ const ATLAS_WIDTH = 1448;
 const ATLAS_HEIGHT = 1086;
 /* Bound GPU work during sustained tapping without interrupting horses already in flight. */
 const MAX_CONCURRENT_RUNS = 6;
-const TAIL_STEP_MS = 120;
+const TAIL_STEP_MS = 172;
 const MIN_MOSAIC_CELLS = 3;
 const MAX_PIXEL_RATIO = 2;
 const MAX_DRAWING_BUFFER_SIZE = 4096;
@@ -103,7 +103,7 @@ const clips = [...approachClips, ...exitClips];
 
 /* Fixed uneven step durations, so the run reads as sampled frames rather than a smooth trajectory.
    Never randomise these at runtime. The exit shortens as the horse accelerates past the viewer. */
-const stepDurationsMs = [230, 180, 180, 260, 150, 150, 230, 140, 140, 260, 190, 220, 170, 145, 125, 110];
+const stepDurationsMs = [330, 259, 259, 373, 216, 216, 330, 201, 201, 373, 273, 316, 244, 208, 179, 158];
 
 /* Indexed by age in steps: 0 is the live frame, later entries are echoes left behind it. */
 const echoSteps: EchoStep[] = [
