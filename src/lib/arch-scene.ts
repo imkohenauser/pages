@@ -1,3 +1,4 @@
+import { HORSE_SPRITE } from './horse-motion';
 import type { ArchRenderer } from './arch-renderer';
 
 /* Long enough that the run starts after the page has settled instead of during the first paint. */
@@ -7,7 +8,6 @@ const REPLAY_COOLDOWN_MS = 150;
 const INITIAL_PLAY_MAX_SCROLL_PX = 48;
 /* Fractional scroll positions can stop just above zero, so use a small tolerance. */
 const PAGE_TOP_MAX_SCROLL_PX = 1;
-const HORSE_SPRITE = 'sprite-sheet/white-horse_v1.webp';
 
 type PendingPlay = 'initial' | 'replay';
 

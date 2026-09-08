@@ -30,7 +30,7 @@ function writingSitemapFields(filePath: string) {
 }
 
 function excludedWritingSlugs() {
-  return globSync('**/*.md', { cwd: writingDir }).flatMap((entry) => {
+  return globSync('**/*.{md,mdx}', { cwd: writingDir }).flatMap((entry) => {
     const data = writingSitemapFields(join(writingDir, entry));
     return data.noindex || data.canonicalUrl ? [contentEntryId(entry)] : [];
   });

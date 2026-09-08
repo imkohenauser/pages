@@ -1,4 +1,5 @@
 ---
+import { articleMarkdown } from '../lib/article-markdown';
 import { render } from 'astro:content';
 import ArticleActions from '../components/ArticleActions.astro';
 import JsonLd from '../components/JsonLd.astro';
@@ -30,7 +31,7 @@ const locale = writing.data.lang === 'ja' ? 'ja-JP' : writing.data.lang;
 const format = new Intl.DateTimeFormat(locale);
 const modifiedAt = writingModifiedAt(writing);
 const showModified = modifiedAt.valueOf() !== writing.data.publishedAt.valueOf();
-const body = writing.body ?? '';
+const body = articleMarkdown(writing.body ?? '', writing.filePath);
 const minutes = readingMinutes(body, writing.data.lang);
 const canonicalUrl = writingCanonicalUrl(writing);
 const imageDimensions = writingImageDimensions(writing);

@@ -48,7 +48,7 @@ const writingLabelExternalUrlRefine = {
 
 const markdownLoader = (base: string) =>
   glob({
-    pattern: '**/*.md',
+    pattern: '**/*.{md,mdx}',
     base,
     retainBody: true,
     generateId: ({ entry }) => contentEntryId(entry),
