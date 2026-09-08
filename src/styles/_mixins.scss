@@ -51,12 +51,11 @@ $breakpoints: (
   }
 }
 
-// Photoshop-style transparency floor: 8px cells in a 16px tile.
 @mixin transparency-checker {
-  background-color: var(--neutral-200);
+  background-color: var(--neutral-100);
   background-image: repeating-conic-gradient(
-    var(--neutral-300) 0% 25%,
-    var(--neutral-200) 0% 50%
+    var(--neutral-200) 0% 25%,
+    var(--neutral-100) 0% 50%
   );
   background-size: rem(16) rem(16);
 }
