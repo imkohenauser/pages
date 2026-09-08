@@ -6,6 +6,9 @@ export type IconName =
   | 'github'
   | 'email'
   | 'search'
-  | 'x';
+  | 'x'
+  | 'play'
+  | 'pause'
+  | 'rotate-clockwise';
 
 export type HeaderIconName = Extract<IconName, 'email' | 'github' | 'x'>;

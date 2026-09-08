@@ -1,6 +1,7 @@
 ---
 import { HORSE_SPRITE, runCycle } from '../../lib/horse-motion';
 import { path } from '../../lib/path';
+import Icon from '../Icon.astro';
 const first = runCycle[0];
 ---
 
@@ -13,8 +14,29 @@ const first = runCycle[0];
       <canvas class="horse-run-demo__canvas" width="724" height="828" role="img" aria-label="白馬の4コマの走り" hidden data-horse-run-canvas></canvas>
     </div>
     <div class="horse-run-demo__controls">
-      <button class="horse-run-demo__button" type="button" disabled data-horse-run-play>再生</button>
-      <button class="horse-run-demo__button" type="button" disabled data-horse-run-reset>先頭に戻す</button>
+      <button
+        class="horse-run-demo__button"
+        type="button"
+        disabled
+        aria-pressed="false"
+        data-horse-run-play
+      >
+        <span class="horse-run-demo__icon" aria-hidden="true">
+          <span class="horse-run-demo__icon-glyph horse-run-demo__icon-glyph--play">
+            <Icon name="play" />
+          </span>
+          <span class="horse-run-demo__icon-glyph horse-run-demo__icon-glyph--pause">
+            <Icon name="pause" />
+          </span>
+        </span>
+        <span class="horse-run-demo__label" data-horse-run-play-label>再生する</span>
+      </button>
+      <button class="horse-run-demo__button" type="button" disabled data-horse-run-reset>
+        <span class="horse-run-demo__icon" aria-hidden="true">
+          <Icon name="rotate-clockwise" />
+        </span>
+        <span class="horse-run-demo__label">先頭へ戻る</span>
+      </button>
     </div>
     <figcaption>固定位置で足運びを繰り返すデモ。音はありません。</figcaption>
     <p class="horse-run-demo__status" role="status" data-horse-run-status>再生には JavaScript が必要です。</p>
@@ -22,6 +44,8 @@ const first = runCycle[0];
 </horse-run-demo>
 
 <style lang="scss">
+  @use "tools" as *;
+
   .horse-run-demo {
     display: block;
     margin-block: var(--space-8);
@@ -65,24 +89,98 @@ const first = runCycle[0];
   }
 
   .horse-run-demo__button {
-    min-height: 44px;
-    padding: var(--space-2) var(--space-4);
-    font: inherit;
+    display: inline-flex;
+    gap: var(--space-1\.5);
+    align-items: center;
+    padding: var(--space-1\.5) var(--space-2);
+    padding-right: var(--space-3);
+    font-size: var(--text-xs);
+    line-height: rem(20);
     color: var(--color-text);
-    background: var(--color-canvas);
-    border: 1px solid var(--color-border-strong);
-    border-radius: var(--radius-1\.5);
     cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
+    background: var(--color-canvas);
+    border: rem(1) solid var(--color-border);
+    border-radius: var(--radius-1\.5);
+    -webkit-tap-highlight-color: transparent;
+
+    @include motion-safe {
+      transition: transform var(--motion-material-release) ease-out;
+    }
+
+    @include hover {
+      &:hover:not(:disabled) .horse-run-demo__label {
+        color: var(--color-link);
+      }
+    }
 
     &:focus-visible {
-      outline: 3px solid var(--color-focus);
-      outline-offset: 2px;
+      outline: rem(3) solid var(--color-focus);
+      outline-offset: rem(2);
+
+      @media (forced-colors: active) {
+        outline: rem(2) solid CanvasText;
+      }
     }
 
     &:disabled {
-      opacity: 0.6;
       cursor: default;
+      opacity: 0.6;
     }
+  }
+
+  .horse-run-demo__button[data-horse-run-pressed] {
+    @include motion-safe {
+      transform: scale(0.97);
+      transition-duration: var(--motion-material-press);
+    }
+  }
+
+  .horse-run-demo__icon {
+    position: relative;
+    flex-shrink: 0;
+    width: rem(16);
+    height: rem(16);
+    color: var(--neutral-800);
+
+    :global(svg) {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .horse-run-demo__icon-glyph {
+    position: absolute;
+    inset: 0;
+
+    @include motion-safe {
+      transition:
+        transform var(--motion-material-press) ease-out,
+        opacity var(--motion-material-release) ease-out;
+    }
+  }
+
+  .horse-run-demo__icon-glyph--pause {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  .horse-run-demo__button[data-horse-run-playing] .horse-run-demo__icon-glyph--play {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  .horse-run-demo__button[data-horse-run-playing] .horse-run-demo__icon-glyph--pause {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .horse-run-demo__label {
+    white-space: nowrap;
+
+    @include hover-color-transition;
   }
 
   .horse-run-demo__status {

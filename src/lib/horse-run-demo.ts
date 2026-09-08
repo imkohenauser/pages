@@ -1,4 +1,5 @@
 import { runCycle } from './horse-motion';
+import { attachPressState } from './press-state';
 
 const cycleDuration = runCycle.reduce((sum, frame) => sum + frame.durationMs, 0);
 
@@ -10,6 +11,7 @@ class HorseRunDemo extends HTMLElement {
   private context?: CanvasRenderingContext2D;
   private image?: HTMLImageElement;
   private playButton?: HTMLButtonElement;
+  private playLabel?: HTMLElement;
   private status?: HTMLElement;
   private animation?: number;
   private elapsed = 0;
@@ -22,12 +24,15 @@ class HorseRunDemo extends HTMLElement {
     if (this.controller) return;
     const canvas = this.querySelector('[data-horse-run-canvas]');
     const play = this.querySelector('[data-horse-run-play]');
+    const playLabel = this.querySelector('[data-horse-run-play-label]');
     const reset = this.querySelector('[data-horse-run-reset]');
     const status = this.querySelector('[data-horse-run-status]');
     if (!(canvas instanceof HTMLCanvasElement) || !(play instanceof HTMLButtonElement) ||
-        !(reset instanceof HTMLButtonElement) || !(status instanceof HTMLElement)) return;
+        !(playLabel instanceof HTMLElement) || !(reset instanceof HTMLButtonElement) ||
+        !(status instanceof HTMLElement)) return;
     this.canvas = canvas;
     this.playButton = play;
+    this.playLabel = playLabel;
     this.status = status;
     this.controller = new AbortController();
     const { signal } = this.controller;
@@ -39,6 +44,8 @@ class HorseRunDemo extends HTMLElement {
     };
     preference();
     reset.disabled = false;
+    attachPressState(play, play, 'data-horse-run-pressed', signal);
+    attachPressState(reset, reset, 'data-horse-run-pressed', signal);
     this.motion.addEventListener('change', preference, { signal });
     play.addEventListener('click', () => {
       if (this.animation !== undefined) this.pause();
@@ -96,11 +103,11 @@ class HorseRunDemo extends HTMLElement {
         return;
       }
       this.startedAt = performance.now() - this.elapsed;
-      this.playButton.textContent = '一時停止';
+      this.setPlaying(true);
       this.message('再生中');
       this.animation = requestAnimationFrame(this.tick);
     } catch {
-      if (!signal.aborted) this.message('再生できませんでした。再生ボタンで再試行できます。');
+      if (!signal.aborted) this.message('再生できませんでした。「再生する」で再試行できます。');
     } finally {
       if (!signal.aborted) this.playButton.disabled = this.motion?.matches ?? false;
     }
@@ -120,7 +127,13 @@ class HorseRunDemo extends HTMLElement {
       this.elapsed = performance.now() - this.startedAt;
       this.message(this.pausedMessage());
     }
-    if (this.playButton) this.playButton.textContent = '再生';
+    this.setPlaying(false);
+  }
+
+  private setPlaying(playing: boolean) {
+    this.playButton?.toggleAttribute('data-horse-run-playing', playing);
+    this.playButton?.setAttribute('aria-pressed', playing ? 'true' : 'false');
+    if (this.playLabel) this.playLabel.textContent = playing ? '一時停止' : '再生する';
   }
 
   private draw(elapsed: number) {
