@@ -31,6 +31,8 @@ const stages = [
   </div>
 </horse-echo-diagram>
 <style lang="scss">
+  @use "tools" as *;
+
   .horse-echo-diagram {
     display: block;
     margin-block: var(--space-8);
@@ -67,7 +69,7 @@ const stages = [
   .horse-echo-diagram__stage {
     display: grid;
     overflow: hidden;
-    background: var(--neutral-700);
+    @include transparency-checker;
     border-radius: var(--radius-2);
   }
   .horse-echo-diagram__scene,

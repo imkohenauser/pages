@@ -15,11 +15,13 @@ import { path } from '../../lib/path';
   <figcaption>全体：1,448 × 1,086px。青枠は9〜12コマ目、黄色の枠はコードで切り出す9コマ目（x: 0、y: 672、幅: 362、高さ: 414px）。</figcaption>
 </figure>
 <style lang="scss">
+  @use "tools" as *;
+
   .horse-sprite-diagram__image {
     display: block;
     width: 100%;
     height: auto;
-    background: var(--neutral-700);
+    @include transparency-checker;
     border-radius: var(--radius-2);
   }
 </style>

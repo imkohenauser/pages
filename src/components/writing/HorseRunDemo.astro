@@ -63,7 +63,7 @@ const first = runCycle[0];
     place-items: center;
     height: clamp(260px, 55vw, 400px);
     overflow: hidden;
-    background: var(--neutral-700, #52525b);
+    @include transparency-checker;
     border-radius: var(--radius-2);
   }
 

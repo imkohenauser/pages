@@ -50,3 +50,13 @@ $breakpoints: (
     transition: color var(--motion-hover-settle) ease-out;
   }
 }
+
+// Photoshop-style transparency floor: 8px cells in a 16px tile.
+@mixin transparency-checker {
+  background-color: var(--neutral-200);
+  background-image: repeating-conic-gradient(
+    var(--neutral-300) 0% 25%,
+    var(--neutral-200) 0% 50%
+  );
+  background-size: rem(16) rem(16);
+}

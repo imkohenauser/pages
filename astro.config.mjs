@@ -63,6 +63,7 @@ export default defineConfig({
         codePaddingInline: '1rem',
         frames: {
           frameBoxShadowCssValue: 'none',
+          editorActiveTabIndicatorTopColor: 'var(--color-link)',
         },
       },
     }),
