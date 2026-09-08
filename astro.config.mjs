@@ -49,7 +49,7 @@ export default defineConfig({
   ],
   integrations: [
     astroExpressiveCode({
-      themes: ['github-dark'],
+      themes: ['github-light'],
       frames: {
         showCopyToClipboardButton: true,
       },

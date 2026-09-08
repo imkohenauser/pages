@@ -1,0 +1,91 @@
+---
+import { HORSE_SPRITE, approachClips } from '../../lib/horse-motion';
+import { path } from '../../lib/path';
+const stages = [
+  { step: 3, label: '1. アーチの内側' },
+  { step: 7, label: '2. 手前へ接近' },
+  { step: 11, label: '3. 拡大と残像' },
+];
+---
+<horse-echo-diagram class="horse-echo-diagram" data-horse-echo-source={path(HORSE_SPRITE)}>
+  <div class="horse-echo-diagram__controls">
+    <label><input type="checkbox" checked disabled data-horse-echo-toggle /> 残像あり</label>
+    <span role="status" data-horse-echo-status>静止画で3つの段階を表示しています。</span>
+  </div>
+  <div class="horse-echo-diagram__stages">
+    {stages.map(({ step, label }) => {
+      const clip = approachClips[step];
+      return <figure class="horse-echo-diagram__figure">
+        <div class="horse-echo-diagram__stage">
+          <svg class="horse-echo-diagram__scene" viewBox="0 0 1000 1277" role="img" aria-label={label}>
+            <path d="M30 940V260A220 220 0 0 1 470 260V940Z" fill="#262626" stroke="#a3a3a3" stroke-width="4" />
+            <svg x={clip.x} y={clip.y} width={clip.width} height={clip.height} viewBox={`${clip.atlasX} ${clip.atlasY} ${clip.atlasWidth} ${clip.atlasHeight}`} overflow="hidden" data-horse-echo-fallback>
+              <image href={path(HORSE_SPRITE)} width="1448" height="1086" />
+            </svg>
+          </svg>
+          <canvas class="horse-echo-diagram__canvas" width="1000" height="1277" data-horse-echo-step={step} hidden aria-hidden="true"></canvas>
+        </div>
+        <figcaption>{label}</figcaption>
+      </figure>;
+    })}
+  </div>
+</horse-echo-diagram>
+<style lang="scss">
+  .horse-echo-diagram {
+    display: block;
+    margin-block: var(--space-8);
+  }
+  .horse-echo-diagram__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    margin-block-end: var(--space-3);
+    font-size: var(--text-sm);
+
+    label {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      min-height: 44px;
+      cursor: pointer;
+    }
+    input:focus-visible {
+      outline: 3px solid var(--color-focus);
+      outline-offset: 3px;
+    }
+  }
+  .horse-echo-diagram__stages {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-3);
+
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+    }
+  }
+  .horse-echo-diagram__figure {
+    margin: 0;
+    min-width: 0;
+  }
+  .horse-echo-diagram__stage {
+    display: grid;
+    overflow: hidden;
+    background: var(--neutral-700);
+    border-radius: var(--radius-2);
+  }
+  .horse-echo-diagram__scene,
+  .horse-echo-diagram__canvas {
+    grid-area: 1 / 1;
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .horse-echo-diagram [hidden] {
+    display: none;
+  }
+</style>
+<script>
+  import { defineHorseEchoDiagram } from '../../lib/horse-echo-diagram';
+  defineHorseEchoDiagram();
+</script>

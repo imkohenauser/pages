@@ -7,6 +7,9 @@ lang: ja
 draft: false
 ---
 
+import HorseSpriteDiagram from '../../../components/writing/HorseSpriteDiagram.astro';
+import HorseTimingDiagram from '../../../components/writing/HorseTimingDiagram.astro';
+import HorseEchoDiagram from '../../../components/writing/HorseEchoDiagram.astro';
 import HorseRunDemo from '../../../components/writing/HorseRunDemo.astro';
 
 トップページでは、白馬がアーチの奥から現れ、こちらに向かって駆けてきます。滑らかにつながる映像ではなく、姿勢が一枚ずつ切り替わり、その後ろに残像が残る表現です。
@@ -21,11 +24,13 @@ import HorseRunDemo from '../../../components/writing/HorseRunDemo.astro';
 
 再生ボタンで開始し、一時停止するとその姿勢で止まります。「先頭に戻す」で最初の姿勢に戻せます。画面外へスクロールしたときは停止します。
 
-これは足運びを観察するためのデモです。トップページにある接近・拡大・残像は省き、Canvas 2D でスプライトの切り替えだけを描いています。
+これは足運びを観察するためのデモです。トップページにある接近・拡大・残像は省き、Canvas 2D API でスプライトの切り替えだけを描いています。
 
 ## 一枚の画像から姿勢を取り出す
 
 素材は、12枚の姿勢を一枚にまとめた WebP のスプライトシートです。各コマの切り出し位置と寸法を指定し、必要な領域だけを表示します。
+
+<HorseSpriteDiagram />
 
 デモで使う4コマは、画像の下段に並んでいます。各領域は幅362px、高さ414pxです。次のコードは、先頭の姿勢を描く部分を抜粋したものです。
 
@@ -45,6 +50,10 @@ context.drawImage(
 
 このデモが取り出している区間の表示時間は、順に201、373、273、316ミリ秒です。一周は1,163ミリ秒で、2コマ目に少し長い間があります。
 
+<HorseTimingDiagram />
+
+2つ目の姿勢を長く見せることで、次の足運びに移る前に短い「ため」が生まれます。等間隔の切り替えよりも、ひとまとまりの拍として感じられる間を作っています。
+
 ```ts title="9〜12コマ目の表示時間"
 const durationsMs = [201, 373, 273, 316];
 const cycleDuration = durationsMs.reduce((sum, value) => sum + value, 0);
@@ -63,9 +72,13 @@ const frameIndex = durationsMs.findIndex((duration) => {
 
 トップページの描画には three.js を使っています。姿勢の切り替えに加えて、コマごとの位置と大きさを変えることで、奥から手前へ近づく動きを作ります。アーチの奥にいる区間では、ステンシルによって見える範囲を制限しています。
 
+下の3枚は、トップページと同じ描画処理で取り出した静止画です。アーチの輪郭を補助線として添え、移動と拡大が分かるよう同じ範囲を表示しています。「残像あり」を切り替えると、同じ姿勢・位置のまま残像の有無を比較できます。
+
+<HorseEchoDiagram />
+
 過去の姿勢はすぐに消さず、時間の断片として後ろに残します。古くなるにつれて透明度を下げ、モザイク、色のずれ、規則的なディザによる欠落を加えています。この残像が、サイトの「Frame Echo」の表現です。
 
-乱数で毎回違う崩れ方にするのではなく、コマと経過段階に対応する値を使っています。足運びも残像も、同じ条件で再生すれば同じ順序で進みます。
+残像の崩れ方は、再生ごとの乱数では決めていません。コマ番号と、残像が何段階古いかから値を計算するため、同じ条件では同じパターンになります。
 
 ## ソースコード
 

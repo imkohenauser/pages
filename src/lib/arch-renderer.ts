@@ -163,6 +163,7 @@ export class ArchRenderer {
   private canvasHeight = 0;
   private designScale = 1;
   private extended = false;
+  private echoes = true;
 
   constructor(canvas: HTMLCanvasElement, host: HTMLElement, horseImage: HTMLImageElement) {
     this.canvas = canvas;
@@ -264,7 +265,10 @@ export class ArchRenderer {
 
   play(delayMs = 0) {
     if (document.hidden || this.runs.length >= MAX_CONCURRENT_RUNS) return;
+    this.createRun(delayMs);
+  }
 
+  private createRun(delayMs: number) {
     const scene = this.scene;
     const texture = this.texture;
     const geometry = this.horseGeometry;
@@ -296,6 +300,30 @@ export class ArchRenderer {
     this.host.removeAttribute('data-arch-scene-running');
     this.host.removeAttribute('data-arch-scene-frame');
     if (render) this.render();
+  }
+
+  // Article stills use the production shader and poses in a fixed design viewport.
+  snapshot(step: number, echoes: boolean) {
+    this.stop(false);
+    this.echoes = echoes;
+    this.designScale = 1;
+    this.canvasWidth = 1000;
+    this.canvasHeight = APPROACH_SCENE_HEIGHT;
+    this.renderer.setPixelRatio(1);
+    this.renderer.setSize(this.canvasWidth, this.canvasHeight, false);
+    this.camera.right = this.canvasWidth;
+    this.camera.bottom = this.canvasHeight;
+    this.camera.updateProjectionMatrix();
+    this.maskMesh.scale.set(1, 1, 1);
+    // The downward-facing snapshot camera reverses the mask winding.
+    this.maskMaterial.side = DoubleSide;
+    this.createRun(0);
+    if (this.animationFrame !== undefined) cancelAnimationFrame(this.animationFrame);
+    this.animationFrame = undefined;
+    for (const run of this.runs) run.visibleStep = step;
+    this.applyRuns();
+    this.render();
+    this.host.removeAttribute('data-arch-scene-running');
   }
 
   dispose() {
@@ -386,7 +414,7 @@ export class ArchRenderer {
       run.meshes.forEach((mesh, index) => {
         const clip = clips[index];
         const echo = run.visibleStep === undefined ? undefined : echoSteps[run.visibleStep - index];
-        mesh.visible = Boolean(clip && echo);
+        mesh.visible = Boolean(clip && echo && (this.echoes || index === run.visibleStep));
         if (!clip || !echo) return;
 
         /* Mosaic and chroma are sized against the drawn width so they stay the same on screen

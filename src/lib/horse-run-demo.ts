@@ -35,7 +35,7 @@ class HorseRunDemo extends HTMLElement {
     const preference = () => {
       this.pause();
       play.disabled = this.motion?.matches ?? false;
-      this.message(play.disabled ? 'モーション軽減設定に合わせて静止表示しています。' : '停止中');
+      this.message(play.disabled ? 'モーション軽減設定に合わせて静止表示しています。' : this.pausedMessage());
     };
     preference();
     reset.disabled = false;
@@ -48,7 +48,7 @@ class HorseRunDemo extends HTMLElement {
       this.pause();
       this.elapsed = 0;
       this.draw(0);
-      if (!this.motion?.matches) this.message('停止中');
+      if (!this.motion?.matches) this.message(this.pausedMessage());
     }, { signal });
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) this.pause();
@@ -92,7 +92,7 @@ class HorseRunDemo extends HTMLElement {
         this.image = image;
       }
       if (signal.aborted || playbackId !== this.playbackId || this.motion?.matches || document.hidden || !this.visible) {
-        this.message(this.motion?.matches ? 'モーション軽減設定に合わせて静止表示しています。' : '停止中');
+        this.message(this.motion?.matches ? 'モーション軽減設定に合わせて静止表示しています。' : this.pausedMessage());
         return;
       }
       this.startedAt = performance.now() - this.elapsed;
@@ -118,7 +118,7 @@ class HorseRunDemo extends HTMLElement {
       cancelAnimationFrame(this.animation);
       this.animation = undefined;
       this.elapsed = performance.now() - this.startedAt;
-      this.message('一時停止中');
+      this.message(this.pausedMessage());
     }
     if (this.playButton) this.playButton.textContent = '再生';
   }
@@ -141,6 +141,10 @@ class HorseRunDemo extends HTMLElement {
     this.canvas.hidden = false;
     const poster = this.querySelector('[data-horse-run-poster]');
     if (poster instanceof SVGElement) poster.setAttribute('hidden', '');
+  }
+
+  private pausedMessage() {
+    return this.elapsed === 0 ? '先頭で停止中' : '途中で停止中';
   }
 
   private message(text: string) {

@@ -1,0 +1,25 @@
+---
+import { HORSE_SPRITE, approachClips } from '../../lib/horse-motion';
+import { path } from '../../lib/path';
+---
+<figure class="horse-sprite-diagram">
+  <svg class="horse-sprite-diagram__image" viewBox="0 0 1448 1086" role="img" aria-label="4列3段に並ぶ12コマのスプライト。下段の9〜12コマがデモの対象。9コマ目の切り出し範囲は左上が (0, 672)、幅362、高さ414ピクセル。">
+    <image href={path(HORSE_SPRITE)} width="1448" height="1086" />
+    {approachClips.map((clip, index) => <g>
+      <rect x={clip.atlasX + 3} y={clip.atlasY + 3} width={clip.atlasWidth - 6} height={clip.atlasHeight - 6} fill="none" stroke={index >= 8 ? '#7dd3fc' : '#a3a3a3'} stroke-width={index >= 8 ? 6 : 2} />
+      <rect x={clip.atlasX + 12} y={clip.atlasY + 12} width="70" height="54" rx="8" fill="#171717" />
+      <text x={clip.atlasX + 47} y={clip.atlasY + 51} text-anchor="middle" fill="white" font-size="40">{index + 1}</text>
+    </g>)}
+    <rect x="5" y="677" width="352" height="404" fill="none" stroke="#facc15" stroke-width="10" />
+  </svg>
+  <figcaption>全体：1,448 × 1,086px。青枠は9〜12コマ目、黄色の枠はコードで切り出す9コマ目（x: 0、y: 672、幅: 362、高さ: 414px）。</figcaption>
+</figure>
+<style lang="scss">
+  .horse-sprite-diagram__image {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--neutral-700);
+    border-radius: var(--radius-2);
+  }
+</style>
