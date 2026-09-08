@@ -1,5 +1,5 @@
 ---
-import { HORSE_SPRITE, runCycle } from '../../lib/horse-motion';
+import { HORSE_SPRITE, HORSE_ATLAS_WIDTH, HORSE_ATLAS_HEIGHT, runCycle } from '../../lib/horse-motion';
 import { path } from '../../lib/path';
 const durationScaleMs = Math.max(...runCycle.map((frame) => frame.durationMs));
 ---
@@ -7,7 +7,7 @@ const durationScaleMs = Math.max(...runCycle.map((frame) => frame.durationMs));
   <div class="horse-timing-diagram__frames">
     {runCycle.map((frame, index) => <div class="horse-timing-diagram__frame">
       <svg class="horse-timing-diagram__pose" viewBox={`${frame.atlasX} ${frame.atlasY} ${frame.atlasWidth} ${frame.atlasHeight}`} role="img" aria-label={`${index + 1}つ目の姿勢（素材の${index + 9}コマ目）`}>
-        <image href={path(HORSE_SPRITE)} width="1448" height="1086" />
+        <image href={path(HORSE_SPRITE)} width={HORSE_ATLAS_WIDTH} height={HORSE_ATLAS_HEIGHT} />
       </svg>
       <span>{index + 1} · {frame.durationMs}ms</span>
       <div class="horse-timing-diagram__duration" aria-hidden="true">

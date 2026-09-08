@@ -11,6 +11,7 @@ import HorseSpriteDiagram from '../../../components/writing/HorseSpriteDiagram.a
 import HorseTimingDiagram from '../../../components/writing/HorseTimingDiagram.astro';
 import HorseEchoDiagram from '../../../components/writing/HorseEchoDiagram.astro';
 import HorseRunDemo from '../../../components/writing/HorseRunDemo.astro';
+import PhotoComparison from '../../../components/writing/PhotoComparison.astro';
 
 トップページでは、白馬がアーチの奥から現れ、こちらに向かって駆けてきます。滑らかにつながる映像ではなく、姿勢が一枚ずつ切り替わり、その後ろに残像が残る表現です。
 
@@ -94,7 +95,7 @@ const frameIndex = durationsMs.findIndex((duration) => {
 
 造形では、シュルレアリスムに見られる異なる空間の接続と、初期 CG の離散的な動きや質感を参照しています。写実的な映像を再現するのではなく、複数の技術と表現を一つの場面にまとめることを意図しました。
 
-<div class="horse-photo-comparison">
+<PhotoComparison>
   <figure>
     <img
       src="/images/white-horse-riding-1992-original.jpg"
@@ -117,4 +118,4 @@ const frameIndex = durationsMs.findIndex((duration) => {
     />
     <figcaption>補正後。左端の人物を除去し、ゴミやノイズ、色味を補正。</figcaption>
   </figure>
-</div>
+</PhotoComparison>

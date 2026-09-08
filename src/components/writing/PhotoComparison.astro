@@ -1,0 +1,17 @@
+<div class="photo-comparison">
+  <slot />
+</div>
+
+<style lang="scss">
+  .photo-comparison {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin-block: var(--space-10);
+  }
+
+  .photo-comparison :global(figure) {
+    min-width: 0;
+    margin: 0;
+  }
+</style>

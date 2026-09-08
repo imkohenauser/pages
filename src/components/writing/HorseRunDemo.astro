@@ -1,5 +1,5 @@
 ---
-import { HORSE_SPRITE, runCycle } from '../../lib/horse-motion';
+import { HORSE_SPRITE, HORSE_ATLAS_WIDTH, HORSE_ATLAS_HEIGHT, runCycle } from '../../lib/horse-motion';
 import { path } from '../../lib/path';
 import Icon from '../Icon.astro';
 const first = runCycle[0];
@@ -9,7 +9,7 @@ const first = runCycle[0];
   <figure class="horse-run-demo__figure">
     <div class="horse-run-demo__stage">
       <svg class="horse-run-demo__poster" viewBox={`${first.atlasX} ${first.atlasY} ${first.atlasWidth} ${first.atlasHeight}`} role="img" aria-label="正面から駆ける白馬" data-horse-run-poster>
-        <image href={path(HORSE_SPRITE)} width="1448" height="1086" />
+        <image href={path(HORSE_SPRITE)} width={HORSE_ATLAS_WIDTH} height={HORSE_ATLAS_HEIGHT} />
       </svg>
       <canvas class="horse-run-demo__canvas" width="724" height="828" role="img" aria-label="白馬の4コマの走り" hidden data-horse-run-canvas></canvas>
     </div>
@@ -167,12 +167,12 @@ const first = runCycle[0];
     transform: scale(0.5);
   }
 
-  .horse-run-demo__button[data-horse-run-playing] .horse-run-demo__icon-glyph--play {
+  .horse-run-demo__button[aria-pressed="true"] .horse-run-demo__icon-glyph--play {
     opacity: 0;
     transform: scale(0.5);
   }
 
-  .horse-run-demo__button[data-horse-run-playing] .horse-run-demo__icon-glyph--pause {
+  .horse-run-demo__button[aria-pressed="true"] .horse-run-demo__icon-glyph--pause {
     opacity: 1;
     transform: scale(1);
   }

@@ -1,4 +1,4 @@
-import { approachClips, stepDurationsMs, type HorseClip } from './horse-motion';
+import { HORSE_ATLAS_WIDTH, HORSE_ATLAS_HEIGHT, approachClips, stepDurationsMs, type HorseClip } from './horse-motion';
 import {
   AlwaysStencilFunc,
   DoubleSide,
@@ -28,8 +28,6 @@ const EXIT_SCENE_HEIGHT = 1600;
 const EXIT_MIN_DESIGN_WIDTH = 1000;
 /* How much of the last exit clip stays inside the canvas once the horse has left. */
 const EXIT_EDGE_MARGIN = 100;
-const ATLAS_WIDTH = 1448;
-const ATLAS_HEIGHT = 1086;
 /* Bound GPU work during sustained tapping without interrupting horses already in flight. */
 const MAX_CONCURRENT_RUNS = 6;
 const TAIL_STEP_MS = 172;
@@ -65,7 +63,7 @@ const exitClips: HorseClip[] = [
   { atlasX: 1086, atlasY: 672, atlasWidth: 362, atlasHeight: 414, exitProgress: 1, y: 549, width: 1134, height: 1299, masked: false, exitOpacity: 0.8, exitMosaicPx: 12, exitDissolve: 0.45 },
 ];
 
-const clips = [...approachClips, ...exitClips];
+const clips: HorseClip[] = [...approachClips, ...exitClips];
 
 /* Indexed by age in steps: 0 is the live frame, later entries are echoes left behind it. */
 const echoSteps: EchoStep[] = [
@@ -265,7 +263,12 @@ export class ArchRenderer {
 
   play(delayMs = 0) {
     if (document.hidden || this.runs.length >= MAX_CONCURRENT_RUNS) return;
+    this.echoes = true;
     this.createRun(delayMs);
+    this.host.toggleAttribute('data-arch-scene-running', true);
+    if (this.animationFrame === undefined) {
+      this.animationFrame = requestAnimationFrame(this.tick);
+    }
   }
 
   private createRun(delayMs: number) {
@@ -283,11 +286,9 @@ export class ArchRenderer {
       return mesh;
     });
     this.layoutHorseMeshes(meshes);
-    this.runs.push({ startedAt: performance.now(), delayMs, meshes });
-    this.host.toggleAttribute('data-arch-scene-running', true);
-    if (this.animationFrame === undefined) {
-      this.animationFrame = requestAnimationFrame(this.tick);
-    }
+    const run: HorseRun = { startedAt: performance.now(), delayMs, meshes };
+    this.runs.push(run);
+    return run;
   }
 
   stop(render = true) {
@@ -317,13 +318,10 @@ export class ArchRenderer {
     this.maskMesh.scale.set(1, 1, 1);
     // The downward-facing snapshot camera reverses the mask winding.
     this.maskMaterial.side = DoubleSide;
-    this.createRun(0);
-    if (this.animationFrame !== undefined) cancelAnimationFrame(this.animationFrame);
-    this.animationFrame = undefined;
-    for (const run of this.runs) run.visibleStep = step;
+    const run = this.createRun(0);
+    run.visibleStep = step;
     this.applyRuns();
     this.render();
-    this.host.removeAttribute('data-arch-scene-running');
   }
 
   dispose() {
@@ -346,7 +344,7 @@ export class ArchRenderer {
     meshes.forEach((mesh, index) => {
       const clip = clips[index];
       if (!clip) return;
-      const x = clip.x ?? exitStartX + (exitEndX - exitStartX) * (clip.exitProgress ?? 1);
+      const x = clip.x ?? exitStartX + (exitEndX - exitStartX) * clip.exitProgress;
       mesh.position.set(
         (x + clip.width / 2) * this.designScale,
         (clip.y + clip.height / 2) * this.designScale,
@@ -473,10 +471,10 @@ function mosaicCells(drawnPx: number, mosaicPx: number) {
 }
 
 function createHorseMaterial(texture: Texture, clip: HorseClip) {
-  const left = clip.atlasX / ATLAS_WIDTH;
-  const right = (clip.atlasX + clip.atlasWidth) / ATLAS_WIDTH;
-  const top = 1 - clip.atlasY / ATLAS_HEIGHT;
-  const bottom = 1 - (clip.atlasY + clip.atlasHeight) / ATLAS_HEIGHT;
+  const left = clip.atlasX / HORSE_ATLAS_WIDTH;
+  const right = (clip.atlasX + clip.atlasWidth) / HORSE_ATLAS_WIDTH;
+  const top = 1 - clip.atlasY / HORSE_ATLAS_HEIGHT;
+  const bottom = 1 - (clip.atlasY + clip.atlasHeight) / HORSE_ATLAS_HEIGHT;
 
   const material = new ShaderMaterial({
     uniforms: {

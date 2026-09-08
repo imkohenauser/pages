@@ -18,7 +18,7 @@ class HorseRunDemo extends HTMLElement {
   private startedAt = 0;
   private visible = false;
   private frameIndex = -1;
-  private playbackId = 0;
+  private pendingPlayback?: AbortController;
 
   connectedCallback() {
     if (this.controller) return;
@@ -37,16 +37,11 @@ class HorseRunDemo extends HTMLElement {
     this.controller = new AbortController();
     const { signal } = this.controller;
     this.motion = matchMedia('(prefers-reduced-motion: reduce)');
-    const preference = () => {
-      this.pause();
-      play.disabled = this.motion?.matches ?? false;
-      this.message(play.disabled ? 'モーション軽減設定に合わせて静止表示しています。' : this.pausedMessage());
-    };
-    preference();
+    this.pause();
     reset.disabled = false;
     attachPressState(play, play, 'data-horse-run-pressed', signal);
     attachPressState(reset, reset, 'data-horse-run-pressed', signal);
-    this.motion.addEventListener('change', preference, { signal });
+    this.motion.addEventListener('change', () => this.pause(), { signal });
     play.addEventListener('click', () => {
       if (this.animation !== undefined) this.pause();
       else void this.play(signal);
@@ -72,6 +67,7 @@ class HorseRunDemo extends HTMLElement {
     this.controller?.abort();
     this.controller = undefined;
     this.observer?.disconnect();
+    this.visible = false;
     this.image = undefined;
     this.context = undefined;
     this.elapsed = 0;
@@ -81,9 +77,11 @@ class HorseRunDemo extends HTMLElement {
     if (poster instanceof SVGElement) poster.removeAttribute('hidden');
   }
 
-  private async play(signal: AbortSignal) {
-    if (!this.playButton || this.motion?.matches || signal.aborted) return;
-    const playbackId = ++this.playbackId;
+  private async play(connectionSignal: AbortSignal) {
+    if (!this.playButton || this.pendingPlayback || this.motion?.matches || connectionSignal.aborted) return;
+    const playback = new AbortController();
+    const signal = AbortSignal.any([connectionSignal, playback.signal]);
+    this.pendingPlayback = playback;
     this.playButton.disabled = true;
     this.message('読み込み中');
     try {
@@ -98,8 +96,9 @@ class HorseRunDemo extends HTMLElement {
         this.context = context;
         this.image = image;
       }
-      if (signal.aborted || playbackId !== this.playbackId || this.motion?.matches || document.hidden || !this.visible) {
-        this.message(this.motion?.matches ? 'モーション軽減設定に合わせて静止表示しています。' : this.pausedMessage());
+      if (signal.aborted) return;
+      if (this.motion?.matches || document.hidden || !this.visible) {
+        this.pause();
         return;
       }
       this.startedAt = performance.now() - this.elapsed;
@@ -109,7 +108,11 @@ class HorseRunDemo extends HTMLElement {
     } catch {
       if (!signal.aborted) this.message('再生できませんでした。「再生する」で再試行できます。');
     } finally {
-      if (!signal.aborted) this.playButton.disabled = this.motion?.matches ?? false;
+      // A cancelled decode must not change a newer playback request or connection.
+      if (this.pendingPlayback === playback) {
+        this.pendingPlayback = undefined;
+        this.playButton.disabled = this.motion?.matches ?? false;
+      }
     }
   }
 
@@ -120,18 +123,19 @@ class HorseRunDemo extends HTMLElement {
   };
 
   private pause() {
-    this.playbackId += 1;
+    this.pendingPlayback?.abort();
+    this.pendingPlayback = undefined;
     if (this.animation !== undefined) {
       cancelAnimationFrame(this.animation);
       this.animation = undefined;
       this.elapsed = performance.now() - this.startedAt;
-      this.message(this.pausedMessage());
     }
+    if (this.playButton) this.playButton.disabled = this.motion?.matches ?? false;
+    this.message(this.motion?.matches ? 'モーション軽減設定に合わせて静止表示しています。' : this.pausedMessage());
     this.setPlaying(false);
   }
 
   private setPlaying(playing: boolean) {
-    this.playButton?.toggleAttribute('data-horse-run-playing', playing);
     this.playButton?.setAttribute('aria-pressed', playing ? 'true' : 'false');
     if (this.playLabel) this.playLabel.textContent = playing ? '一時停止' : '再生する';
   }

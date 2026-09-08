@@ -1,5 +1,5 @@
 ---
-import { HORSE_SPRITE, approachClips } from '../../lib/horse-motion';
+import { HORSE_SPRITE, HORSE_ATLAS_WIDTH, HORSE_ATLAS_HEIGHT, approachClips } from '../../lib/horse-motion';
 import { path } from '../../lib/path';
 const stages = [
   { step: 3, label: '1. アーチの内側' },
@@ -20,7 +20,7 @@ const stages = [
           <svg class="horse-echo-diagram__scene" viewBox="0 0 1000 1277" role="img" aria-label={label}>
             <path d="M30 940V260A220 220 0 0 1 470 260V940Z" fill="#262626" stroke="#a3a3a3" stroke-width="4" />
             <svg x={clip.x} y={clip.y} width={clip.width} height={clip.height} viewBox={`${clip.atlasX} ${clip.atlasY} ${clip.atlasWidth} ${clip.atlasHeight}`} overflow="hidden" data-horse-echo-fallback>
-              <image href={path(HORSE_SPRITE)} width="1448" height="1086" />
+              <image href={path(HORSE_SPRITE)} width={HORSE_ATLAS_WIDTH} height={HORSE_ATLAS_HEIGHT} />
             </svg>
           </svg>
           <canvas class="horse-echo-diagram__canvas" width="1000" height="1277" data-horse-echo-step={step} hidden aria-hidden="true"></canvas>

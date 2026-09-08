@@ -5,10 +5,10 @@ class HorseEchoDiagram extends HTMLElement {
 
   connectedCallback() {
     if (this.controller) return;
-    this.controller = new AbortController();
-    const { signal } = this.controller;
     const toggle = this.querySelector('[data-horse-echo-toggle]');
     if (!(toggle instanceof HTMLInputElement)) return;
+    this.controller = new AbortController();
+    const { signal } = this.controller;
     toggle.addEventListener('change', () => void this.renderStills(signal), { signal });
     this.observer = new IntersectionObserver((entries) => {
       if (!entries.some((entry) => entry.isIntersecting)) return;
@@ -33,6 +33,7 @@ class HorseEchoDiagram extends HTMLElement {
     let renderer: import('./arch-renderer').ArchRenderer | undefined;
     try {
       const { ArchRenderer } = await import('./arch-renderer');
+      if (signal.aborted) return;
       if (!this.image) {
         const image = new Image();
         image.src = this.dataset.horseEchoSource ?? '';
