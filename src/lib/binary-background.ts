@@ -9,6 +9,8 @@ const GLYPH_ATLAS_SCALE = MAX_PIXEL_RATIO;
 const GLYPH_ASSET_VERSION = 'white-v1';
 const GLYPH_OPACITY_MIN = 0.09;
 const GLYPH_OPACITY_RANGE = 0.08;
+// Sample the white pulse at the existing 125ms mutation cadence.
+const GLYPH_PULSE_STEPS = [0.55, 0.28, 0.1] as const;
 const FADE_START = 0.36;
 const FADE_END = 0.82;
 
@@ -21,6 +23,7 @@ class BinaryBackground extends HTMLElement {
   private context?: CanvasRenderingContext2D;
   private glyphAtlas?: HTMLCanvasElement;
   private cellData?: Uint8Array;
+  private pulsingCells = new Map<number, number>();
   private gridColumns = 0;
   private gridRows = 0;
   private cssWidth = 0;
@@ -141,6 +144,7 @@ class BinaryBackground extends HTMLElement {
   }
 
   private createCellState(columns: number, rows: number) {
+    this.pulsingCells.clear();
     this.gridColumns = columns;
     this.gridRows = rows;
     this.randomState = (0x6d2b79f5 ^ (columns << 16) ^ rows) >>> 0;
@@ -188,9 +192,16 @@ class BinaryBackground extends HTMLElement {
   }
 
   private stopMutation() {
-    if (this.mutationTimer === undefined) return;
-    window.clearInterval(this.mutationTimer);
-    this.mutationTimer = undefined;
+    if (this.mutationTimer !== undefined) {
+      window.clearInterval(this.mutationTimer);
+      this.mutationTimer = undefined;
+    }
+    const cells = [...this.pulsingCells.keys()];
+    this.pulsingCells.clear();
+    for (const cell of cells) {
+      const row = Math.floor(cell / this.gridColumns);
+      this.drawCell(cell - row * this.gridColumns, row);
+    }
   }
 
   private mutateCells = () => {
@@ -198,10 +209,25 @@ class BinaryBackground extends HTMLElement {
 
     const cellCount = this.gridColumns * this.gridRows;
     const mutationCount = Math.max(1, Math.round(cellCount * MUTATION_RATIO));
+    const dirtyCells = new Set(this.pulsingCells.keys());
+    for (const [cell, step] of this.pulsingCells) {
+      if (step + 1 >= GLYPH_PULSE_STEPS.length) {
+        this.pulsingCells.delete(cell);
+      } else {
+        this.pulsingCells.set(cell, step + 1);
+      }
+    }
+    const mutatedCells = new Set<number>();
     for (let index = 0; index < mutationCount; index += 1) {
       const cell = Math.floor(this.nextRandom() * cellCount);
+      if (mutatedCells.has(cell)) continue;
+      mutatedCells.add(cell);
       const offset = cell * 4;
       this.cellData[offset] = 255 - this.cellData[offset];
+      this.pulsingCells.set(cell, 0);
+      dirtyCells.add(cell);
+    }
+    for (const cell of dirtyCells) {
       const row = Math.floor(cell / this.gridColumns);
       const column = cell - row * this.gridColumns;
       this.drawCell(column, row);
@@ -242,9 +268,12 @@ class BinaryBackground extends HTMLElement {
       GLYPH_OPACITY_MIN +
       GLYPH_OPACITY_RANGE * (this.cellData[offset + 1] / 255);
     const fadeMask = cellFade(row, this.gridRows);
+    const pulseStep = this.pulsingCells.get(row * this.gridColumns + column);
+    const pulse = pulseStep === undefined ? 0 : (GLYPH_PULSE_STEPS[pulseStep] ?? 0);
 
     this.context.clearRect(x, y, cellWidth, cellHeight);
-    this.context.globalAlpha = localOpacity * fadeMask;
+    this.context.globalAlpha =
+      (localOpacity + (1 - localOpacity) * pulse) * fadeMask;
     this.context.drawImage(
       this.glyphAtlas,
       glyphIndex * CELL_WIDTH * GLYPH_ATLAS_SCALE,
