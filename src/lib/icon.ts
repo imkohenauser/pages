@@ -9,6 +9,8 @@ export type IconName =
   | 'x'
   | 'play'
   | 'pause'
-  | 'rotate-clockwise';
+  | 'rotate-clockwise'
+  | 'sparkles'
+  | 'sparkles-off';
 
 export type HeaderIconName = Extract<IconName, 'email' | 'github' | 'x'>;

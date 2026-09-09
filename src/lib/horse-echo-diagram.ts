@@ -1,3 +1,5 @@
+import { attachPressState } from './press-state';
+
 class HorseEchoDiagram extends HTMLElement {
   private controller?: AbortController;
   private observer?: IntersectionObserver;
@@ -6,10 +8,15 @@ class HorseEchoDiagram extends HTMLElement {
   connectedCallback() {
     if (this.controller) return;
     const toggle = this.querySelector('[data-horse-echo-toggle]');
-    if (!(toggle instanceof HTMLInputElement)) return;
+    if (!(toggle instanceof HTMLButtonElement)) return;
     this.controller = new AbortController();
     const { signal } = this.controller;
-    toggle.addEventListener('change', () => void this.renderStills(signal), { signal });
+    attachPressState(toggle, toggle, 'data-horse-echo-pressed', signal);
+    toggle.addEventListener('click', () => {
+      const on = toggle.getAttribute('aria-pressed') !== 'true';
+      this.setEcho(on);
+      void this.renderStills(signal);
+    }, { signal });
     this.observer = new IntersectionObserver((entries) => {
       if (!entries.some((entry) => entry.isIntersecting)) return;
       this.observer?.disconnect();
@@ -25,11 +32,25 @@ class HorseEchoDiagram extends HTMLElement {
     this.image = undefined;
   }
 
+  private setEcho(on: boolean) {
+    const toggle = this.querySelector('[data-horse-echo-toggle]');
+    const label = this.querySelector('[data-horse-echo-toggle-label]');
+    if (!(toggle instanceof HTMLButtonElement)) return;
+    toggle.setAttribute('aria-pressed', on ? 'true' : 'false');
+    if (label instanceof HTMLElement) label.textContent = on ? '残像あり' : '残像なし';
+  }
+
+  private echoOn() {
+    const toggle = this.querySelector('[data-horse-echo-toggle]');
+    return toggle instanceof HTMLButtonElement && toggle.getAttribute('aria-pressed') === 'true';
+  }
+
   private async renderStills(signal: AbortSignal) {
     const toggle = this.querySelector('[data-horse-echo-toggle]');
     const status = this.querySelector('[data-horse-echo-status]');
-    if (!(toggle instanceof HTMLInputElement) || !(status instanceof HTMLElement)) return;
+    if (!(toggle instanceof HTMLButtonElement) || !(status instanceof HTMLElement)) return;
     toggle.disabled = true;
+    const echoOn = this.echoOn();
     let renderer: import('./arch-renderer').ArchRenderer | undefined;
     try {
       const { ArchRenderer } = await import('./arch-renderer');
@@ -49,7 +70,7 @@ class HorseEchoDiagram extends HTMLElement {
         if (!(canvas instanceof HTMLCanvasElement)) continue;
         const context = canvas.getContext('2d');
         if (!context) throw new Error('Canvas is unavailable.');
-        renderer.snapshot(Number(canvas.dataset.horseEchoStep), toggle.checked);
+        renderer.snapshot(Number(canvas.dataset.horseEchoStep), echoOn);
         context.clearRect(0, 0, canvas.width, canvas.height);
         context.drawImage(source, 0, 0);
         canvas.hidden = false;
@@ -57,7 +78,7 @@ class HorseEchoDiagram extends HTMLElement {
       for (const fallback of this.querySelectorAll('[data-horse-echo-fallback]')) {
         fallback.setAttribute('hidden', '');
       }
-      status.textContent = toggle.checked ? '残像ありの3段階を表示中' : '残像なしの3段階を表示中';
+      status.textContent = echoOn ? '残像ありの3段階を表示中' : '残像なしの3段階を表示中';
       toggle.disabled = false;
     } catch {
       if (signal.aborted) return;

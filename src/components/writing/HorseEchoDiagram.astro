@@ -1,6 +1,7 @@
 ---
 import { HORSE_SPRITE, HORSE_ATLAS_WIDTH, HORSE_ATLAS_HEIGHT, approachClips } from '../../lib/horse-motion';
 import { path } from '../../lib/path';
+import Icon from '../Icon.astro';
 const stages = [
   { step: 3, label: '1. アーチの内側' },
   { step: 7, label: '2. 手前へ接近' },
@@ -8,26 +9,44 @@ const stages = [
 ];
 ---
 <horse-echo-diagram class="horse-echo-diagram" data-horse-echo-source={path(HORSE_SPRITE)}>
-  <div class="horse-echo-diagram__controls">
-    <label><input type="checkbox" checked disabled data-horse-echo-toggle /> 残像あり</label>
-    <span role="status" data-horse-echo-status>静止画で3つの段階を表示しています。</span>
-  </div>
-  <div class="horse-echo-diagram__stages">
-    {stages.map(({ step, label }) => {
-      const clip = approachClips[step];
-      return <figure class="horse-echo-diagram__figure">
-        <div class="horse-echo-diagram__stage">
-          <svg class="horse-echo-diagram__scene" viewBox="0 0 1000 1277" role="img" aria-label={label}>
-            <path d="M30 940V260A220 220 0 0 1 470 260V940Z" fill="#262626" stroke="#a3a3a3" stroke-width="4" />
-            <svg x={clip.x} y={clip.y} width={clip.width} height={clip.height} viewBox={`${clip.atlasX} ${clip.atlasY} ${clip.atlasWidth} ${clip.atlasHeight}`} overflow="hidden" data-horse-echo-fallback>
-              <image href={path(HORSE_SPRITE)} width={HORSE_ATLAS_WIDTH} height={HORSE_ATLAS_HEIGHT} />
+  <div class="horse-echo-diagram__figure">
+    <div class="horse-echo-diagram__stages">
+      {stages.map(({ step, label }) => {
+        const clip = approachClips[step];
+        return <figure>
+          <div class="horse-echo-diagram__stage">
+            <svg class="horse-echo-diagram__scene" viewBox="0 0 1000 1277" role="img" aria-label={label}>
+              <path d="M30 940V260A220 220 0 0 1 470 260V940Z" fill="#262626" stroke="#a3a3a3" stroke-width="4" />
+              <svg x={clip.x} y={clip.y} width={clip.width} height={clip.height} viewBox={`${clip.atlasX} ${clip.atlasY} ${clip.atlasWidth} ${clip.atlasHeight}`} overflow="hidden" data-horse-echo-fallback>
+                <image href={path(HORSE_SPRITE)} width={HORSE_ATLAS_WIDTH} height={HORSE_ATLAS_HEIGHT} />
+              </svg>
             </svg>
-          </svg>
-          <canvas class="horse-echo-diagram__canvas" width="1000" height="1277" data-horse-echo-step={step} hidden aria-hidden="true"></canvas>
-        </div>
-        <figcaption>{label}</figcaption>
-      </figure>;
-    })}
+            <canvas class="horse-echo-diagram__canvas" width="1000" height="1277" data-horse-echo-step={step} hidden aria-hidden="true"></canvas>
+          </div>
+          <figcaption>{label}</figcaption>
+        </figure>;
+      })}
+    </div>
+    <div class="horse-echo-diagram__controls">
+      <button
+        class="horse-echo-diagram__button"
+        type="button"
+        disabled
+        aria-pressed="true"
+        data-horse-echo-toggle
+      >
+        <span class="horse-echo-diagram__icon" aria-hidden="true">
+          <span class="horse-echo-diagram__icon-glyph horse-echo-diagram__icon-glyph--on">
+            <Icon name="sparkles" />
+          </span>
+          <span class="horse-echo-diagram__icon-glyph horse-echo-diagram__icon-glyph--off">
+            <Icon name="sparkles-off" />
+          </span>
+        </span>
+        <span class="horse-echo-diagram__label" data-horse-echo-toggle-label>残像あり</span>
+      </button>
+    </div>
+    <div class="horse-echo-diagram__status" role="status" data-horse-echo-status>静止画で3つの段階を表示しています。</div>
   </div>
 </horse-echo-diagram>
 <style lang="scss">
@@ -37,41 +56,32 @@ const stages = [
     display: block;
     margin-block: var(--space-8);
   }
-  .horse-echo-diagram__controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-3);
-    margin-block-end: var(--space-3);
-    font-size: var(--text-sm);
 
-    label {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-2);
-      min-height: 44px;
-      cursor: pointer;
-    }
-    input:focus-visible {
-      outline: 3px solid var(--color-focus);
-      outline-offset: 3px;
-    }
+  .horse-echo-diagram .horse-echo-diagram__figure {
+    margin: 0;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-2);
   }
+
   .horse-echo-diagram__stages {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--space-3);
   }
-  .horse-echo-diagram__figure {
+
+  .horse-echo-diagram .horse-echo-diagram__stages > figure {
     margin: 0;
     min-width: 0;
   }
+
   .horse-echo-diagram__stage {
     display: grid;
     overflow: hidden;
     @include transparency-checker;
     border-radius: var(--radius-2);
   }
+
   .horse-echo-diagram__scene,
   .horse-echo-diagram__canvas {
     grid-area: 1 / 1;
@@ -79,8 +89,117 @@ const stages = [
     width: 100%;
     height: auto;
   }
+
   .horse-echo-diagram [hidden] {
     display: none;
+  }
+
+  .horse-echo-diagram__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-block-start: var(--space-4);
+  }
+
+  .horse-echo-diagram__button {
+    display: inline-flex;
+    gap: var(--space-1\.5);
+    align-items: center;
+    padding: var(--space-1\.5) var(--space-2);
+    padding-right: var(--space-3);
+    font-size: var(--text-xs);
+    line-height: rem(20);
+    color: var(--color-text);
+    cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
+    background: var(--color-canvas);
+    border: rem(1) solid var(--color-border);
+    border-radius: var(--radius-1\.5);
+    -webkit-tap-highlight-color: transparent;
+
+    @include motion-safe {
+      transition: transform var(--motion-material-release) ease-out;
+    }
+
+    @include hover {
+      &:hover:not(:disabled) .horse-echo-diagram__label {
+        color: var(--color-link);
+      }
+    }
+
+    &:focus-visible {
+      outline: rem(3) solid var(--color-focus);
+      outline-offset: rem(2);
+
+      @media (forced-colors: active) {
+        outline: rem(2) solid CanvasText;
+      }
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.6;
+    }
+  }
+
+  .horse-echo-diagram__button[data-horse-echo-pressed] {
+    @include motion-safe {
+      transform: scale(0.97);
+      transition-duration: var(--motion-material-press);
+    }
+  }
+
+  .horse-echo-diagram__icon {
+    position: relative;
+    flex-shrink: 0;
+    width: rem(16);
+    height: rem(16);
+    color: var(--neutral-800);
+
+    :global(svg) {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .horse-echo-diagram__icon-glyph {
+    position: absolute;
+    inset: 0;
+
+    @include motion-safe {
+      transition:
+        transform var(--motion-material-press) ease-out,
+        opacity var(--motion-material-release) ease-out;
+    }
+  }
+
+  .horse-echo-diagram__icon-glyph--off {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  .horse-echo-diagram__button[aria-pressed="false"] .horse-echo-diagram__icon-glyph--on {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  .horse-echo-diagram__button[aria-pressed="false"] .horse-echo-diagram__icon-glyph--off {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .horse-echo-diagram__label {
+    white-space: nowrap;
+
+    @include hover-color-transition;
+  }
+
+  .horse-echo-diagram__status {
+    margin-block: var(--space-2) 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
   }
 </style>
 <script>
