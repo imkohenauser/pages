@@ -1,5 +1,5 @@
 ---
-import { articleMarkdown } from '../lib/article-markdown';
+import { articleCopyMarkdown, articleReadingSource } from '../lib/article-markdown';
 import { render } from 'astro:content';
 import ArticleActions from '../components/ArticleActions.astro';
 import JsonLd from '../components/JsonLd.astro';
@@ -31,11 +31,12 @@ const locale = writing.data.lang === 'ja' ? 'ja-JP' : writing.data.lang;
 const format = new Intl.DateTimeFormat(locale);
 const modifiedAt = writingModifiedAt(writing);
 const showModified = modifiedAt.valueOf() !== writing.data.publishedAt.valueOf();
-const body = articleMarkdown(writing.body ?? '', writing.filePath);
-const minutes = readingMinutes(body, writing.data.lang);
 const canonicalUrl = writingCanonicalUrl(writing);
+const body = writing.body ?? '';
+const minutes = readingMinutes(articleReadingSource(body, writing.filePath), writing.data.lang);
 const imageDimensions = writingImageDimensions(writing);
-const markdown = `# ${writing.data.title}\n\n${writing.data.description}\n\n${body}`;
+const markdownBody = articleCopyMarkdown(body, writing.filePath, canonicalUrl);
+const markdown = `# ${writing.data.title}\n\n${writing.data.description}\n\n${markdownBody}`;
 const tableOfContents = headings.filter((heading) => heading.depth === 2);
 const hasWritingNavigation = Boolean(older || newer);
 ---
@@ -159,7 +160,7 @@ const hasWritingNavigation = Boolean(older || newer);
 
   .writing-toc {
     display: none;
-    
+
     margin: 0 var(--space-3) var(--space-12);
     background: var(--color-surface);
     border-radius: var(--radius-2);

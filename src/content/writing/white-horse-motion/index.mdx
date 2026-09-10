@@ -13,7 +13,9 @@ import HorseSpriteDiagram from '../../../components/writing/HorseSpriteDiagram.a
 import HorseTimingDiagram from '../../../components/writing/HorseTimingDiagram.astro';
 import HorseEchoDiagram from '../../../components/writing/HorseEchoDiagram.astro';
 import HorseRunDemo from '../../../components/writing/HorseRunDemo.astro';
+import MarkdownFallback from '../../../components/writing/MarkdownFallback.astro';
 import PhotoComparison from '../../../components/writing/PhotoComparison.astro';
+import RenderedOnly from '../../../components/writing/RenderedOnly.astro';
 import { Image } from 'astro:assets';
 import motionPath from './motion-path.webp';
 
@@ -27,6 +29,10 @@ import motionPath from './motion-path.webp';
 
 <HorseRunDemo />
 
+<MarkdownFallback>
+> **足運びデモ:** 素材の9〜12コマ目を固定位置で繰り返します。各コマの表示時間は201、373、273、316ミリ秒で、一周は1,163ミリ秒です。[ブラウザでデモを再生する](https://imkohenauser.com/white-horse-motion/#白馬の足運び)
+</MarkdownFallback>
+
 「再生する」で開始し、「一時停止」するとその姿勢で止まります。「先頭へ戻る」で最初の姿勢に戻せます。画面外へスクロールしたときは停止します。
 
 これは足運びを観察するためのデモです。トップページにある接近・拡大・残像は省き、Canvas 2D API でスプライトの切り替えだけを描いています。
@@ -36,6 +42,12 @@ import motionPath from './motion-path.webp';
 素材は、12枚の姿勢を一枚にまとめた WebP のスプライトシートです。各コマの切り出し位置と寸法を指定し、必要な領域だけを表示します。
 
 <HorseSpriteDiagram />
+
+<MarkdownFallback>
+![4列3段に並ぶ12コマの白馬のスプライトシート。下段の9〜12コマがデモの対象。](https://imkohenauser.com/sprite-sheet/white-horse_v1.webp)
+
+*12コマを一枚にまとめたスプライトシート（1,448 × 1,086px）。デモでは下段の9〜12コマ目を使い、9コマ目の切り出し範囲は左上が (0, 672)、幅362、高さ414ピクセルです。画像は `gpt-image-2` で生成。*
+</MarkdownFallback>
 
 デモで使う4コマは、画像の下段に並んでいます。各領域は幅362px、高さ414pxです。次のコードは、先頭の姿勢を描く部分を抜粋したものです。
 
@@ -56,6 +68,17 @@ context.drawImage(
 このデモが取り出している区間の表示時間は、順に201、373、273、316ミリ秒です。一周は1,163ミリ秒で、2コマ目に少し長い間があります。
 
 <HorseTimingDiagram />
+
+<MarkdownFallback>
+| デモ上の順番 | 素材上のコマ | 表示時間 |
+| ---: | ---: | ---: |
+| 1 | 9 | 201ms |
+| 2 | 10 | 373ms |
+| 3 | 11 | 273ms |
+| 4 | 12 | 316ms |
+
+*各コマの表示時間を同じ尺度で比較すると、2つ目の姿勢が最も長く表示されます。*
+</MarkdownFallback>
 
 2つ目の姿勢を長く見せることで、次の足運びに移る前に短い「ため」が生まれます。等間隔の切り替えよりも、ひとまとまりの拍として感じられる間を作っています。
 
@@ -81,18 +104,34 @@ const frameIndex = durationsMs.findIndex((duration) => {
 
 次の図は、白馬の移動経路を検討するためにFigmaで作成したものです。アーチの奥から現れ、右手前へ回り込みながら大きくなる流れを一枚に重ねています。
 
-<figure>
-  <Image
-    src={motionPath}
-    alt="アーチの奥にいる小さな白馬が、右手前へ回り込みながら段階的に拡大する移動経路の概念図"
-    loading="lazy"
-  />
-  <figcaption>白馬の位置と大きさを検討した概念図。赤い実線はアーチ、破線は想定した移動経路を示す。実装では曲線上を連続移動させず、姿勢ごとに定めた位置を切り替えている。</figcaption>
-</figure>
+<RenderedOnly>
+  <figure>
+    <Image
+      src={motionPath}
+      alt="アーチの奥にいる小さな白馬が、右手前へ回り込みながら段階的に拡大する移動経路の概念図"
+      loading="lazy"
+    />
+    <figcaption>白馬の位置と大きさを検討した概念図。赤い実線はアーチ、破線は想定した移動経路を示す。実装では曲線上を連続移動させず、姿勢ごとに定めた位置を切り替えている。</figcaption>
+  </figure>
+</RenderedOnly>
+
+<MarkdownFallback>
+> **白馬の移動経路:** アーチの奥から現れ、右手前へ回り込みながら段階的に拡大します。赤い実線はアーチ、破線は想定した移動経路です。[ブラウザで概念図を見る](https://imkohenauser.com/white-horse-motion/#トップページでは奥行きと残像を加える)
+</MarkdownFallback>
 
 下の3枚は、トップページと同じ描画処理で取り出した静止画です。アーチの輪郭を補助線として添え、移動と拡大が分かるよう同じ範囲を表示しています。「残像あり」を切り替えると、同じ姿勢・位置のまま残像の有無を比較できます。
 
 <HorseEchoDiagram />
+
+<MarkdownFallback>
+| 段階 | 位置と表現 |
+| --- | --- |
+| 1. アーチの内側 | 小さな白馬をステンシルでアーチ内に制限 |
+| 2. 手前へ接近 | 位置と大きさを切り替えて接近を表現 |
+| 3. 拡大と残像 | 拡大した現在の姿勢と、崩した過去の姿勢を重ねて表示 |
+
+*残像あり・なしの比較は[ブラウザ上の静止画](https://imkohenauser.com/white-horse-motion/#トップページでは奥行きと残像を加える)で切り替えられます。*
+</MarkdownFallback>
 
 過去の姿勢はすぐに消さず、現在の平面とあわせて表示することで、時間の断片として後ろに残します。古くなるにつれて透明度を下げ、モザイク、色のずれ、規則的なディザによる欠落を加えています。
 

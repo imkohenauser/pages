@@ -18,6 +18,7 @@
     "stop": "astro dev stop",
     "build": "astro build",
     "check": "astro check",
+    "test:article-markdown": "node --experimental-strip-types --test src/lib/article-markdown.test.ts",
     "preview": "astro preview"
   },
   "dependencies": {

@@ -4,40 +4,115 @@ import remarkMdx from 'remark-mdx';
 
 const parser = unified().use(remarkParse).use(remarkMdx);
 
+interface TransformOptions {
+  baseUrl?: string;
+  includeFallbacks: boolean;
+}
+
+interface Edit {
+  start: number;
+  end: number;
+  replacement: string;
+}
+
+export function articleReadingSource(body: string, filePath?: string) {
+  return transformMdx(body, filePath, { includeFallbacks: false });
+}
+
+export function articleCopyMarkdown(body: string, filePath?: string, baseUrl?: string) {
+  return transformMdx(body, filePath, { baseUrl, includeFallbacks: true });
+}
+
 // Strip executable MDX while retaining Markdown and static HTML, including image captions.
-export function articleMarkdown(body: string, filePath?: string) {
+function transformMdx(body: string, filePath: string | undefined, options: TransformOptions) {
   if (!filePath?.endsWith('.mdx')) return body;
   const tree = parser.parse(body);
-  const ranges: { start: number; end: number }[] = [];
+  const edits: Edit[] = [];
   type Node = typeof tree | (typeof tree.children)[number];
 
-  function omit(node: Node) {
+  function replace(node: Node, replacement = '') {
     const start = node.position?.start.offset;
     const end = node.position?.end.offset;
-    if (start !== undefined && end !== undefined) ranges.push({ start, end });
+    if (start !== undefined && end !== undefined) edits.push({ start, end, replacement });
   }
 
   function collect(node: Node) {
     if (node.type === 'mdxjsEsm' || node.type === 'mdxFlowExpression' || node.type === 'mdxTextExpression') {
-      omit(node);
+      replace(node);
       return;
     }
     if (node.type === 'mdxJsxFlowElement' || node.type === 'mdxJsxTextElement') {
-      const staticHtml = node.name !== null && /^[a-z][a-z0-9-]*$/.test(node.name) &&
-        node.attributes.every((attribute) => attribute.type === 'mdxJsxAttribute' &&
-          (attribute.value === null || typeof attribute.value === 'string'));
-      if (!staticHtml) {
+      if (node.name === 'RenderedOnly') {
+        if (options.includeFallbacks) {
+          replace(node);
+          return;
+        }
         const start = node.position?.start.offset;
         const end = node.position?.end.offset;
         const contentStart = node.children[0]?.position?.start.offset;
         const contentEnd = node.children.at(-1)?.position?.end.offset;
         if (start === undefined || end === undefined) return;
         if (contentStart === undefined || contentEnd === undefined) {
-          omit(node);
+          replace(node);
+          return;
+        }
+        edits.push(
+          { start, end: contentStart, replacement: '' },
+          { start: contentEnd, end, replacement: '' },
+        );
+      }
+      if (node.name === 'MarkdownFallback') {
+        if (!options.includeFallbacks) {
+          replace(node);
+          return;
+        }
+        const start = node.position?.start.offset;
+        const end = node.position?.end.offset;
+        const contentStart = node.children[0]?.position?.start.offset;
+        const contentEnd = node.children.at(-1)?.position?.end.offset;
+        if (start === undefined || end === undefined) return;
+        if (contentStart === undefined || contentEnd === undefined) {
+          replace(node);
+          return;
+        }
+        edits.push(
+          { start, end: contentStart, replacement: '' },
+          { start: contentEnd, end, replacement: '' },
+        );
+      }
+      const staticHtml = node.name !== null && /^[a-z][a-z0-9-]*$/.test(node.name) &&
+        node.attributes.every((attribute) => attribute.type === 'mdxJsxAttribute' &&
+          (attribute.value === null || typeof attribute.value === 'string'));
+      if (!staticHtml && node.name !== 'MarkdownFallback' && node.name !== 'RenderedOnly') {
+        const start = node.position?.start.offset;
+        const end = node.position?.end.offset;
+        const contentStart = node.children[0]?.position?.start.offset;
+        const contentEnd = node.children.at(-1)?.position?.end.offset;
+        if (start === undefined || end === undefined) return;
+        if (contentStart === undefined || contentEnd === undefined) {
+          replace(node);
           return;
         }
         // Component wrappers are omitted, but their authored content still belongs to the article.
-        ranges.push({ start, end: contentStart }, { start: contentEnd, end });
+        edits.push(
+          { start, end: contentStart, replacement: '' },
+          { start: contentEnd, end, replacement: '' },
+        );
+      }
+      if (staticHtml && options.baseUrl) {
+        for (const attribute of node.attributes) {
+          if (attribute.type !== 'mdxJsxAttribute' ||
+              (attribute.name !== 'src' && attribute.name !== 'href') ||
+              typeof attribute.value !== 'string' || !attribute.value.startsWith('/')) continue;
+          const start = attribute.position?.start.offset;
+          const end = attribute.position?.end.offset;
+          if (start === undefined || end === undefined) continue;
+          edits.push({
+            start,
+            end,
+            replacement: `${attribute.name}="${new URL(attribute.value, options.baseUrl).href}"`,
+          });
+        }
       }
     }
     if ('children' in node) {
@@ -47,8 +122,8 @@ export function articleMarkdown(body: string, filePath?: string) {
 
   collect(tree);
   let result = body;
-  for (const { start, end } of ranges.sort((a, b) => b.start - a.start)) {
-    result = result.slice(0, start) + result.slice(end);
+  for (const { start, end, replacement } of edits.sort((a, b) => b.start - a.start)) {
+    result = result.slice(0, start) + replacement + result.slice(end);
   }
   return result.trim();
 }
