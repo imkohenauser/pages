@@ -129,7 +129,7 @@
   .writing-prose :global(hr) {
     margin: var(--space-12) 0;
     border: 0;
-    border-block-start: rem(1) solid var(--color-border-strong);
+    border-block-start: rem(1) solid var(--color-border);
   }
 
   .writing-prose :global(hr + h2) {
@@ -160,6 +160,11 @@
 
   .writing-prose :global(.expressive-code) {
     margin-block: var(--space-6);
+  }
+
+  .writing-prose :global(.expressive-code .frame.has-title:not(.is-terminal) .header .title) {
+    border-inline-end-color: var(--color-border);
+    border-start-end-radius: 0;
   }
 
   .writing-prose :global(table) {

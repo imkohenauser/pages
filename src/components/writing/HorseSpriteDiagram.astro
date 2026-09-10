@@ -1,0 +1,26 @@
+---
+import { HORSE_SPRITE, HORSE_ATLAS_WIDTH, HORSE_ATLAS_HEIGHT, approachClips } from '../../lib/horse-motion';
+import { path } from '../../lib/path';
+---
+<figure class="horse-sprite-diagram">
+  <svg class="horse-sprite-diagram__image" viewBox={`0 0 ${HORSE_ATLAS_WIDTH} ${HORSE_ATLAS_HEIGHT}`} role="img" aria-label="4列3段に並ぶ12コマのスプライト。下段の9〜12コマがデモの対象。9コマ目の切り出し範囲は左上が (0, 672)、幅362、高さ414ピクセル。">
+    <image href={path(HORSE_SPRITE)} width={HORSE_ATLAS_WIDTH} height={HORSE_ATLAS_HEIGHT} />
+    {approachClips.map((clip, index) => <g>
+      <rect x={clip.atlasX + 3} y={clip.atlasY + 3} width={clip.atlasWidth - 6} height={clip.atlasHeight - 6} fill="none" stroke={index >= 8 ? '#62b2ea' : '#d4d4d4'} stroke-width={index >= 8 ? 4 : 2} />
+      <rect x={clip.atlasX + 12} y={clip.atlasY + 12} width="70" height="54" rx="8" fill="#171717" />
+      <text x={clip.atlasX + 47} y={clip.atlasY + 51} text-anchor="middle" fill="white" font-size="32">{index + 1}</text>
+    </g>)}
+    <rect x="5" y="677" width="352" height="404" fill="none" stroke="#fbbf24" stroke-width="8" />
+  </svg>
+  <figcaption>12コマを一枚にまとめたスプライトシート（1,448 × 1,086px）。青枠はデモで使う9〜12コマ目、黄枠はその先頭である9コマ目の切り出し範囲。画像は <code>gpt-image-2</code> で生成。</figcaption>
+</figure>
+<style lang="scss">
+  @use "tools" as *;
+
+  .horse-sprite-diagram__image {
+    display: block;
+    width: 100%;
+    height: auto;
+    @include transparency-checker;
+  }
+</style>

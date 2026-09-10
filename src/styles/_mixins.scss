@@ -50,3 +50,12 @@ $breakpoints: (
     transition: color var(--motion-hover-settle) ease-out;
   }
 }
+
+@mixin transparency-checker {
+  background-color: var(--neutral-100);
+  background-image: repeating-conic-gradient(
+    var(--neutral-200) 0% 25%,
+    var(--neutral-100) 0% 50%
+  );
+  background-size: rem(16) rem(16);
+}

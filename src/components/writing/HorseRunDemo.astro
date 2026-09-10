@@ -1,0 +1,195 @@
+---
+import { HORSE_SPRITE, HORSE_ATLAS_WIDTH, HORSE_ATLAS_HEIGHT, runCycle } from '../../lib/horse-motion';
+import { path } from '../../lib/path';
+import Icon from '../Icon.astro';
+const first = runCycle[0];
+---
+
+<horse-run-demo class="horse-run-demo" data-horse-run-source={path(HORSE_SPRITE)}>
+  <figure class="horse-run-demo__figure">
+    <div class="horse-run-demo__stage">
+      <svg class="horse-run-demo__poster" viewBox={`${first.atlasX} ${first.atlasY} ${first.atlasWidth} ${first.atlasHeight}`} role="img" aria-label="正面から駆ける白馬" data-horse-run-poster>
+        <image href={path(HORSE_SPRITE)} width={HORSE_ATLAS_WIDTH} height={HORSE_ATLAS_HEIGHT} />
+      </svg>
+      <canvas class="horse-run-demo__canvas" width="724" height="828" role="img" aria-label="白馬の4コマの走り" hidden data-horse-run-canvas></canvas>
+    </div>
+    <div class="horse-run-demo__controls">
+      <button
+        class="horse-run-demo__button"
+        type="button"
+        disabled
+        aria-pressed="false"
+        data-horse-run-play
+      >
+        <span class="horse-run-demo__icon" aria-hidden="true">
+          <span class="horse-run-demo__icon-glyph horse-run-demo__icon-glyph--play">
+            <Icon name="play" />
+          </span>
+          <span class="horse-run-demo__icon-glyph horse-run-demo__icon-glyph--pause">
+            <Icon name="pause" />
+          </span>
+        </span>
+        <span class="horse-run-demo__label" data-horse-run-play-label>再生する</span>
+      </button>
+      <button class="horse-run-demo__button" type="button" disabled data-horse-run-reset>
+        <span class="horse-run-demo__icon" aria-hidden="true">
+          <Icon name="rotate-clockwise" />
+        </span>
+        <span class="horse-run-demo__label">先頭へ戻る</span>
+      </button>
+    </div>
+    <figcaption>固定位置で足運びを繰り返すデモ。</figcaption>
+    <div class="horse-run-demo__status" role="status" data-horse-run-status>再生には JavaScript が必要です。</div>
+  </figure>
+</horse-run-demo>
+
+<style lang="scss">
+  @use "tools" as *;
+
+  .horse-run-demo {
+    display: block;
+    margin-block: var(--space-8);
+  }
+
+  .horse-run-demo .horse-run-demo__figure {
+    margin-block: 0;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-2);
+  }
+
+  .horse-run-demo__stage {
+    display: grid;
+    place-items: center;
+    height: clamp(260px, 55vw, 400px);
+    overflow: hidden;
+    @include transparency-checker;
+  }
+
+  .horse-run-demo__poster,
+  .horse-run-demo__canvas {
+    grid-area: 1 / 1;
+    width: auto;
+    max-width: 100%;
+    height: 90%;
+    aspect-ratio: 362 / 414;
+    overflow: hidden;
+  }
+
+  .horse-run-demo [hidden] {
+    display: none;
+  }
+
+  .horse-run-demo__controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-block-start: var(--space-4);
+  }
+
+  .horse-run-demo__button {
+    display: inline-flex;
+    gap: var(--space-1\.5);
+    align-items: center;
+    padding: var(--space-1\.5) var(--space-2);
+    padding-right: var(--space-3);
+    font-size: var(--text-xs);
+    line-height: rem(20);
+    color: var(--color-text);
+    cursor: pointer;
+    user-select: none;
+    touch-action: manipulation;
+    background: var(--color-canvas);
+    border: rem(1) solid var(--color-border);
+    border-radius: var(--radius-1\.5);
+    -webkit-tap-highlight-color: transparent;
+
+    @include motion-safe {
+      transition: transform var(--motion-material-release) ease-out;
+    }
+
+    @include hover {
+      &:hover:not(:disabled) .horse-run-demo__label {
+        color: var(--color-link);
+      }
+    }
+
+    &:focus-visible {
+      outline: rem(3) solid var(--color-focus);
+      outline-offset: rem(2);
+
+      @media (forced-colors: active) {
+        outline: rem(2) solid CanvasText;
+      }
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.6;
+    }
+  }
+
+  .horse-run-demo__button[data-horse-run-pressed] {
+    @include motion-safe {
+      transform: scale(0.97);
+      transition-duration: var(--motion-material-press);
+    }
+  }
+
+  .horse-run-demo__icon {
+    position: relative;
+    flex-shrink: 0;
+    width: rem(16);
+    height: rem(16);
+    color: var(--neutral-800);
+
+    :global(svg) {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  .horse-run-demo__icon-glyph {
+    position: absolute;
+    inset: 0;
+
+    @include motion-safe {
+      transition:
+        transform var(--motion-material-press) ease-out,
+        opacity var(--motion-material-release) ease-out;
+    }
+  }
+
+  .horse-run-demo__icon-glyph--pause {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  .horse-run-demo__button[aria-pressed="true"] .horse-run-demo__icon-glyph--play {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+
+  .horse-run-demo__button[aria-pressed="true"] .horse-run-demo__icon-glyph--pause {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .horse-run-demo__label {
+    white-space: nowrap;
+
+    @include hover-color-transition;
+  }
+
+  .horse-run-demo__status {
+    margin-block: var(--space-2) 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+</style>
+
+<script>
+  import { defineHorseRunDemo } from '../../lib/horse-run-demo';
+  defineHorseRunDemo();
+</script>

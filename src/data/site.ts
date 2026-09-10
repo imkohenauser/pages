@@ -5,7 +5,7 @@ export const site = {
   kanaName: '(Kohen)',
   shortName: 'Kohei Saito',
   title: 'Personal site of a Design Engineer, or Creative Technologist',
-  bio: 'Graphic design, print, web, and UI. I work with teams on the systems they already use. Projects, experiments, and notes on tools, AI, and everyday making.',
+  bio: 'Graphic design, print, web, and UI. I work with teams on the systems they already use. Projects, experiments, and notes on tools, AI, and the practical side of creative work.',
   lang: 'ja',
   locale: 'ja_JP',
   ogImage: '/ogp.png',

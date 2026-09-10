@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url';
+import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import astroExpressiveCode from 'astro-expressive-code';
 import { defineConfig, fontProviders } from 'astro/config';
@@ -48,7 +49,7 @@ export default defineConfig({
   ],
   integrations: [
     astroExpressiveCode({
-      themes: ['github-dark'],
+      themes: ['github-light'],
       frames: {
         showCopyToClipboardButton: true,
       },
@@ -62,9 +63,11 @@ export default defineConfig({
         codePaddingInline: '1rem',
         frames: {
           frameBoxShadowCssValue: 'none',
+          editorActiveTabIndicatorTopColor: 'transparent',
         },
       },
     }),
+    mdx(),
     sitemap({
       filter: includeInSitemap,
     }),
