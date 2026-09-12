@@ -73,7 +73,7 @@ const swimmers: readonly FishConfig[] = [
     pathRateY: 0.19,
     phase: 0.2,
     swimCycleSeconds: 2.7,
-    swimCycleImpulse: 110,
+    swimCycleImpulse: 52,
     initialSwimPhase: 0,
   },
   {
@@ -91,7 +91,7 @@ const swimmers: readonly FishConfig[] = [
     pathRateY: 0.145,
     phase: 2.25,
     swimCycleSeconds: 3.42,
-    swimCycleImpulse: 110,
+    swimCycleImpulse: 52,
     initialSwimPhase: 0.25,
   },
 ];
@@ -99,9 +99,12 @@ const swimmers: readonly FishConfig[] = [
 const BODY_WIDTH_PX = 58;
 const NARROW_BODY_WIDTH_PX = 46;
 const NARROW_WIDTH_PX = 520;
-const HORIZONTAL_GLIDE_DRAG = 1.85;
+const HORIZONTAL_GLIDE_DRAG = 2.1;
 const VERTICAL_GLIDE_DRAG = 3;
-const HORIZONTAL_COHESION = 0.95;
+/* Distant current targets only steer, preserving a smooth paddle-and-glide. */
+const HORIZONTAL_COHESION = 0.55;
+const COHESION_LOOKAHEAD_BODIES = 2;
+const MAX_CRUISE_BODIES = 2.2;
 const VERTICAL_COHESION = 0.8;
 const VERTICAL_STROKE_LIFT = 0.06;
 export const ATTRACTION_DURATION_S = 1.8;
@@ -367,9 +370,14 @@ export class FishSimulation {
       let accelerationY = 0;
       const towardX = targetX - fish.x;
       const towardY = targetY - fish.y;
+      const lookAheadX = bodyWidth * COHESION_LOOKAHEAD_BODIES;
+      const cohesionX = clamp(
+        towardX * fish.heading > 0 ? towardX : towardX * 0.15,
+        -lookAheadX,
+        lookAheadX,
+      );
       /* Cohesion may trim speed; it must not drag the fish tail-first. */
-      accelerationX +=
-        (towardX * fish.heading > 0 ? towardX : towardX * 0.15) * HORIZONTAL_COHESION * propulsionGain;
+      accelerationX += cohesionX * HORIZONTAL_COHESION * propulsionGain;
       accelerationY += towardY * VERTICAL_COHESION;
 
       for (const other of this.school) {
@@ -406,6 +414,8 @@ export class FishSimulation {
       /* Vertical movement meets more drag, so depth changes lag behind forward travel. */
       fish.vx *= Math.exp(-HORIZONTAL_GLIDE_DRAG * delta);
       fish.vy *= Math.exp(-VERTICAL_GLIDE_DRAG * delta);
+      const maxCruise = bodyWidth * MAX_CRUISE_BODIES;
+      fish.vx = clamp(fish.vx, -maxCruise, maxCruise);
 
       if (softAvoidance) {
         const inwardVelocity = fish.vx * softAvoidance.x + fish.vy * softAvoidance.y;
