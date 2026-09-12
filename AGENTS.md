@@ -17,44 +17,17 @@
 - Match Astro-required route filenames and dynamic-segment syntax exactly.
 - After source or path changes, run `npm run check` and `npm run build`.
 
-## SCSS and TypeScript conventions
+## Conditional frontend guidance
 
-- Use SCSS. Keep tokens, reset, base rules, and shared utilities in partials under `src/styles/`, composed by `src/styles.scss`; keep component layout and appearance in scoped Astro `<style lang="scss">` blocks.
-- Keep design tokens as CSS custom properties so they remain available at runtime. Use Sass features for organization and authoring rather than duplicating runtime tokens.
-- Keep reusable motion durations in `src/styles/_motion-tokens.scss` as CSS custom properties; leave one-off, component-specific timing values scoped to the component.
-- Add a matching value to `src/lib/motion-tokens.ts` only when TypeScript behavior needs the numeric duration. Keep the semantic name and duration synchronized across CSS and TypeScript, and prefer `animationend` or `transitionend` when that safely avoids mirrored timing logic.
-- Use semantic kebab-case blocks, `block__element`, and `block--modifier`. Do not add `l-`, `p-`, or `c-` prefixes.
-- Nest `@media` inside the selector it overrides so base and breakpoint rules stay together. Keep BEM elements and modifiers as top-level selectors.
-- Reserve classes for styling. TypeScript must not query or toggle presentation classes.
-- Prefer native elements and state attributes such as `hidden`, `open`, `disabled`, and `aria-expanded`; use `id` for explicit element relationships.
-- Use component-prefixed `data-*` attributes only for behavior without a native equivalent, and query targets from the component root rather than `document` where possible.
-- Keep one source of truth for state. Style native or custom state attributes directly instead of duplicating them with classes.
-- Narrow queried elements with `instanceof` checks; do not rely on unchecked casts or non-null assertions.
-- Use a custom element when an interaction is reusable, stateful, or owns multiple internal targets.
+Read only the relevant sections of [`.agents/guides/frontend-conventions.md`](.agents/guides/frontend-conventions.md):
 
-## Comments
-
-Write comments in English. Prefer why over what. Keep them concise and factual. Use complete sentences for behavior, reasoning, constraints, or workarounds. Do not comment self-explanatory code. Update or remove comments when the related code changes. Place comments immediately above the code they describe. Avoid decorative separators. Prefer descriptive names over comments.
-
-- CSS / Sass: use `/* ... */` for comments that should remain in compiled CSS. Use `//` only for Sass-specific notes that should not appear in the output. Short section labels are fine. Explain non-obvious values, workarounds, layout constraints, and intentional overrides.
-- TypeScript: use `//` for implementation notes. Use JSDoc (`/** ... */`) for exported APIs only when it adds information beyond the name and types.
-- Astro: use `//` in frontmatter and `<script>`, `<!-- ... -->` for markup notes, and `/* ... */` in `<style>`. Do not leave implementation notes in rendered HTML.
-
-## UI implementation constraints
-
-- Preserve visible `:focus-visible` treatment and complete keyboard operation for every pointer interaction.
-- Use the `hover-fine` mixin for hover-only motion so taps do not leave a false hover state. Use `hover` for non-motion hover styling that should apply to any hover-capable pointer.
-- Use the `motion-safe` mixin to opt in to spatial motion when the user has not requested reduced motion, while retaining a static cue for the state change.
-- Name transition properties explicitly; do not use `transition: all`.
-- Prefer `transform` and `opacity` over layout properties when they provide an equivalent animation.
+- For style changes, read **SCSS conventions** and **UI implementation constraints**.
+- For interaction or state-management changes, read **TypeScript conventions** and **UI implementation constraints**.
+- When changing a shared motion duration in CSS or TypeScript, also read **SCSS conventions** for the synchronization rule.
+- When adding or editing comments, read **Comments**.
 
 ## Repository skills
 
 Read the selected `.agents/skills/*/SKILL.md` before using a skill. Apply review skills only when review is the task; do not invoke them for ordinary implementation or use them to make fixes unless the user separately asks.
 
-- Use `motion-identity` when adding or changing motion and the project's lighting, ignition, material, or Frame Echo concepts are relevant. Do not invoke it for changes without motion or for a dedicated review.
-- Use `review-accessibility` only when the user explicitly asks for a dedicated accessibility or WCAG review or audit of existing interface code, a diff, or a rendered flow. Do not invoke it for implementation that merely involves forms, semantics, keyboard access, focus, media, or motion.
-- Use `review-animations` only when the user explicitly asks for a dedicated review of existing animation or motion code. Its automatic invocation is disabled; it reports findings and a `Block` or `Approve` verdict without implementing changes.
-- Use `web-naming-conventions` when choosing, reviewing, or changing names is the primary task. Do not invoke it for ordinary implementation that merely introduces names; repository-specific path rules above take precedence.
 - Use `commit-ja` only when the user explicitly invokes `$commit-ja` or `/commit-ja`. It proposes Japanese Conventional Commit text from staged changes without changing files, the index, or Git history.
-- Use `tidy-css` only when the user explicitly asks to tidy, clean up, or normalize selected CSS. Do not invoke it for ordinary style implementation.
