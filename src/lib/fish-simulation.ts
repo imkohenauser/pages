@@ -68,8 +68,8 @@ const swimmers: readonly FishConfig[] = [
     pathCenterX: 0.5,
     pathRangeX: 0.42,
     pathRateX: 0.13,
-    pathCenterY: 0.72,
-    pathRangeY: 0.22,
+    pathCenterY: 0.66,
+    pathRangeY: 0.28,
     pathRateY: 0.19,
     phase: 0.2,
     swimCycleSeconds: 2.7,
@@ -86,8 +86,8 @@ const swimmers: readonly FishConfig[] = [
     pathCenterX: 0.5,
     pathRangeX: 0.4,
     pathRateX: 0.095,
-    pathCenterY: 0.68,
-    pathRangeY: 0.2,
+    pathCenterY: 0.64,
+    pathRangeY: 0.24,
     pathRateY: 0.145,
     phase: 2.25,
     swimCycleSeconds: 3.42,
@@ -102,7 +102,7 @@ const NARROW_WIDTH_PX = 520;
 const HORIZONTAL_GLIDE_DRAG = 1.85;
 const VERTICAL_GLIDE_DRAG = 3;
 const HORIZONTAL_COHESION = 0.95;
-const VERTICAL_COHESION = 0.13;
+const VERTICAL_COHESION = 0.8;
 const VERTICAL_STROKE_LIFT = 0.06;
 export const ATTRACTION_DURATION_S = 1.8;
 const ATTRACTION_RELEASE_S = 0.6;
@@ -130,6 +130,8 @@ const AVOIDANCE_TURN_STRENGTH = 0.28;
 const AVOIDANCE_TURN_RELEASE = 0.16;
 const AVOIDANCE_IMPULSE_DAMP = 0.72;
 const EDGE_MARGIN = 6;
+/* A quarter body past the canvas lets the tail leave before the turn starts. */
+const TARGET_OVERSCAN_RATIO = 0.25;
 
 export interface FishInput {
   pointerX?: number;
@@ -216,12 +218,10 @@ export class FishSimulation {
       glitchAt: this.elapsed,
     };
 
-    const minX = extent.left * clone.scale + EDGE_MARGIN;
-    const maxX = Math.max(minX, this.width - extent.right * clone.scale - EDGE_MARGIN);
-    const minY = extent.top * clone.scale + EDGE_MARGIN;
-    const maxY = Math.max(minY, this.height - extent.bottom * clone.scale - EDGE_MARGIN);
-    clone.x = clamp(clone.x, minX, maxX);
-    clone.y = clamp(clone.y, minY, maxY);
+    const hardX = hardBoundsX(this.width);
+    const hardY = hardBoundsY(this.height, clone.scale);
+    clone.x = clamp(clone.x, hardX.min, hardX.max);
+    clone.y = clamp(clone.y, hardY.min, hardY.max);
     this.school.push(clone);
     return true;
   }
@@ -229,9 +229,11 @@ export class FishSimulation {
   resize(width: number, height: number) {
     const previousWidth = this.width;
     const previousHeight = this.height;
+    const previousHardX = hardBoundsX(previousWidth);
+    const previousHardY = this.school.map((fish) => hardBoundsY(previousHeight, fish.scale));
     this.width = width;
     this.height = height;
-    const bodyWidth = this.width < NARROW_WIDTH_PX ? NARROW_BODY_WIDTH_PX : BODY_WIDTH_PX;
+    const bodyWidth = sceneBodyWidth(this.width);
     this.scale = bodyWidth / REFERENCE_BODY_WIDTH;
     for (const fish of this.school) {
       fish.scale = this.scale * fish.config.sizeFactor;
@@ -249,9 +251,15 @@ export class FishSimulation {
         fish.y = this.entryLaneY(fish, fish.config.startY);
       }
     } else if (previousWidth > 0 && previousHeight > 0) {
-      for (const fish of this.school) {
-        fish.x = (fish.x / previousWidth) * this.width;
-        fish.y = (fish.y / previousHeight) * this.height;
+      /* Map through the swim walls, not the canvas, so a fish already off-screen does not jump. */
+      const nextHardX = hardBoundsX(this.width);
+      for (const [index, fish] of this.school.entries()) {
+        const previousY = previousHardY[index];
+        const nextY = hardBoundsY(this.height, fish.scale);
+        fish.x = remap(fish.x, previousHardX.min, previousHardX.max, nextHardX.min, nextHardX.max);
+        if (previousY) {
+          fish.y = remap(fish.y, previousY.min, previousY.max, nextY.min, nextY.max);
+        }
         if (this.elapsed < ENTRY_DURATION_S) {
           fish.y = this.entryLaneY(fish, fish.config.startY);
         }
@@ -274,26 +282,25 @@ export class FishSimulation {
     const entryProgress = entryRatio * entryRatio * (3 - 2 * entryRatio);
 
     // Later fish observe earlier fish after movement, so update order is significant.
+    const hardX = hardBoundsX(this.width);
+    const targetXRange = targetBoundsX(this.width);
+    const overscan = targetOverscan(this.width);
+
     for (const fish of this.school) {
-      const minX = extent.left * fish.scale + EDGE_MARGIN;
-      const maxX = Math.max(minX, this.width - extent.right * fish.scale - EDGE_MARGIN);
-      const minY = extent.top * fish.scale + EDGE_MARGIN;
-      const maxY = Math.max(minY, this.height - extent.bottom * fish.scale - EDGE_MARGIN);
+      const hardY = hardBoundsY(this.height, fish.scale);
       const bodyWidth = REFERENCE_BODY_WIDTH * fish.scale;
       const reachX = bodyWidth / 2;
       const reachY = (bodyWidth * BODY_HEIGHT_RATIO) / 2;
 
-      const currentX =
-        fish.config.pathCenterX +
-        fish.config.pathRangeX *
-          (0.76 * Math.sin(this.elapsed * fish.config.pathRateX + fish.config.phase) +
-            0.24 * Math.sin(this.elapsed * fish.config.pathRateX * 0.43 + fish.config.phase * 1.7));
+      const horizontalWave =
+        0.76 * Math.sin(this.elapsed * fish.config.pathRateX + fish.config.phase) +
+        0.24 * Math.sin(this.elapsed * fish.config.pathRateX * 0.43 + fish.config.phase * 1.7);
       const currentY =
         fish.config.pathCenterY +
         fish.config.pathRangeY *
           (0.68 * Math.sin(this.elapsed * fish.config.pathRateY + fish.config.phase * 1.3) +
             0.32 * Math.sin(this.elapsed * fish.config.pathRateY * 0.57 + fish.config.phase * 2.1));
-      let targetX = this.width * currentX;
+      let targetX = this.width / 2 + (this.width / 2 + overscan) * horizontalWave;
       let targetY = this.height * currentY;
 
       /* Enter as a close pair, then release each fish into its own current without a jump. */
@@ -314,8 +321,8 @@ export class FishSimulation {
         }
       }
 
-      targetX = clamp(targetX, minX, maxX);
-      targetY = clamp(targetY, minY, maxY);
+      targetX = clamp(targetX, targetXRange.min, targetXRange.max);
+      targetY = clamp(targetY, hardY.min, hardY.max);
 
       let softAvoidance: Avoidance | undefined;
       for (const obstacle of this.obstacles) {
@@ -326,7 +333,7 @@ export class FishSimulation {
       }
       softAvoidance = mergeAvoidance(
         softAvoidance,
-        findEdgeAvoidance(fish.x, fish.y, minX, maxX, minY, maxY, EDGE_AVOIDANCE_RANGE),
+        findEdgeAvoidance(fish.x, fish.y, hardX.min, hardX.max, hardY.min, hardY.max, EDGE_AVOIDANCE_RANGE),
       );
 
       const towardPointerX = pointerX === undefined ? undefined : pointerX - fish.x;
@@ -410,8 +417,8 @@ export class FishSimulation {
       }
 
       brakeFishTurn(fish, delta);
-      const integratedX = integrateAxis(fish.x, fish.vx, delta, minX, maxX);
-      const integratedY = integrateAxis(fish.y, fish.vy, delta, minY, maxY);
+      const integratedX = integrateAxis(fish.x, fish.vx, delta, hardX.min, hardX.max);
+      const integratedY = integrateAxis(fish.y, fish.vy, delta, hardY.min, hardY.max);
       fish.x = integratedX.position;
       fish.y = integratedY.position;
       fish.vx = integratedX.velocity;
@@ -423,10 +430,10 @@ export class FishSimulation {
         this.obstacles,
         reachX,
         reachY,
-        minX,
-        maxX,
-        minY,
-        maxY,
+        hardX.min,
+        hardX.max,
+        hardY.min,
+        hardY.max,
       );
     }
 
@@ -448,9 +455,8 @@ export class FishSimulation {
   }
 
   private entryLaneY(fish: Fish, fallbackRatio: number) {
-    const minY = extent.top * fish.scale + EDGE_MARGIN;
-    const maxY = Math.max(minY, this.height - extent.bottom * fish.scale - EDGE_MARGIN);
-    return clamp(this.height * fallbackRatio, minY, maxY);
+    const hardY = hardBoundsY(this.height, fish.scale);
+    return clamp(this.height * fallbackRatio, hardY.min, hardY.max);
   }
 
   /* The canvas keeps pointer-events none so footer links stay clickable; hit-testing uses the page pointer. */
@@ -518,6 +524,38 @@ export class FishSimulation {
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
+}
+
+function remap(value: number, fromMin: number, fromMax: number, toMin: number, toMax: number) {
+  if (fromMax <= fromMin) return (toMin + toMax) / 2;
+  return toMin + ((value - fromMin) / (fromMax - fromMin)) * (toMax - toMin);
+}
+
+function sceneBodyWidth(width: number) {
+  return width < NARROW_WIDTH_PX ? NARROW_BODY_WIDTH_PX : BODY_WIDTH_PX;
+}
+
+function targetOverscan(width: number) {
+  return sceneBodyWidth(width) * TARGET_OVERSCAN_RATIO;
+}
+
+function targetBoundsX(width: number) {
+  const overscan = targetOverscan(width);
+  return { min: -overscan, max: width + overscan };
+}
+
+function hardBoundsX(width: number) {
+  const overscan = targetOverscan(width);
+  return {
+    min: -overscan - EDGE_AVOIDANCE_RANGE,
+    max: width + overscan + EDGE_AVOIDANCE_RANGE,
+  };
+}
+
+function hardBoundsY(height: number, scale: number) {
+  const min = extent.top * scale + EDGE_MARGIN;
+  const max = Math.max(min, height - extent.bottom * scale - EDGE_MARGIN);
+  return { min, max };
 }
 
 function mergeAvoidance(

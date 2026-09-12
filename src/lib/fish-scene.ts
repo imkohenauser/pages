@@ -5,7 +5,12 @@ import type { FishKind } from './fish-sprites';
 const SIMULATION_STEP_S = 1 / 60;
 // Bound catch-up after a stalled frame without slowing normal 15–144Hz rendering.
 const MAX_DELTA_S = 0.1;
-const SWIM_BAND_HEIGHT_PX = 320;
+const SWIM_BAND_MIN_HEIGHT_PX = 360;
+const SWIM_BAND_MAX_HEIGHT_PX = 460;
+const SWIM_BAND_BASE_HEIGHT_PX = 300;
+const SWIM_BAND_HEIGHT_VIEWPORT_FACTOR = 0.1;
+const SWIM_BAND_ORIGINAL_HEIGHT_PX = 320;
+const MAX_CANVAS_PIXELS = 4_000_000;
 const OBSTACLE_PADDING = 20;
 const LOAD_MARGIN_PX = 400;
 /* Match the gate replay guard while still allowing deliberate rapid multiplication. */
@@ -143,6 +148,7 @@ class FishScene extends HTMLElement {
     this.simulation.hoveredFish = undefined;
     this.simulation.attraction = undefined;
     this.lastDuplicationAt = -Infinity;
+    this.style.removeProperty('height');
     this.removeAttribute('data-fish-scene-ready');
   }
 
@@ -208,17 +214,27 @@ class FishScene extends HTMLElement {
     const rootRect = this.getBoundingClientRect();
     if (rootRect.width <= 0) return;
 
+    const viewportWidth = document.documentElement.clientWidth;
+    const desiredHeight = swimBandHeight(viewportWidth);
+    /* Reserve the added water below the cards instead of covering more obstacles above them. */
+    this.style.height = `${desiredHeight - SWIM_BAND_ORIGINAL_HEIGHT_PX}px`;
+
     const boundaryRect = this.boundary.getBoundingClientRect();
     const footerRect = this.footer.getBoundingClientRect();
+    const swimStartRect = this.swimStart.getBoundingClientRect();
     const usesDesktopBoundary = boundaryRect.width > rootRect.width + 1;
     const bandLeft = usesDesktopBoundary ? 0 : rootRect.left;
-    const bandTop = footerRect.bottom - SWIM_BAND_HEIGHT_PX;
-    const width = usesDesktopBoundary
-      ? document.documentElement.clientWidth
-      : rootRect.width;
-    const height = SWIM_BAND_HEIGHT_PX;
+    /* Grow with the viewport, but never climb above the projects title. */
+    const bandTop = Math.max(footerRect.bottom - desiredHeight, swimStartRect.top);
+    const width = usesDesktopBoundary ? viewportWidth : rootRect.width;
+    const height = Math.max(0, footerRect.bottom - bandTop);
+    if (width <= 0 || height <= 0) return;
 
-    const pixelRatio = Math.min(window.devicePixelRatio, 2);
+    const pixelRatio = Math.min(
+      window.devicePixelRatio,
+      2,
+      Math.sqrt(MAX_CANVAS_PIXELS / (width * height)),
+    );
     this.canvas.style.insetInlineStart = `${bandLeft - rootRect.left}px`;
     this.canvas.style.insetBlockStart = `${bandTop - rootRect.top}px`;
     this.canvas.style.width = `${width}px`;
@@ -387,6 +403,16 @@ class FishScene extends HTMLElement {
     if (!this.context || !this.sheets) return;
     drawFishSchool(this.context, this.mosaic, this.sheets, this.simulation);
   }
+}
+
+function swimBandHeight(viewportWidth: number) {
+  return Math.min(
+    Math.max(
+      SWIM_BAND_BASE_HEIGHT_PX + viewportWidth * SWIM_BAND_HEIGHT_VIEWPORT_FACTOR,
+      SWIM_BAND_MIN_HEIGHT_PX,
+    ),
+    SWIM_BAND_MAX_HEIGHT_PX,
+  );
 }
 
 export function defineFishScene() {
