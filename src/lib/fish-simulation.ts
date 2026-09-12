@@ -108,6 +108,7 @@ export const ATTRACTION_DURATION_S = 1.8;
 const ATTRACTION_RELEASE_S = 0.6;
 const ATTRACTION_MAX_OFFSET_PX = 160;
 const ENTRY_DURATION_S = 10;
+const MAX_FISH_COUNT = 16;
 /* Weak enough that the pair can pass through each other instead of bouncing apart. */
 const SEPARATION_PUSH = 10;
 const BODY_HEIGHT_RATIO = 0.48;
@@ -146,6 +147,7 @@ export class FishSimulation {
   /* The fish the fine pointer is over, so a stay does not retrigger the sequence. */
   hoveredFish?: Fish;
   obstacles: Obstacle[] = [];
+  private nextCloneId = 1;
   school: Fish[] = swimmers.map((member) => ({
     config: member,
     swimPhase: member.initialSwimPhase,
@@ -162,6 +164,67 @@ export class FishSimulation {
     glitchArmed: true,
     glitchAt: -1,
   }));
+
+  /** Sparks the fish under a page-level pointer without requiring canvas pointer events. */
+  sparkFishAt(x: number, y: number) {
+    const fish = this.fishUnderPointer(x, y);
+    this.hoveredFish = fish;
+    if (fish) this.sparkGlitch(fish);
+    return fish !== undefined;
+  }
+
+  /** Returns true when a fish was hit, including when the school is already at its safe limit. */
+  duplicateFishAt(x: number, y: number) {
+    const source = this.fishUnderPointer(x, y);
+    if (!source) return false;
+
+    this.sparkGlitch(source);
+    if (this.school.length >= MAX_FISH_COUNT) return true;
+
+    const cloneId = this.nextCloneId;
+    this.nextCloneId += 1;
+    const splitHeading: FishHeading = cloneId % 2 === 0 ? 1 : -1;
+    const splitDistance = REFERENCE_BODY_WIDTH * source.scale * 0.18;
+    const phaseOffset = cloneId * 0.83;
+    const rateFactor = 0.88 + (cloneId % 5) * 0.06;
+    const config: FishConfig = {
+      ...source.config,
+      pathCenterY: clamp(
+        source.config.pathCenterY + Math.sin(phaseOffset) * 0.06,
+        0.2,
+        0.8,
+      ),
+      pathRateX: source.config.pathRateX * rateFactor,
+      pathRateY: source.config.pathRateY * (1.18 - (cloneId % 4) * 0.07),
+      phase: source.config.phase + phaseOffset,
+      initialSwimPhase: (source.swimPhase + 0.5) % 1,
+    };
+    const clone: Fish = {
+      config,
+      swimPhase: config.initialSwimPhase,
+      scale: source.scale,
+      x: source.x + splitHeading * splitDistance,
+      y: source.y + (cloneId % 2 === 0 ? -1 : 1) * splitDistance * 0.35,
+      vx: splitHeading * Math.max(Math.abs(source.vx), 18),
+      vy: -source.vy * 0.35,
+      heading: splitHeading,
+      desiredHeading: splitHeading,
+      headingRequestAge: 0,
+      turnMode: 'swimming',
+      recoveryAge: 0,
+      glitchArmed: false,
+      glitchAt: this.elapsed,
+    };
+
+    const minX = extent.left * clone.scale + EDGE_MARGIN;
+    const maxX = Math.max(minX, this.width - extent.right * clone.scale - EDGE_MARGIN);
+    const minY = extent.top * clone.scale + EDGE_MARGIN;
+    const maxY = Math.max(minY, this.height - extent.bottom * clone.scale - EDGE_MARGIN);
+    clone.x = clamp(clone.x, minX, maxX);
+    clone.y = clamp(clone.y, minY, maxY);
+    this.school.push(clone);
+    return true;
+  }
 
   resize(width: number, height: number) {
     const previousWidth = this.width;

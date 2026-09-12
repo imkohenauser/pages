@@ -8,6 +8,8 @@ const MAX_DELTA_S = 0.1;
 const SWIM_BAND_HEIGHT_PX = 320;
 const OBSTACLE_PADDING = 20;
 const LOAD_MARGIN_PX = 400;
+/* Match the gate replay guard while still allowing deliberate rapid multiplication. */
+const DUPLICATION_COOLDOWN_MS = 150;
 const INTERACTIVE_SELECTOR = [
   'a',
   'button',
@@ -44,6 +46,7 @@ class FishScene extends HTMLElement {
   private simulation = new FishSimulation();
   private pointerClientX?: number;
   private pointerClientY?: number;
+  private lastDuplicationAt = -Infinity;
 
   connectedCallback() {
     if (this.abortController) return;
@@ -86,7 +89,7 @@ class FishScene extends HTMLElement {
 
     window.addEventListener('resize', this.scheduleResize, { signal });
     window.addEventListener('pointermove', this.handlePointerMove, { passive: true, signal });
-    window.addEventListener('pointerdown', this.handlePointerMove, { passive: true, signal });
+    window.addEventListener('pointerdown', this.handlePointerDown, { passive: true, signal });
     window.addEventListener('pointerup', this.handlePointerEnd, { passive: true, signal });
     window.addEventListener('pointercancel', this.handlePointerEnd, { passive: true, signal });
     window.addEventListener('click', this.handleAttraction, { passive: true, signal });
@@ -139,6 +142,7 @@ class FishScene extends HTMLElement {
     this.hoverFineQuery = undefined;
     this.simulation.hoveredFish = undefined;
     this.simulation.attraction = undefined;
+    this.lastDuplicationAt = -Infinity;
     this.removeAttribute('data-fish-scene-ready');
   }
 
@@ -279,6 +283,17 @@ class FishScene extends HTMLElement {
     this.pointerClientY = event.clientY;
   };
 
+  private handlePointerDown = (event: PointerEvent) => {
+    this.handlePointerMove(event);
+    if (event.button !== 0 || this.reducedMotionQuery?.matches) return;
+
+    const target = event.target;
+    if (target instanceof Element && target.closest(INTERACTIVE_SELECTOR)) return;
+
+    const point = this.localPoint(event.clientX, event.clientY);
+    if (point) this.simulation.sparkFishAt(point.x, point.y);
+  };
+
   /* A finger stops existing when it lifts, unlike a cursor, so it must not keep facing that point. */
   private handlePointerEnd = (event: PointerEvent) => {
     if (event.pointerType === 'mouse') return;
@@ -296,19 +311,36 @@ class FishScene extends HTMLElement {
     const target = event.target;
     if (target instanceof Element && target.closest(INTERACTIVE_SELECTOR)) return;
 
-    const canvasRect = this.canvas?.getBoundingClientRect();
-    if (!canvasRect) return;
+    const point = this.localPoint(event.clientX, event.clientY);
+    if (!point) return;
 
-    const x = event.clientX - canvasRect.left;
-    const y = event.clientY - canvasRect.top;
-    if (x < 0 || x > this.simulation.width || y < 0 || y > this.simulation.height) return;
+    const now = performance.now();
+    if (this.simulation.sparkFishAt(point.x, point.y)) {
+      if (now - this.lastDuplicationAt >= DUPLICATION_COOLDOWN_MS) {
+        this.simulation.duplicateFishAt(point.x, point.y);
+        this.lastDuplicationAt = now;
+      }
+      return;
+    }
 
     this.simulation.attraction = {
-      x,
-      y,
+      x: point.x,
+      y: point.y,
       until: this.simulation.elapsed + ATTRACTION_DURATION_S,
     };
   };
+
+  private localPoint(clientX: number, clientY: number) {
+    const canvasRect = this.canvas?.getBoundingClientRect();
+    if (!canvasRect) return undefined;
+
+    const x = clientX - canvasRect.left;
+    const y = clientY - canvasRect.top;
+    if (x < 0 || x > this.simulation.width || y < 0 || y > this.simulation.height) {
+      return undefined;
+    }
+    return { x, y };
+  }
 
   private tick = (time: number) => {
     if (document.documentElement.dataset.siteLoader === 'active') {
