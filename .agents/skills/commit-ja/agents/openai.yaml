@@ -1,2 +1,7 @@
+interface:
+  display_name: "Japanese Commit Message"
+  short_description: "Propose or apply Japanese Conventional Commit messages"
+  default_prompt: "Use $commit-ja to propose a Japanese commit message for my staged changes."
+
 policy:
   allow_implicit_invocation: false

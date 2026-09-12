@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "skills": {
+    "commit-ja": {
+      "source": "imkohenauser/skills",
+      "sourceType": "github",
+      "skillPath": "skills/commit-ja/SKILL.md",
+      "computedHash": "8d150b4b14ff28565ca6f8588467ae0cf894e2f04e494712d09b5b87879c1cd3"
+    },
+    "review-accessibility": {
+      "source": "imkohenauser/skills",
+      "sourceType": "github",
+      "skillPath": "skills/review-accessibility/SKILL.md",
+      "computedHash": "027c9fe74b67f64b921ca39cc93e740ecd618e4e97a03f294f8d80711d4421ad"
+    },
+    "web-naming-conventions": {
+      "source": "imkohenauser/skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-naming-conventions/SKILL.md",
+      "computedHash": "9e9f2a1c5181b668c3f6c6c37f187aa30176bd109aaaf6e7ec835a964e06569d"
+    }
+  }
+}

@@ -1,51 +1,39 @@
 ---
 name: review-accessibility
-description: Review existing interface code, diffs, or rendered flows for accessibility barriers. Use only when the user explicitly requests a dedicated accessibility or WCAG review or audit. Report findings only; do not modify code unless separately asked.
+description: Review interface code, diffs, or rendered flows for accessibility barriers. Use when explicitly invoked as `$review-accessibility` or `/review-accessibility`.
+license: MIT
+disable-model-invocation: true
 ---
 
 # Review Accessibility
 
-Review only the interface and user flow in scope. Do not edit files, implement fixes, or expand into general UI review unless the user separately asks.
+Review the requested interface or flow. Do not edit files unless fixes are explicitly requested.
 
-Prefer the project's stated accessibility target. When none is stated, use WCAG 2.2 Level AA as the review baseline and identify checks that require manual or assistive-technology verification.
+Use the project's accessibility target, or WCAG 2.2 AA if none is stated. Use the relevant sections of [review-checks.md](references/review-checks.md).
 
-Read [references/review-checks.md](references/review-checks.md) completely before reviewing.
+Inspect semantics, keyboard and focus behavior, forms, dynamic updates, visual access, and media. Test the flow in a browser when available. Distinguish observed behavior from source inspection and mark missing checks `Not verified`.
 
-## Review method
+## Findings
 
-1. Identify the user tasks, interactive elements, and dynamic states in scope.
-2. Inspect semantics, accessible names, roles, relationships, and exposed states.
-3. Inspect keyboard operation, focus order, focus visibility, focus movement, and restoration.
-4. Inspect forms, errors, status messages, and other dynamic updates.
-5. Inspect images, media, target sizes, color-independent cues, zoom, reflow, and motion preferences.
-6. When a browser is available, test keyboard-only operation, the accessibility tree, zoom or narrow reflow, and reduced-motion settings.
-7. Separate confirmed findings from checks that could not be performed.
+List findings in this table, ordered by severity. Use `path:line` for code or the flow and element for observed behavior.
 
-Automated audits supplement manual review. They do not establish conformance.
-
-## Finding requirements
-
-Report only issues supported by code or observed behavior. Each finding must include severity, location or affected flow, current behavior, affected users and task impact, recommended outcome, and verification status.
-
-Do not report conventions as failures without concrete user impact:
-
-- Do not report heading-level preferences as standalone failures.
-- Check target-size exceptions before reporting an undersized control.
-- Do not assume a custom focus color or contrast pair passes without measuring the rendered result.
-- Do not claim screen-reader behavior was verified when only source code was inspected.
-- Prefer valid native behavior over a custom ARIA reconstruction.
-
-## Severity and verdict
-
-- **HIGH** — blocks a task, hides essential content, traps or loses focus, or makes an essential control unavailable to keyboard or assistive technology.
-- **MEDIUM** — creates substantial friction, ambiguity, or unreliable operation without fully blocking the task.
-- **LOW** — isolated accessibility polish with limited task impact.
-
-List findings first, ordered by severity:
-
-| Severity | Location | Finding | User impact | Recommendation | Verification |
+| Severity | Location | Finding and evidence | User impact | Suggested fix | Verification |
 | --- | --- | --- | --- | --- | --- |
 
-Use `path:line` for code findings and a concise flow or element name for runtime findings.
+Severity:
 
-Close with `Block` when a HIGH finding remains and `Approve` when no blocking finding remains in the inspected scope. State `Not fully verified` when required browser, screen-reader, contrast, zoom, or device checks could not be performed. Approval applies only to the reviewed scope and is not a claim of complete WCAG conformance.
+- **HIGH**: blocks a task or essential content, traps focus, or makes an essential control inaccessible.
+- **MEDIUM**: causes substantial friction or ambiguity.
+- **LOW**: causes limited difficulty.
+
+For requirement failures, cite the applicable WCAG criterion and level or project rule. Label other improvements as recommendations. Report concrete barriers rather than convention preferences.
+
+## Verdict
+
+End with the reviewed scope, missing checks, and one verdict:
+
+- `Block`: a confirmed HIGH finding remains.
+- `Inconclusive`: no confirmed HIGH finding, but essential checks are incomplete.
+- `Approve`: essential checks are complete and no HIGH finding remains. Include any MEDIUM or LOW findings.
+
+The verdict covers the reviewed scope; automated checks alone do not establish WCAG conformance.

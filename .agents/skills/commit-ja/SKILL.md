@@ -1,52 +1,45 @@
 ---
 name: commit-ja
-description: Propose a Japanese Conventional Commit message from staged changes. Use only when explicitly invoked as `$commit-ja` or `/commit-ja`.
+description: Write Japanese Conventional Commit messages from staged changes. Use when invoked as `$commit-ja` or `/commit-ja`, attached as a skill, or named as the project's commit convention. Create commits when requested.
+license: MIT
+disable-model-invocation: true
 ---
 
 # Japanese Commit Message
 
-Propose commit text for the staged changes. Read Git state only; do not edit files, change the index, or create a commit.
+Generate a message now when invoked on its own. Empty input or a skill reference alone counts, even if the client omits the command text. When supplied as context for another request, follow that request.
 
-## Inspect
+## Generate
 
-Run these commands in parallel and do not inspect anything else unless the staged diff is insufficient:
+1. Read `git status --short`, `git diff --cached --stat`, `git diff --cached`, and `git log -8 --format='%s'` in parallel.
+2. Base the message on staged changes; use recent subjects for style. Skip the history if the repository has no commits. Read more context only as needed.
+3. Return only the message in one `text` code block. If nothing is staged, return `ステージ済みの変更はありません` in that block. If inspection fails, report the error.
 
-- `git status --short`
-- `git diff --cached --stat`
-- `git diff --cached`
-- `git log -8 --format='%s'`
+Leave files and the index unchanged when generating a message. Finish with the result, not an acknowledgment or a request to invoke again.
 
-Use only the staged diff as the source of truth. Ignore unstaged and untracked changes. Use recent commit subjects only to match the repository's established message style; do not search for additional commit conventions.
+## Message format
 
-If there are no staged changes, output `ステージ済みの変更はありません` and stop.
+Use `type(scope)!: subject`:
 
-If paths and diff hunks do not provide enough context for an accurate message, read at most one relevant file.
+- Type: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `build`, `ci`, or `revert`.
+- Use English for type and scope; Japanese for subject and body. Include scope when the diff supports it.
+- Describe the resulting behavior with a concise noun phrase. Include meaningful terms, rather than filenames or generic words such as `修正` alone.
+- Aim for 50 characters; limit the subject to 72. Omit final punctuation, ticket numbers, URLs, and `〜しました`.
+- Add a body when motivation or impact needs explanation.
+- Mark breaking changes with `!`; add a `BREAKING CHANGE:` footer when migration needs explanation.
 
-## Compose
-
-Use the Conventional Commits form `type(scope)!: subject`:
-
-- Choose one of `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `build`, `ci`, or `revert`.
-- Add a scope only when it is clear from the staged paths or diff.
-- Add `!` immediately after the type or scope for a breaking change. Add a `BREAKING CHANGE:` footer when the migration impact needs explanation.
-- Write the type and scope in English. Write the subject and body in Japanese.
-- Describe the result of applying the commit, not the editing process.
-- Write the subject as a concise Japanese noun phrase. Do not use `〜しました`.
-- Include meaningful domain or behavior terms; do not use only generic words such as `修正` or `更新`, and do not list filenames as the subject.
-- Do not end the subject with punctuation. Aim for 50 characters and never exceed 72 characters.
-- Keep ticket numbers and URLs out of the subject.
-- Add a body only when it clarifies motivation, behavior, or impact. Do not narrate implementation details.
-
-Prefer one message. If the staged diff clearly combines independently committable concerns with different types, output one message for each proposed commit and separate them with `---`.
-
-## Output
-
-Output only the proposed message text. Do not add a code fence, introduction, explanation, conclusion, or reasoning.
-
-Example:
+Split independent concerns into separate messages, separated by `---` within the same block. Keep supporting tests and documentation with their change.
 
 ```text
 feat(auth): OAuth2ログインエンドポイントの追加
 
 リフレッシュトークンを使ったセッション継続に対応。
 ```
+
+## Commit
+
+Create commits only when requested. Inspect staged and relevant unstaged changes, then stage the requested paths or hunks while preserving unrelated and partially staged work.
+
+Do not use blanket staging, create empty commits, or bypass hooks.
+
+Group independent concerns separately. Check each staged diff and required repository checks, commit with a message in the format above, and verify the commit and remaining Git state. Pass plain message text to Git. Report any commit or hook failure.
