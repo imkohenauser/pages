@@ -38,7 +38,7 @@
   "devDependencies": {
     "@astrojs/check": "0.9.10",
     "@types/three": "0.185.4",
-    "sass": "1.103.1",
+    "sass": "1.104.0",
     "typescript": "5.9.3"
   }
 }
