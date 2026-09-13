@@ -1,6 +1,6 @@
 import { advanceSwimPhase } from './fish-swim-cycle';
-import { brakeFishTurn, updateFishTurn, RECOVERY_SECONDS, type FishHeading, type FishTurnState } from './fish-turn';
-import { extent, REFERENCE_BODY_WIDTH, type FishKind } from './fish-sprites';
+import { brakeFishTurn, initialTurnClock, updateFishTurn, type FishHeading, type FishTurnState } from './fish-turn';
+import { extent, REFERENCE_BODY_WIDTH, turnFrontness, type FishKind } from './fish-sprites';
 
 export interface Obstacle {
   left: number;
@@ -167,7 +167,7 @@ export class FishSimulation {
     desiredHeading: -1,
     headingRequestAge: 0,
     turnMode: 'recovering',
-    motionAge: 0,
+    ...initialTurnClock(member.kind, member.phase),
     glitchArmed: true,
     glitchAt: -1,
   }));
@@ -219,7 +219,7 @@ export class FishSimulation {
       desiredHeading: splitHeading,
       headingRequestAge: 0,
       turnMode: 'recovering',
-      motionAge: 0,
+      ...initialTurnClock(config.kind, config.phase),
       glitchArmed: false,
       glitchAt: this.elapsed,
     };
@@ -364,14 +364,22 @@ export class FishSimulation {
       ) {
         heading = towardPointerX > 0 ? 1 : -1;
       }
-      const driveDistance = bodyWidth * (fish.turnMode === 'idle' ? 0.65 : 0.25);
+      const driveDistance = bodyWidth * (fish.turnMode === 'idle' ? 0.9 : 0.58);
       const drive = Math.hypot(targetX - fish.x, (targetY - fish.y) * 0.4) > driveDistance;
       const propulsionGain = updateFishTurn(fish, heading, delta, drive);
-      const cycleSeconds = fish.turnMode === 'recovering' ? RECOVERY_SECONDS : fish.config.swimCycleSeconds;
+      let cycleSeconds = fish.config.swimCycleSeconds;
+      // Hover slows the fin beat; a dart or lure compresses it. Do not undo that with extra impulse.
+      if (fish.turnMode === 'idle' || fish.turnMode === 'braking') {
+        cycleSeconds *= 1.4;
+      } else if (fish.turnMode === 'recovering') {
+        // The recovery stroke and its poses share one clock, including individual tempo.
+        cycleSeconds = fish.recoverySeconds;
+      } else if (attractionRemaining > 0) {
+        cycleSeconds *= 0.7;
+      }
       const cycle = advanceSwimPhase(fish.swimPhase, delta, cycleSeconds);
       fish.swimPhase = cycle.swimPhase;
-      const recoveryImpulse = fish.turnMode === 'recovering' ? RECOVERY_SECONDS / fish.config.swimCycleSeconds : 1;
-      this.applySwimImpulse(fish, targetX, targetY, cycle.impulseFraction * propulsionGain * recoveryImpulse, softAvoidance);
+      this.applySwimImpulse(fish, targetX, targetY, cycle.impulseFraction * propulsionGain, softAvoidance);
 
       let accelerationX = 0;
       let accelerationY = 0;
@@ -659,14 +667,16 @@ function findEdgeAvoidance(
 function bodyRect(fish: Fish) {
   const width = REFERENCE_BODY_WIDTH * fish.scale;
   const height = width * BODY_HEIGHT_RATIO;
-  const left = fish.x - width / 2;
-  const right = fish.x + width / 2;
+  // Front-facing turn poses are taller and narrower than the cruise silhouette.
+  const front = turnFrontness(fish, fish.config.kind);
+  const boxWidth = width * (1 - 0.45 * front);
+  const boxHeight = height * (1 + 0.7 * front);
   return {
-    left,
-    right,
-    top: fish.y - height / 2,
-    bottom: fish.y + height / 2,
-    area: width * height,
+    left: fish.x - boxWidth / 2,
+    right: fish.x + boxWidth / 2,
+    top: fish.y - boxHeight / 2,
+    bottom: fish.y + boxHeight / 2,
+    area: boxWidth * boxHeight,
   };
 }
 
