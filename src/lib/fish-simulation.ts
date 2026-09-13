@@ -1,5 +1,5 @@
 import { advanceSwimPhase } from './fish-swim-cycle';
-import { brakeFishTurn, updateFishTurn, type FishHeading, type FishTurnState } from './fish-turn';
+import { brakeFishTurn, updateFishTurn, RECOVERY_SECONDS, type FishHeading, type FishTurnState } from './fish-turn';
 import { extent, REFERENCE_BODY_WIDTH, type FishKind } from './fish-sprites';
 
 export interface Obstacle {
@@ -48,6 +48,7 @@ export interface Fish extends FishTurnState {
   y: number;
   vx: number;
   vy: number;
+  pitch: number;
   avoidanceHeading?: FishHeading;
   /* Rearms once the fish has cleared its neighbours, so a crossing can spark another glitch. */
   glitchArmed: boolean;
@@ -161,11 +162,12 @@ export class FishSimulation {
     y: 0,
     vx: 0,
     vy: 0,
+    pitch: 0,
     heading: -1,
     desiredHeading: -1,
     headingRequestAge: 0,
-    turnMode: 'swimming',
-    recoveryAge: 0,
+    turnMode: 'recovering',
+    motionAge: 0,
     glitchArmed: true,
     glitchAt: -1,
   }));
@@ -212,11 +214,12 @@ export class FishSimulation {
       y: source.y + (cloneId % 2 === 0 ? -1 : 1) * splitDistance * 0.35,
       vx: splitHeading * Math.max(Math.abs(source.vx), 18),
       vy: -source.vy * 0.35,
+      pitch: 0,
       heading: splitHeading,
       desiredHeading: splitHeading,
       headingRequestAge: 0,
-      turnMode: 'swimming',
-      recoveryAge: 0,
+      turnMode: 'recovering',
+      motionAge: 0,
       glitchArmed: false,
       glitchAt: this.elapsed,
     };
@@ -361,10 +364,14 @@ export class FishSimulation {
       ) {
         heading = towardPointerX > 0 ? 1 : -1;
       }
-      const propulsionGain = updateFishTurn(fish, heading, delta);
-      const cycle = advanceSwimPhase(fish.swimPhase, delta, fish.config.swimCycleSeconds);
+      const driveDistance = bodyWidth * (fish.turnMode === 'idle' ? 0.65 : 0.25);
+      const drive = Math.hypot(targetX - fish.x, (targetY - fish.y) * 0.4) > driveDistance;
+      const propulsionGain = updateFishTurn(fish, heading, delta, drive);
+      const cycleSeconds = fish.turnMode === 'recovering' ? RECOVERY_SECONDS : fish.config.swimCycleSeconds;
+      const cycle = advanceSwimPhase(fish.swimPhase, delta, cycleSeconds);
       fish.swimPhase = cycle.swimPhase;
-      this.applySwimImpulse(fish, targetX, targetY, cycle.impulseFraction * propulsionGain, softAvoidance);
+      const recoveryImpulse = fish.turnMode === 'recovering' ? RECOVERY_SECONDS / fish.config.swimCycleSeconds : 1;
+      this.applySwimImpulse(fish, targetX, targetY, cycle.impulseFraction * propulsionGain * recoveryImpulse, softAvoidance);
 
       let accelerationX = 0;
       let accelerationY = 0;
@@ -378,7 +385,7 @@ export class FishSimulation {
       );
       /* Cohesion may trim speed; it must not drag the fish tail-first. */
       accelerationX += cohesionX * HORIZONTAL_COHESION * propulsionGain;
-      accelerationY += towardY * VERTICAL_COHESION;
+      accelerationY += towardY * VERTICAL_COHESION * (fish.turnMode === 'turning' ? 0.15 : 1);
 
       for (const other of this.school) {
         if (other === fish) continue;
@@ -433,6 +440,9 @@ export class FishSimulation {
       fish.y = integratedY.position;
       fish.vx = integratedX.velocity;
       fish.vy = integratedY.velocity;
+      const desiredPitch = fish.turnMode === 'turning' ? 0
+        : clamp(Math.atan2(fish.vy * fish.heading, Math.max(18, Math.abs(fish.vx))), -0.22, 0.22);
+      fish.pitch += (desiredPitch - fish.pitch) * (1 - Math.exp(-4 * delta));
 
       /* A stroke can still carry a fish into a card, so the card keeps the last word. */
       resolveObstaclePenetration(
@@ -649,9 +659,8 @@ function findEdgeAvoidance(
 function bodyRect(fish: Fish) {
   const width = REFERENCE_BODY_WIDTH * fish.scale;
   const height = width * BODY_HEIGHT_RATIO;
-  /* The solid body hangs behind the eye. */
-  const left = fish.heading < 0 ? fish.x : fish.x - width;
-  const right = fish.heading < 0 ? fish.x + width : fish.x;
+  const left = fish.x - width / 2;
+  const right = fish.x + width / 2;
   return {
     left,
     right,

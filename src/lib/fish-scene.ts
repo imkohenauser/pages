@@ -173,8 +173,8 @@ class FishScene extends HTMLElement {
     const female = new Image();
     male.decoding = 'async';
     female.decoding = 'async';
-    male.src = `${import.meta.env.BASE_URL}sprite-sheet/sacura-margaritacea_male_v2.webp`;
-    female.src = `${import.meta.env.BASE_URL}sprite-sheet/sacura-margaritacea_female_v2.webp`;
+    male.src = `${import.meta.env.BASE_URL}sprite-sheet/sacura-margaritacea-male-motion.webp`;
+    female.src = `${import.meta.env.BASE_URL}sprite-sheet/sacura-margaritacea-female-motion.webp`;
 
     try {
       await Promise.all([male.decode(), female.decode()]);

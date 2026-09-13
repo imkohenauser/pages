@@ -1,5 +1,5 @@
 import { drawMosaicImage, glitchFromAge, type Glitch } from './mosaic-glitch';
-import { clipSets, spriteScale, swimClipIndex, type FishKind } from './fish-sprites';
+import { fishPose, spriteScale, type FishKind } from './fish-sprites';
 import { GLITCH_SEQUENCE, type Fish, type FishSimulation } from './fish-simulation';
 
 export function drawFishSchool(
@@ -31,19 +31,19 @@ function drawFish(
   glitch: Glitch,
 ) {
   const sheet = sheets[fish.config.kind];
-  const clip = clipSets[fish.config.kind][swimClipIndex(fish.swimPhase)];
+  const clip = fishPose(fish);
   if (!context || !sheet || !clip) return;
 
   const scale = fish.scale * spriteScale[fish.config.kind];
   const drawnWidth = clip.width * scale;
   const drawnHeight = clip.height * scale;
-  const drawX = -clip.headX * scale;
-  const drawY = -clip.headY * scale;
+  const drawX = -clip.anchorX * scale;
+  const drawY = -clip.anchorY * scale;
 
   context.save();
   context.translate(fish.x, fish.y);
-  /* The sheet faces right, so swimming left is a flip around the eye. */
-  if (fish.heading < 0) context.scale(-1, 1);
+  context.rotate(fish.pitch);
+  if (clip.flip) context.scale(-1, 1);
 
   if (!mosaic) {
     context.restore();
