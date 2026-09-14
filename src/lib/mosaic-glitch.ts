@@ -16,6 +16,15 @@ export const GLITCH_REST: Glitch = {
   chromaPx: 0,
 };
 
+/* Stepped sequence for a hover or crossing, like the gate echoes rather than interpolated. */
+export const GLITCH_SEQUENCE = [
+  { until: 0.07, mosaicPx: 10, dissolve: 0.5, scatter: 0.48, chromaPx: 2.5 },
+  { until: 0.16, mosaicPx: 9, dissolve: 0.32, scatter: 0.36, chromaPx: 2 },
+  { until: 0.28, mosaicPx: 8, dissolve: 0.18, scatter: 0.24, chromaPx: 1.5 },
+] as const satisfies readonly GlitchStep[];
+
+export const GLITCH_DURATION_S = GLITCH_SEQUENCE[GLITCH_SEQUENCE.length - 1].until;
+
 const MIN_MOSAIC_CELLS = 3;
 
 export function glitchFromAge(age: number, sequence: readonly GlitchStep[]): Glitch {
