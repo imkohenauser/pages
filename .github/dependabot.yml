@@ -5,11 +5,19 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 1
+    # @astrojs/check@0.9.10 only accepts TypeScript 5 or 6. A TypeScript 7 PR cannot npm ci.
+    ignore:
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     groups:
       npm:
         applies-to: version-updates
         patterns:
           - "*"
+        # Keep the weekly grouped PR on non-breaking updates. Majors stay ungrouped so they can be reviewed on their own.
+        update-types:
+          - "minor"
+          - "patch"
       npm-security:
         applies-to: security-updates
         patterns:
