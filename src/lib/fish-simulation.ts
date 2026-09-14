@@ -1,3 +1,4 @@
+import { GLITCH_DURATION_S } from './mosaic-glitch';
 import { advanceSwimPhase } from './fish-swim-cycle';
 import { brakeFishTurn, initialTurnClock, updateFishTurn, type FishHeading, type FishTurnState } from './fish-turn';
 import { extent, REFERENCE_BODY_WIDTH, turnFrontness, type FishKind } from './fish-sprites';
@@ -118,13 +119,6 @@ const SEPARATION_PUSH = 10;
 const BODY_HEIGHT_RATIO = 0.48;
 const GLITCH_TRIGGER = 0.16;
 const GLITCH_CLEAR = 0.08;
-/* Encounter sequence for a crossing, stepped like the gate echoes rather than interpolated. */
-export const GLITCH_SEQUENCE = [
-  { until: 0.07, mosaicPx: 10, dissolve: 0.5, scatter: 0.48, chromaPx: 2.5 },
-  { until: 0.16, mosaicPx: 9, dissolve: 0.32, scatter: 0.36, chromaPx: 2 },
-  { until: 0.28, mosaicPx: 8, dissolve: 0.18, scatter: 0.24, chromaPx: 1.5 },
-] as const;
-const GLITCH_DURATION_S = GLITCH_SEQUENCE[GLITCH_SEQUENCE.length - 1].until;
 const POINTER_TURN_HYSTERESIS = 10;
 const SOFT_AVOIDANCE_RANGE = 80;
 const SOFT_AVOIDANCE_PUSH = 90;

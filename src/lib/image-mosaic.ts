@@ -1,13 +1,10 @@
 import {
-  CARD_IMAGE_GLITCH_DURATION_S,
-  CARD_IMAGE_GLITCH_SEQUENCE,
-} from './card-image-glitch';
-import {
+  GLITCH_DURATION_S,
+  GLITCH_SEQUENCE,
   coverSourceRect,
   drawMosaicImage,
   glitchFromAge,
 } from './mosaic-glitch';
-import { MOTION_IGNITE_DWELL_MS } from './motion-tokens';
 
 let activeMosaic: ImageMosaic | undefined;
 
@@ -18,7 +15,6 @@ export class ImageMosaic extends HTMLElement {
   private scratchCanvas?: HTMLCanvasElement;
   private resizeObserver?: ResizeObserver;
   private animationFrame?: number;
-  private dwellTimer?: number;
   private glitchStartedAt?: number;
   private firedThisHover = false;
   private animating = false;
@@ -61,33 +57,22 @@ export class ImageMosaic extends HTMLElement {
 
   play() {
     if (!this.motionAllowed || !this.hoverFine) return;
-    if (this.firedThisHover && !this.animating) return;
+    /* A stay does not retrigger; a second spark waits until the sequence has finished. */
+    if (this.animating || this.firedThisHover) return;
 
     if (activeMosaic && activeMosaic !== this) {
       activeMosaic.settle();
     }
 
-    window.clearTimeout(this.dwellTimer);
-
-    if (this.animating) {
-      this.settle();
-    }
-
-    this.dwellTimer = window.setTimeout(() => {
-      this.dwellTimer = undefined;
-      this.beginGlitch();
-    }, MOTION_IGNITE_DWELL_MS);
+    this.firedThisHover = true;
+    this.beginGlitch();
   }
 
   onTriggerLeave() {
-    window.clearTimeout(this.dwellTimer);
-    this.dwellTimer = undefined;
     this.firedThisHover = false;
   }
 
   settle() {
-    window.clearTimeout(this.dwellTimer);
-    this.dwellTimer = undefined;
     if (this.animationFrame !== undefined) {
       cancelAnimationFrame(this.animationFrame);
       this.animationFrame = undefined;
@@ -115,16 +100,19 @@ export class ImageMosaic extends HTMLElement {
   private beginGlitch() {
     const image = this.image;
     const context = this.displayContext;
-    if (!image || !context || this.firedThisHover || this.animating) return;
+    if (!image || !context || this.animating) return;
 
     const start = () => {
-      if (image.naturalWidth <= 0 || image.naturalHeight <= 0) return;
+      if (!this.firedThisHover || this.animating) return;
+      if (image.naturalWidth <= 0 || image.naturalHeight <= 0) {
+        this.firedThisHover = false;
+        return;
+      }
 
       if (activeMosaic && activeMosaic !== this) {
         activeMosaic.settle();
       }
 
-      this.firedThisHover = true;
       this.animating = true;
       activeMosaic = this;
       this.glitchStartedAt = performance.now();
@@ -148,7 +136,7 @@ export class ImageMosaic extends HTMLElement {
 
     this.drawFrame(age);
 
-    if (age >= CARD_IMAGE_GLITCH_DURATION_S) {
+    if (age >= GLITCH_DURATION_S) {
       this.settle();
       return;
     }
@@ -183,7 +171,7 @@ export class ImageMosaic extends HTMLElement {
       layoutWidth,
       layoutHeight,
     );
-    const glitch = glitchFromAge(age, CARD_IMAGE_GLITCH_SEQUENCE);
+    const glitch = glitchFromAge(age, GLITCH_SEQUENCE);
     const scratch = this.scratchCanvas ?? this.createScratchCanvas();
 
     drawMosaicImage(

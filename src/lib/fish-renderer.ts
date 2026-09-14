@@ -1,6 +1,6 @@
-import { drawMosaicImage, glitchFromAge, type Glitch } from './mosaic-glitch';
+import { GLITCH_SEQUENCE, drawMosaicImage, glitchFromAge, type Glitch } from './mosaic-glitch';
 import { fishPose, spriteScale, type FishKind } from './fish-sprites';
-import { GLITCH_SEQUENCE, type Fish, type FishSimulation } from './fish-simulation';
+import type { Fish, FishSimulation } from './fish-simulation';
 
 export function drawFishSchool(
   context: CanvasRenderingContext2D,

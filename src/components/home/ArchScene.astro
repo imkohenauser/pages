@@ -25,6 +25,9 @@ const { avatarSrc = path('/avatar.svg') } = Astro.props;
 <style lang="scss">
   @use "tools" as *;
 
+  /* Short dwell so a cursor passing the gate never ignites it. */
+  $ignite-dwell: 40ms;
+
   .arch-scene {
     position: relative;
     isolation: isolate;
@@ -66,6 +69,15 @@ const { avatarSrc = path('/avatar.svg') } = Astro.props;
   }
 
   .arch-scene__inner {
+    /*
+     * The hard band stays hairline and the brightness comes from the diffuse halo,
+     * so the peak reads as light rather than as a drawn blue border.
+     */
+    --arch-scene-inner-bloom:
+      inset 0 0 0 1px color-mix(in srgb, var(--sky-500) 46%, transparent),
+      inset 0 0 #{rem(12)} color-mix(in srgb, var(--sky-500) 42%, transparent),
+      inset 0 0 #{rem(28)} color-mix(in srgb, var(--sky-400) 30%, transparent);
+
     position: absolute;
     /* Frame thickness: 6% of the width at the sides, 4% above the arch and 6% below. */
     inset: 4% 6% 6%;
@@ -76,10 +88,40 @@ const { avatarSrc = path('/avatar.svg') } = Astro.props;
     padding: 0;
     appearance: none;
     cursor: pointer;
-    background: transparent;
+    /* Occlude the floor and outer fill when the portrait is missing or punched through. */
+    background: linear-gradient(to bottom, var(--neutral-100), var(--neutral-50));
     border: 0;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+
+    /* Inset bloom only, so the portrait stays visible while the opening rim emits light. */
+    &::after {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      content: "";
+      border-radius: inherit;
+      box-shadow: var(--arch-scene-inner-bloom);
+      opacity: 0;
+    }
+
+    /* A faint rest glow while hovered; the ignition bloom leaves this behind. */
+    @include hover {
+      &:hover::after {
+        opacity: 0.28;
+      }
+    }
+
+    @include hover-fine {
+      @include motion-safe {
+        &:hover::after {
+          animation: arch-scene-inner-ignite
+            calc(var(--motion-electronic-cycle) * 2) steps(1, jump-end)
+            $ignite-dwell both;
+        }
+      }
+    }
 
     &:focus-visible {
       outline: rem(3) solid var(--color-focus);
@@ -88,6 +130,48 @@ const { avatarSrc = path('/avatar.svg') } = Astro.props;
       @media (forced-colors: active) {
         outline: rem(2) solid CanvasText;
       }
+    }
+  }
+
+  /*
+   * Two uneven strikes over two electronic cycles: spark, stall, bloom, miss,
+   * bloom again, then a faint lit rest. The 0% stop is what the dwell delay holds.
+   */
+  @keyframes arch-scene-inner-ignite {
+    0% {
+      opacity: 0;
+    }
+
+    4% {
+      opacity: 0.22;
+    }
+
+    12% {
+      opacity: 0.06;
+    }
+
+    22% {
+      opacity: 1;
+    }
+
+    34% {
+      opacity: 0.1;
+    }
+
+    44% {
+      opacity: 0.28;
+    }
+
+    54% {
+      opacity: 1;
+    }
+
+    68% {
+      opacity: 0.16;
+    }
+
+    100% {
+      opacity: 0.28;
     }
   }
 

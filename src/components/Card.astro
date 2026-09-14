@@ -186,7 +186,7 @@ const cellMask = `--card-cell-mask: url("${path('/pattern/border-cell.svg')}")`;
         }
 
         &:has(.card__title-link):hover::after {
-          animation: card-edge-ignite var(--motion-electronic-cycle)
+          animation: card-edge-ignite calc(var(--motion-electronic-cycle) * 2)
             steps(1, jump-end) $ignite-dwell both;
         }
 
@@ -510,6 +510,11 @@ const cellMask = `--card-cell-mask: url("${path('/pattern/border-cell.svg')}")`;
     }
   }
 
+  /*
+   * Two uneven strikes over two electronic cycles: spark, stall, bloom, miss,
+   * bloom again, then off. The 0% stop is what the dwell delay holds, so it must
+   * match the unlit card. The bloom leaves nothing behind.
+   */
   @keyframes card-edge-ignite {
     0% {
       opacity: 0;
@@ -519,16 +524,28 @@ const cellMask = `--card-cell-mask: url("${path('/pattern/border-cell.svg')}")`;
       opacity: 0.22;
     }
 
-    20% {
+    12% {
       opacity: 0.06;
     }
 
-    42% {
+    22% {
       opacity: 1;
     }
 
-    64% {
-      opacity: 0.2;
+    34% {
+      opacity: 0.1;
+    }
+
+    44% {
+      opacity: 0.28;
+    }
+
+    54% {
+      opacity: 1;
+    }
+
+    68% {
+      opacity: 0.16;
     }
 
     100% {
