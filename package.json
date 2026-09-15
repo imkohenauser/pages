@@ -19,6 +19,7 @@
     "build": "astro build",
     "check": "astro check",
     "test:article-markdown": "node --experimental-strip-types --test src/lib/article-markdown.test.ts",
+    "test:sea-bream": "node --experimental-strip-types --test src/lib/sea-bream-*.test.ts",
     "preview": "astro preview"
   },
   "dependencies": {

@@ -1,0 +1,446 @@
+import { SeaBreamSimulation, ATTRACTION_DURATION_S } from './sea-bream-simulation.ts';
+import { drawSeaBreamSchool } from './sea-bream-renderer.ts';
+import { loadSeaBreamAtlas } from './sea-bream-assets.ts';
+
+const SIMULATION_STEP_S = 1 / 60;
+// Bound catch-up after a stalled frame without slowing normal 15–144Hz rendering.
+const MAX_DELTA_S = 0.1;
+const SWIM_BAND_MIN_HEIGHT_PX = 360;
+const SWIM_BAND_MAX_HEIGHT_PX = 460;
+const SWIM_BAND_BASE_HEIGHT_PX = 300;
+const SWIM_BAND_HEIGHT_VIEWPORT_FACTOR = 0.1;
+const SWIM_BAND_ORIGINAL_HEIGHT_PX = 320;
+const MAX_CANVAS_PIXELS = 4_000_000;
+const OBSTACLE_PADDING = 20;
+/* Fetch and decode well before the band arrives, so scrolling never waits on the atlas. */
+const LOAD_MARGIN_VIEWPORTS = 1.75;
+/* Rebuilding the observer costs a callback, so ignore small viewport height changes. */
+const LOAD_MARGIN_RESET_PX = 120;
+/* Match the gate replay guard while still allowing deliberate rapid multiplication. */
+const DUPLICATION_COOLDOWN_MS = 150;
+const INTERACTIVE_SELECTOR = [
+  'a',
+  'button',
+  'input',
+  'select',
+  'textarea',
+  'summary',
+  'label',
+  '[role="button"]',
+  '[role="link"]',
+  '[contenteditable]:not([contenteditable="false"])',
+].join(',');
+
+class FishScene extends HTMLElement {
+  private abortController?: AbortController;
+  private resizeObserver?: ResizeObserver;
+  private preloadObserver?: IntersectionObserver;
+  private visibilityObserver?: IntersectionObserver;
+  private reducedMotionQuery?: MediaQueryList;
+  private hoverFineQuery?: MediaQueryList;
+  private canvas?: HTMLCanvasElement;
+  private context?: CanvasRenderingContext2D;
+  private boundary?: HTMLElement;
+  private obstacleRoot?: HTMLElement;
+  private swimStart?: HTMLElement;
+  private footer?: HTMLElement;
+  private mosaic?: HTMLCanvasElement;
+  private atlas?: HTMLImageElement;
+  private animationFrame?: number;
+  private resizeFrame?: number;
+  private lastFrameAt?: number;
+  private pendingTime = 0;
+  private connectionId = 0;
+  private loadMarginPx = 0;
+  private inView = false;
+  private simulation = new SeaBreamSimulation();
+  private pointerClientX?: number;
+  private pointerClientY?: number;
+  private lastDuplicationAt = -Infinity;
+
+  connectedCallback() {
+    if (this.abortController) return;
+
+    const canvas = this.querySelector('[data-fish-scene-canvas]');
+    if (!(canvas instanceof HTMLCanvasElement)) return;
+
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    const obstacleRootId = this.getAttribute('data-fish-scene-obstacle-root');
+    const swimStartId = this.getAttribute('data-fish-scene-swim-start');
+    const footerId = this.getAttribute('data-fish-scene-footer');
+    const boundary = this.closest('[data-fish-scene-boundary]');
+    const obstacleRoot = obstacleRootId
+      ? document.getElementById(obstacleRootId)
+      : undefined;
+    const swimStart = swimStartId ? document.getElementById(swimStartId) : undefined;
+    const footer = footerId ? document.getElementById(footerId) : undefined;
+    if (
+      !(boundary instanceof HTMLElement) ||
+      !(obstacleRoot instanceof HTMLElement) ||
+      !(swimStart instanceof HTMLElement) ||
+      !(footer instanceof HTMLElement)
+    ) {
+      return;
+    }
+
+    const mosaic = document.createElement('canvas');
+
+    this.canvas = canvas;
+    this.context = context;
+    this.boundary = boundary;
+    this.obstacleRoot = obstacleRoot;
+    this.swimStart = swimStart;
+    this.footer = footer;
+    this.mosaic = mosaic;
+    this.abortController = new AbortController();
+    const { signal } = this.abortController;
+
+    window.addEventListener('resize', this.scheduleResize, { signal });
+    window.addEventListener('pointermove', this.handlePointerMove, { passive: true, signal });
+    window.addEventListener('pointerdown', this.handlePointerDown, { passive: true, signal });
+    window.addEventListener('pointerup', this.handlePointerEnd, { passive: true, signal });
+    window.addEventListener('pointercancel', this.handlePointerEnd, { passive: true, signal });
+    window.addEventListener('click', this.handleAttraction, { passive: true, signal });
+    document.addEventListener('pointerleave', this.handlePointerLeave, { signal });
+    document.addEventListener('visibilitychange', this.handleVisibility, { signal });
+
+    this.reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    this.reducedMotionQuery.addEventListener('change', this.handleMotionPreference, { signal });
+    this.hoverFineQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+    this.resizeObserver = new ResizeObserver(this.scheduleResize);
+    this.resizeObserver.observe(this);
+    this.resizeObserver.observe(boundary);
+    this.resizeObserver.observe(obstacleRoot);
+    this.resizeObserver.observe(swimStart);
+    this.resizeObserver.observe(footer);
+
+    /* Size the expanded desktop band before intersection testing decides when to load the atlas. */
+    this.resize();
+    this.observePreload();
+
+    this.visibilityObserver = new IntersectionObserver(this.handleVisible);
+    /* The host has no height of its own, so the canvas is what can be observed for intersection. */
+    this.visibilityObserver.observe(canvas);
+  }
+
+  disconnectedCallback() {
+    this.connectionId += 1;
+    this.abortController?.abort();
+    this.abortController = undefined;
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = undefined;
+    this.preloadObserver?.disconnect();
+    this.preloadObserver = undefined;
+    this.visibilityObserver?.disconnect();
+    this.visibilityObserver = undefined;
+    this.loadMarginPx = 0;
+    if (this.resizeFrame !== undefined) {
+      cancelAnimationFrame(this.resizeFrame);
+      this.resizeFrame = undefined;
+    }
+    this.stop();
+    this.canvas = undefined;
+    this.context = undefined;
+    this.boundary = undefined;
+    this.obstacleRoot = undefined;
+    this.swimStart = undefined;
+    this.footer = undefined;
+    this.mosaic = undefined;
+    this.atlas = undefined;
+    this.reducedMotionQuery = undefined;
+    this.hoverFineQuery = undefined;
+    this.simulation.hoveredFish = undefined;
+    this.simulation.attraction = undefined;
+    this.lastDuplicationAt = -Infinity;
+    this.style.removeProperty('height');
+    this.removeAttribute('data-fish-scene-ready');
+  }
+
+  /* The margin follows the viewport, and rootMargin is fixed once an observer exists. */
+  private observePreload() {
+    if (!this.canvas) return;
+
+    const margin = Math.round(window.innerHeight * LOAD_MARGIN_VIEWPORTS);
+    if (this.preloadObserver && Math.abs(margin - this.loadMarginPx) < LOAD_MARGIN_RESET_PX) {
+      return;
+    }
+
+    this.preloadObserver?.disconnect();
+    this.loadMarginPx = margin;
+    this.preloadObserver = new IntersectionObserver(this.handlePreload, {
+      rootMargin: `${margin}px 0px`,
+    });
+    this.preloadObserver.observe(this.canvas);
+  }
+
+  private handlePreload = (entries: IntersectionObserverEntry[]) => {
+    const entry = entries[entries.length - 1];
+    if (entry?.isIntersecting) void this.load();
+  };
+
+  /* Preparation happens a margin early; the animation only runs while the band is on screen. */
+  private handleVisible = (entries: IntersectionObserverEntry[]) => {
+    const entry = entries[entries.length - 1];
+    if (!entry) return;
+
+    this.inView = entry.isIntersecting;
+    if (this.inView) {
+      this.start();
+    } else {
+      this.stop();
+    }
+  };
+
+  private async load() {
+    if (this.atlas) return;
+
+    const connectionId = this.connectionId;
+    let atlas: HTMLImageElement;
+    try {
+      atlas = await loadSeaBreamAtlas();
+    } catch {
+      return;
+    }
+
+    if (connectionId !== this.connectionId) return;
+
+    this.atlas = atlas;
+    this.resize();
+    this.toggleAttribute('data-fish-scene-ready', true);
+
+    if (this.inView) this.start();
+  }
+
+  private scheduleResize = () => {
+    if (this.resizeFrame !== undefined) return;
+    this.resizeFrame = requestAnimationFrame(() => {
+      this.resizeFrame = undefined;
+      this.resize();
+      this.observePreload();
+    });
+  };
+
+  private resize() {
+    if (
+      !this.canvas ||
+      !this.context ||
+      !this.boundary ||
+      !this.obstacleRoot ||
+      !this.swimStart ||
+      !this.footer
+    ) {
+      return;
+    }
+
+    const rootRect = this.getBoundingClientRect();
+    if (rootRect.width <= 0) return;
+
+    const viewportWidth = document.documentElement.clientWidth;
+    const desiredHeight = swimBandHeight(viewportWidth);
+    /* Reserve the added water below the cards instead of covering more obstacles above them. */
+    this.style.height = `${desiredHeight - SWIM_BAND_ORIGINAL_HEIGHT_PX}px`;
+
+    const boundaryRect = this.boundary.getBoundingClientRect();
+    const footerRect = this.footer.getBoundingClientRect();
+    const swimStartRect = this.swimStart.getBoundingClientRect();
+    const usesDesktopBoundary = boundaryRect.width > rootRect.width + 1;
+    const bandLeft = usesDesktopBoundary ? 0 : rootRect.left;
+    /* Grow with the viewport, but never climb above the projects title. */
+    const bandTop = Math.max(footerRect.bottom - desiredHeight, swimStartRect.top);
+    const width = usesDesktopBoundary ? viewportWidth : rootRect.width;
+    const height = Math.max(0, footerRect.bottom - bandTop);
+    if (width <= 0 || height <= 0) return;
+
+    const pixelRatio = Math.min(
+      window.devicePixelRatio,
+      2,
+      Math.sqrt(MAX_CANVAS_PIXELS / (width * height)),
+    );
+    this.canvas.style.insetInlineStart = `${bandLeft - rootRect.left}px`;
+    this.canvas.style.insetBlockStart = `${bandTop - rootRect.top}px`;
+    this.canvas.style.width = `${width}px`;
+    this.canvas.style.height = `${height}px`;
+    this.canvas.width = Math.round(width * pixelRatio);
+    this.canvas.height = Math.round(height * pixelRatio);
+    this.context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
+    /* Cards stay clickable; fish may swim over the column but steer around each card. */
+    const contentObstacles = [
+      ...this.obstacleRoot.querySelectorAll('[data-fish-scene-obstacle]'),
+    ];
+    this.simulation.obstacles = contentObstacles
+      .map((element) => element.getBoundingClientRect())
+      .map((rect) => ({
+        left: rect.left - bandLeft - OBSTACLE_PADDING,
+        top: rect.top - bandTop - OBSTACLE_PADDING,
+        right: rect.right - bandLeft + OBSTACLE_PADDING,
+        bottom: rect.bottom - bandTop + OBSTACLE_PADDING,
+      }));
+
+    this.simulation.resize(width, height);
+
+    this.draw();
+  }
+
+  private start() {
+    if (this.animationFrame !== undefined) return;
+    if (!this.atlas || document.hidden || this.reducedMotionQuery?.matches) return;
+
+    this.lastFrameAt = undefined;
+    this.pendingTime = 0;
+    this.animationFrame = requestAnimationFrame(this.tick);
+  }
+
+  private stop() {
+    if (this.animationFrame === undefined) return;
+    cancelAnimationFrame(this.animationFrame);
+    this.animationFrame = undefined;
+  }
+
+  private handleVisibility = () => {
+    if (document.hidden) {
+      this.stop();
+    } else if (this.inView) {
+      this.start();
+    }
+  };
+
+  private handleMotionPreference = () => {
+    if (this.reducedMotionQuery?.matches) {
+      this.simulation.attraction = undefined;
+      this.stop();
+      this.draw();
+    } else if (this.inView) {
+      this.start();
+    }
+  };
+
+  private handlePointerMove = (event: PointerEvent) => {
+    this.pointerClientX = event.clientX;
+    this.pointerClientY = event.clientY;
+  };
+
+  private handlePointerDown = (event: PointerEvent) => {
+    this.handlePointerMove(event);
+    if (event.button !== 0 || this.reducedMotionQuery?.matches) return;
+
+    const target = event.target;
+    if (target instanceof Element && target.closest(INTERACTIVE_SELECTOR)) return;
+
+    const point = this.localPoint(event.clientX, event.clientY);
+    if (point) this.simulation.sparkFishAt(point.x, point.y);
+  };
+
+  /* A finger stops existing when it lifts, unlike a cursor, so it must not keep facing that point. */
+  private handlePointerEnd = (event: PointerEvent) => {
+    if (event.pointerType === 'mouse') return;
+    this.handlePointerLeave();
+  };
+
+  private handlePointerLeave = () => {
+    this.pointerClientX = undefined;
+    this.pointerClientY = undefined;
+  };
+
+  private handleAttraction = (event: MouseEvent) => {
+    if (event.defaultPrevented || event.button !== 0 || this.reducedMotionQuery?.matches) return;
+
+    const target = event.target;
+    if (target instanceof Element && target.closest(INTERACTIVE_SELECTOR)) return;
+
+    const point = this.localPoint(event.clientX, event.clientY);
+    if (!point) return;
+
+    const now = performance.now();
+    if (this.simulation.sparkFishAt(point.x, point.y)) {
+      if (now - this.lastDuplicationAt >= DUPLICATION_COOLDOWN_MS) {
+        this.simulation.duplicateFishAt(point.x, point.y);
+        this.lastDuplicationAt = now;
+      }
+      return;
+    }
+
+    this.simulation.attraction = {
+      x: point.x,
+      y: point.y,
+      until: this.simulation.elapsed + ATTRACTION_DURATION_S,
+    };
+  };
+
+  private localPoint(clientX: number, clientY: number) {
+    const canvasRect = this.canvas?.getBoundingClientRect();
+    if (!canvasRect) return undefined;
+
+    const x = clientX - canvasRect.left;
+    const y = clientY - canvasRect.top;
+    if (x < 0 || x > this.simulation.width || y < 0 || y > this.simulation.height) {
+      return undefined;
+    }
+    return { x, y };
+  }
+
+  private tick = (time: number) => {
+    if (document.documentElement.dataset.siteLoader === 'active') {
+      this.lastFrameAt = time;
+      this.pendingTime = 0;
+      this.draw();
+      this.animationFrame = requestAnimationFrame(this.tick);
+      return;
+    }
+
+    const previous = this.lastFrameAt ?? time;
+    this.lastFrameAt = time;
+
+    const delta = Math.max(0, Math.min((time - previous) / 1000, MAX_DELTA_S));
+    this.pendingTime += delta;
+    // Keep avoidance, turns and swim impulses on the same clock at every refresh rate.
+    const steps = Math.floor((this.pendingTime + 1e-9) / SIMULATION_STEP_S);
+    for (let index = 0; index < steps; index += 1) this.step(SIMULATION_STEP_S);
+    this.pendingTime = Math.max(0, this.pendingTime - steps * SIMULATION_STEP_S);
+    this.draw();
+
+    this.animationFrame = requestAnimationFrame(this.tick);
+  };
+
+  private step(delta: number) {
+    const canvasRect = this.canvas?.getBoundingClientRect();
+    this.simulation.step(
+      delta,
+      canvasRect
+        ? {
+            pointerX: this.pointerClientX === undefined
+              ? undefined
+              : this.pointerClientX - canvasRect.left,
+            pointerY: this.pointerClientY === undefined
+              ? undefined
+              : this.pointerClientY - canvasRect.top,
+            hoverEnabled: !this.reducedMotionQuery?.matches && !!this.hoverFineQuery?.matches,
+          }
+        : undefined,
+    );
+  }
+
+  private draw() {
+    if (!this.context || !this.atlas) return;
+    drawSeaBreamSchool(this.context, this.mosaic, this.atlas, this.simulation);
+  }
+}
+
+function swimBandHeight(viewportWidth: number) {
+  return Math.min(
+    Math.max(
+      SWIM_BAND_BASE_HEIGHT_PX + viewportWidth * SWIM_BAND_HEIGHT_VIEWPORT_FACTOR,
+      SWIM_BAND_MIN_HEIGHT_PX,
+    ),
+    SWIM_BAND_MAX_HEIGHT_PX,
+  );
+}
+
+export function defineFishScene() {
+  if (!customElements.get('fish-scene')) {
+    customElements.define('fish-scene', FishScene);
+  }
+}
