@@ -9,13 +9,6 @@ import {
 } from './sea-bream-turn.ts';
 import { extent, REFERENCE_BODY_WIDTH, turnFrontness } from './sea-bream-sprites.ts';
 
-export interface Obstacle {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-}
-
 interface Avoidance {
   x: number;
   y: number;
@@ -103,7 +96,6 @@ const BODY_HEIGHT_RATIO = 0.52;
 const GLITCH_TRIGGER = 0.16;
 const GLITCH_CLEAR = 0.08;
 const POINTER_TURN_HYSTERESIS = 10;
-const SOFT_AVOIDANCE_RANGE = 80;
 const SOFT_AVOIDANCE_PUSH = 90;
 const SOFT_INWARD_VELOCITY_RETAIN = 0.45;
 const EDGE_AVOIDANCE_RANGE = 56;
@@ -129,7 +121,6 @@ export class SeaBreamSimulation {
   attraction?: Attraction;
   /* The fish the fine pointer is over, so a stay does not retrigger the sequence. */
   hoveredFish?: SeaBream;
-  obstacles: Obstacle[] = [];
   private nextCloneId = 1;
   school: SeaBream[] = [
     {
@@ -276,8 +267,6 @@ export class SeaBreamSimulation {
     for (const fish of this.school) {
       const hardY = hardBoundsY(this.height, fish.scale);
       const bodyWidth = REFERENCE_BODY_WIDTH * fish.scale;
-      const reachX = bodyWidth / 2;
-      const reachY = (bodyWidth * BODY_HEIGHT_RATIO) / 2;
 
       const horizontalWave =
         0.76 * Math.sin(this.elapsed * fish.config.pathRateX + fish.config.phase) +
@@ -311,16 +300,14 @@ export class SeaBreamSimulation {
       targetX = clamp(targetX, targetXRange.min, targetXRange.max);
       targetY = clamp(targetY, hardY.min, hardY.max);
 
-      let softAvoidance: Avoidance | undefined;
-      for (const obstacle of this.obstacles) {
-        softAvoidance = mergeAvoidance(
-          softAvoidance,
-          findAvoidance(fish.x, fish.y, obstacle, reachX, reachY, SOFT_AVOIDANCE_RANGE),
-        );
-      }
-      softAvoidance = mergeAvoidance(
-        softAvoidance,
-        findEdgeAvoidance(fish.x, fish.y, hardX.min, hardX.max, hardY.min, hardY.max, EDGE_AVOIDANCE_RANGE),
+      const softAvoidance = findEdgeAvoidance(
+        fish.x,
+        fish.y,
+        hardX.min,
+        hardX.max,
+        hardY.min,
+        hardY.max,
+        EDGE_AVOIDANCE_RANGE,
       );
 
       const towardPointerX = pointerX === undefined ? undefined : pointerX - fish.x;
@@ -389,8 +376,6 @@ export class SeaBreamSimulation {
         accelerationY += (awayY / distance) * SEPARATION_PUSH * strength;
       }
 
-      /* Grow obstacles by the solid body, not the sprite clip, so transparent padding
-         does not close the remaining corridor. */
       if (softAvoidance) {
         const inwardAcceleration =
           accelerationX * softAvoidance.x + accelerationY * softAvoidance.y;
@@ -432,18 +417,6 @@ export class SeaBreamSimulation {
       const desiredPitch = fish.turnMode === 'turning' ? 0
         : clamp(Math.atan2(fish.vy * fish.heading, Math.max(18, Math.abs(fish.vx))), -0.22, 0.22);
       fish.pitch += (desiredPitch - fish.pitch) * (1 - Math.exp(-4 * delta));
-
-      /* A stroke can still carry a fish into a card, so the card keeps the last word. */
-      resolveObstaclePenetration(
-        fish,
-        this.obstacles,
-        reachX,
-        reachY,
-        hardX.min,
-        hardX.max,
-        hardY.min,
-        hardY.max,
-      );
     }
 
     /* Only the farther fish mosaics, so the nearer one stays intact through the crossing.
@@ -567,15 +540,6 @@ function hardBoundsY(height: number, scale: number) {
   return { min, max };
 }
 
-function mergeAvoidance(
-  current: Avoidance | undefined,
-  candidate: Avoidance | undefined,
-): Avoidance | undefined {
-  if (!candidate) return current;
-  if (!current || candidate.strength > current.strength) return candidate;
-  return current;
-}
-
 function integrateAxis(
   position: number,
   velocity: number,
@@ -591,31 +555,6 @@ function integrateAxis(
     return { position: max, velocity: Math.min(velocity, 0) };
   }
   return { position: next, velocity };
-}
-
-function resolveObstaclePenetration(
-  fish: SeaBream,
-  obstacles: Obstacle[],
-  reachX: number,
-  reachY: number,
-  minX: number,
-  maxX: number,
-  minY: number,
-  maxY: number,
-) {
-  for (const obstacle of obstacles) {
-    const exit = findExit(fish.x, fish.y, obstacle, reachX, reachY);
-    if (!exit) continue;
-
-    fish.x = clamp(fish.x + exit.x * exit.depth, minX, maxX);
-    fish.y = clamp(fish.y + exit.y * exit.depth, minY, maxY);
-    if (exit.x !== 0) {
-      fish.vx = exit.x > 0 ? Math.max(fish.vx, 0) : Math.min(fish.vx, 0);
-    }
-    if (exit.y !== 0) {
-      fish.vy = exit.y > 0 ? Math.max(fish.vy, 0) : Math.min(fish.vy, 0);
-    }
-  }
 }
 
 function findEdgeAvoidance(
@@ -669,78 +608,4 @@ function bodyOverlap(a: SeaBream, b: SeaBream) {
   const smaller = Math.min(ra.area, rb.area);
   if (smaller <= 0) return 0;
   return (width * height) / smaller;
-}
-
-/* Start turning before contact. Inside the field, keep pushing toward the nearest open water
-   without snapping the fish back to the boundary. */
-function findAvoidance(
-  x: number,
-  y: number,
-  obstacle: Obstacle,
-  reachX: number,
-  reachY: number,
-  range: number,
-): Avoidance | undefined {
-  const left = obstacle.left - reachX;
-  const right = obstacle.right + reachX;
-  const top = obstacle.top - reachY;
-  const bottom = obstacle.bottom + reachY;
-  const inside = x > left && x < right && y > top && y < bottom;
-
-  if (inside) {
-    const exits = [
-      { x: -1, y: 0, distance: x - left },
-      { x: 1, y: 0, distance: right - x },
-      { x: 0, y: -1, distance: y - top },
-      { x: 0, y: 1, distance: bottom - y },
-    ];
-    const nearest = exits.reduce((current, candidate) =>
-      candidate.distance < current.distance ? candidate : current,
-    );
-    return {
-      x: nearest.x,
-      y: nearest.y,
-      strength: 1 + Math.min(nearest.distance / range, 1),
-    };
-  }
-
-  const nearestX = clamp(x, left, right);
-  const nearestY = clamp(y, top, bottom);
-  const awayX = x - nearestX;
-  const awayY = y - nearestY;
-  const distance = Math.hypot(awayX, awayY);
-  if (distance >= range) return undefined;
-
-  if (distance > 0.001) {
-    return {
-      x: awayX / distance,
-      y: awayY / distance,
-      strength: 1 - distance / range,
-    };
-  }
-
-  if (x <= left) return { x: -1, y: 0, strength: 1 };
-  if (x >= right) return { x: 1, y: 0, strength: 1 };
-  if (y <= top) return { x: 0, y: -1, strength: 1 };
-  return { x: 0, y: 1, strength: 1 };
-}
-
-/* Nearest way out of an obstacle that has been grown by the solid body. */
-function findExit(x: number, y: number, obstacle: Obstacle, reachX: number, reachY: number) {
-  const left = obstacle.left - reachX;
-  const right = obstacle.right + reachX;
-  const top = obstacle.top - reachY;
-  const bottom = obstacle.bottom + reachY;
-  if (x <= left || x >= right || y <= top || y >= bottom) return undefined;
-
-  const toLeft = x - left;
-  const toRight = right - x;
-  const toTop = y - top;
-  const toBottom = bottom - y;
-  const shortest = Math.min(toLeft, toRight, toTop, toBottom);
-
-  if (shortest === toLeft) return { x: -1, y: 0, depth: toLeft, span: reachX };
-  if (shortest === toRight) return { x: 1, y: 0, depth: toRight, span: reachX };
-  if (shortest === toTop) return { x: 0, y: -1, depth: toTop, span: reachY };
-  return { x: 0, y: 1, depth: toBottom, span: reachY };
 }
