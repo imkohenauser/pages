@@ -1,14 +1,13 @@
-import { GLITCH_DURATION_S } from './mosaic-glitch';
-import { advanceSwimPhase } from './fish-swim-cycle';
-import { brakeFishTurn, initialTurnClock, updateFishTurn, type FishHeading, type FishTurnState } from './fish-turn';
-import { extent, REFERENCE_BODY_WIDTH, turnFrontness, type FishKind } from './fish-sprites';
-
-export interface Obstacle {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-}
+import { GLITCH_DURATION_S } from './mosaic-glitch.ts';
+import { advanceSwimPhase } from './fish-swim-cycle.ts';
+import {
+  brakeFishTurn,
+  initialTurnClock,
+  updateFishTurn,
+  type FishHeading,
+  type FishTurnState,
+} from './fish-turn.ts';
+import { extent, REFERENCE_BODY_WIDTH, turnFrontness } from './fish-sprites.ts';
 
 interface Avoidance {
   x: number;
@@ -23,7 +22,6 @@ interface Attraction {
 }
 
 export interface FishConfig {
-  readonly kind: FishKind;
   readonly sizeFactor: number;
   readonly startX: number;
   readonly startY: number;
@@ -56,47 +54,24 @@ export interface Fish extends FishTurnState {
   glitchAt: number;
 }
 
-/* Each fish follows its own deterministic current. Their ranges overlap so they still meet, but
-   their different periods keep either fish from becoming the other's shadow. */
-// Cycle duration and impulse preserve the mean rate of two former strokes.
-const swimmers: readonly FishConfig[] = [
-  {
-    kind: 'male',
-    sizeFactor: 1,
-    startX: 0.68,
-    startY: 0.8,
-    entryX: 0.56,
-    entryY: 0.8,
-    pathCenterX: 0.5,
-    pathRangeX: 0.42,
-    pathRateX: 0.13,
-    pathCenterY: 0.66,
-    pathRangeY: 0.28,
-    pathRateY: 0.19,
-    phase: 0.2,
-    swimCycleSeconds: 2.7,
-    swimCycleImpulse: 52,
-    initialSwimPhase: 0,
-  },
-  {
-    kind: 'female',
-    sizeFactor: 0.8,
-    startX: 0.71,
-    startY: 0.77,
-    entryX: 0.61,
-    entryY: 0.77,
-    pathCenterX: 0.5,
-    pathRangeX: 0.4,
-    pathRateX: 0.095,
-    pathCenterY: 0.64,
-    pathRangeY: 0.24,
-    pathRateY: 0.145,
-    phase: 2.25,
-    swimCycleSeconds: 3.42,
-    swimCycleImpulse: 52,
-    initialSwimPhase: 0.25,
-  },
-];
+/* The resident fish follows one deterministic current; duplicates derive their own from it. */
+const RESIDENT: FishConfig = {
+  sizeFactor: 1,
+  startX: 0.68,
+  startY: 0.8,
+  entryX: 0.56,
+  entryY: 0.8,
+  pathCenterX: 0.5,
+  pathRangeX: 0.42,
+  pathRateX: 0.13,
+  pathCenterY: 0.66,
+  pathRangeY: 0.28,
+  pathRateY: 0.19,
+  phase: 0.2,
+  swimCycleSeconds: 2.7,
+  swimCycleImpulse: 52,
+  initialSwimPhase: 0,
+};
 
 const BODY_WIDTH_PX = 58;
 const NARROW_BODY_WIDTH_PX = 46;
@@ -114,13 +89,13 @@ const ATTRACTION_RELEASE_S = 0.6;
 const ATTRACTION_MAX_OFFSET_PX = 160;
 const ENTRY_DURATION_S = 10;
 const MAX_FISH_COUNT = 16;
-/* Weak enough that the pair can pass through each other instead of bouncing apart. */
+/* Weak enough that a pair can pass through each other instead of bouncing apart. */
 const SEPARATION_PUSH = 10;
-const BODY_HEIGHT_RATIO = 0.48;
+/* Measured against the artwork: the solid body without the dorsal, pelvic and anal fins. */
+const BODY_HEIGHT_RATIO = 0.52;
 const GLITCH_TRIGGER = 0.16;
 const GLITCH_CLEAR = 0.08;
 const POINTER_TURN_HYSTERESIS = 10;
-const SOFT_AVOIDANCE_RANGE = 80;
 const SOFT_AVOIDANCE_PUSH = 90;
 const SOFT_INWARD_VELOCITY_RETAIN = 0.45;
 const EDGE_AVOIDANCE_RANGE = 56;
@@ -146,25 +121,26 @@ export class FishSimulation {
   attraction?: Attraction;
   /* The fish the fine pointer is over, so a stay does not retrigger the sequence. */
   hoveredFish?: Fish;
-  obstacles: Obstacle[] = [];
   private nextCloneId = 1;
-  school: Fish[] = swimmers.map((member) => ({
-    config: member,
-    swimPhase: member.initialSwimPhase,
-    scale: 1,
-    x: 0,
-    y: 0,
-    vx: 0,
-    vy: 0,
-    pitch: 0,
-    heading: -1,
-    desiredHeading: -1,
-    headingRequestAge: 0,
-    turnMode: 'recovering',
-    ...initialTurnClock(member.kind, member.phase),
-    glitchArmed: true,
-    glitchAt: -1,
-  }));
+  school: Fish[] = [
+    {
+      config: RESIDENT,
+      swimPhase: RESIDENT.initialSwimPhase,
+      scale: 1,
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      pitch: 0,
+      heading: -1,
+      desiredHeading: -1,
+      headingRequestAge: 0,
+      turnMode: 'recovering',
+      ...initialTurnClock(RESIDENT.phase),
+      glitchArmed: true,
+      glitchAt: -1,
+    },
+  ];
 
   /** Sparks the fish under a page-level pointer without requiring canvas pointer events. */
   sparkFishAt(x: number, y: number) {
@@ -190,6 +166,8 @@ export class FishSimulation {
     const rateFactor = 0.88 + (cloneId % 5) * 0.06;
     const config: FishConfig = {
       ...source.config,
+      /* Duplicates read as the ones further out, which also settles who mosaics on a crossing. */
+      sizeFactor: 0.94 - (cloneId % 6) * 0.03,
       pathCenterY: clamp(
         source.config.pathCenterY + Math.sin(phaseOffset) * 0.06,
         0.2,
@@ -203,7 +181,7 @@ export class FishSimulation {
     const clone: Fish = {
       config,
       swimPhase: config.initialSwimPhase,
-      scale: source.scale,
+      scale: this.scale * config.sizeFactor,
       x: source.x + splitHeading * splitDistance,
       y: source.y + (cloneId % 2 === 0 ? -1 : 1) * splitDistance * 0.35,
       vx: splitHeading * Math.max(Math.abs(source.vx), 18),
@@ -213,7 +191,7 @@ export class FishSimulation {
       desiredHeading: splitHeading,
       headingRequestAge: 0,
       turnMode: 'recovering',
-      ...initialTurnClock(config.kind, config.phase),
+      ...initialTurnClock(config.phase),
       glitchArmed: false,
       glitchAt: this.elapsed,
     };
@@ -289,8 +267,6 @@ export class FishSimulation {
     for (const fish of this.school) {
       const hardY = hardBoundsY(this.height, fish.scale);
       const bodyWidth = REFERENCE_BODY_WIDTH * fish.scale;
-      const reachX = bodyWidth / 2;
-      const reachY = (bodyWidth * BODY_HEIGHT_RATIO) / 2;
 
       const horizontalWave =
         0.76 * Math.sin(this.elapsed * fish.config.pathRateX + fish.config.phase) +
@@ -303,7 +279,7 @@ export class FishSimulation {
       let targetX = this.width / 2 + (this.width / 2 + overscan) * horizontalWave;
       let targetY = this.height * currentY;
 
-      /* Enter as a close pair, then release each fish into its own current without a jump. */
+      /* Enter from the near side, then release the fish into its own current without a jump. */
       const entryTargetX = this.width * fish.config.entryX;
       const entryTargetY = this.entryLaneY(fish, fish.config.entryY);
       targetX = entryTargetX + (targetX - entryTargetX) * entryProgress;
@@ -324,16 +300,14 @@ export class FishSimulation {
       targetX = clamp(targetX, targetXRange.min, targetXRange.max);
       targetY = clamp(targetY, hardY.min, hardY.max);
 
-      let softAvoidance: Avoidance | undefined;
-      for (const obstacle of this.obstacles) {
-        softAvoidance = mergeAvoidance(
-          softAvoidance,
-          findAvoidance(fish.x, fish.y, obstacle, reachX, reachY, SOFT_AVOIDANCE_RANGE),
-        );
-      }
-      softAvoidance = mergeAvoidance(
-        softAvoidance,
-        findEdgeAvoidance(fish.x, fish.y, hardX.min, hardX.max, hardY.min, hardY.max, EDGE_AVOIDANCE_RANGE),
+      const softAvoidance = findEdgeAvoidance(
+        fish.x,
+        fish.y,
+        hardX.min,
+        hardX.max,
+        hardY.min,
+        hardY.max,
+        EDGE_AVOIDANCE_RANGE,
       );
 
       const towardPointerX = pointerX === undefined ? undefined : pointerX - fish.x;
@@ -402,8 +376,6 @@ export class FishSimulation {
         accelerationY += (awayY / distance) * SEPARATION_PUSH * strength;
       }
 
-      /* Grow obstacles by the solid body, not the sprite clip, so transparent padding
-         does not close the remaining corridor. */
       if (softAvoidance) {
         const inwardAcceleration =
           accelerationX * softAvoidance.x + accelerationY * softAvoidance.y;
@@ -445,26 +417,15 @@ export class FishSimulation {
       const desiredPitch = fish.turnMode === 'turning' ? 0
         : clamp(Math.atan2(fish.vy * fish.heading, Math.max(18, Math.abs(fish.vx))), -0.22, 0.22);
       fish.pitch += (desiredPitch - fish.pitch) * (1 - Math.exp(-4 * delta));
-
-      /* A stroke can still carry a fish into a card, so the card keeps the last word. */
-      resolveObstaclePenetration(
-        fish,
-        this.obstacles,
-        reachX,
-        reachY,
-        hardX.min,
-        hardX.max,
-        hardY.min,
-        hardY.max,
-      );
     }
 
-    /* Only the farther fish mosaics, so the nearer one stays intact through the crossing. */
-    for (const fish of this.school) {
+    /* Only the farther fish mosaics, so the nearer one stays intact through the crossing.
+       The school is drawn back to front, so an earlier entry is the nearer fish. */
+    for (const [index, fish] of this.school.entries()) {
       let overlap = 0;
-      for (const other of this.school) {
-        if (other === fish || fish.config.sizeFactor >= other.config.sizeFactor) continue;
-        overlap = Math.max(overlap, bodyOverlap(fish, other));
+      for (let other = 0; other < index; other += 1) {
+        const nearer = this.school[other];
+        if (nearer) overlap = Math.max(overlap, bodyOverlap(fish, nearer));
       }
       if (overlap >= GLITCH_TRIGGER && fish.glitchArmed) {
         fish.glitchArmed = false;
@@ -504,7 +465,7 @@ export class FishSimulation {
   }
 
   private fishUnderPointer(x: number, y: number) {
-    /* Frontmost first: the larger fish is drawn last. */
+    /* Frontmost first: the first entry is drawn last. */
     for (const fish of this.school) {
       const rect = bodyRect(fish);
       if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) return fish;
@@ -541,7 +502,6 @@ export class FishSimulation {
     const lift = clamp(targetY - fish.y, -40, 40);
     fish.vy += (lift / 40) * impulse * VERTICAL_STROKE_LIFT;
   }
-
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -580,15 +540,6 @@ function hardBoundsY(height: number, scale: number) {
   return { min, max };
 }
 
-function mergeAvoidance(
-  current: Avoidance | undefined,
-  candidate: Avoidance | undefined,
-): Avoidance | undefined {
-  if (!candidate) return current;
-  if (!current || candidate.strength > current.strength) return candidate;
-  return current;
-}
-
 function integrateAxis(
   position: number,
   velocity: number,
@@ -604,31 +555,6 @@ function integrateAxis(
     return { position: max, velocity: Math.min(velocity, 0) };
   }
   return { position: next, velocity };
-}
-
-function resolveObstaclePenetration(
-  fish: Fish,
-  obstacles: Obstacle[],
-  reachX: number,
-  reachY: number,
-  minX: number,
-  maxX: number,
-  minY: number,
-  maxY: number,
-) {
-  for (const obstacle of obstacles) {
-    const exit = findExit(fish.x, fish.y, obstacle, reachX, reachY);
-    if (!exit) continue;
-
-    fish.x = clamp(fish.x + exit.x * exit.depth, minX, maxX);
-    fish.y = clamp(fish.y + exit.y * exit.depth, minY, maxY);
-    if (exit.x !== 0) {
-      fish.vx = exit.x > 0 ? Math.max(fish.vx, 0) : Math.min(fish.vx, 0);
-    }
-    if (exit.y !== 0) {
-      fish.vy = exit.y > 0 ? Math.max(fish.vy, 0) : Math.min(fish.vy, 0);
-    }
-  }
 }
 
 function findEdgeAvoidance(
@@ -662,7 +588,7 @@ function bodyRect(fish: Fish) {
   const width = REFERENCE_BODY_WIDTH * fish.scale;
   const height = width * BODY_HEIGHT_RATIO;
   // Front-facing turn poses are taller and narrower than the cruise silhouette.
-  const front = turnFrontness(fish, fish.config.kind);
+  const front = turnFrontness(fish);
   const boxWidth = width * (1 - 0.45 * front);
   const boxHeight = height * (1 + 0.7 * front);
   return {
@@ -682,78 +608,4 @@ function bodyOverlap(a: Fish, b: Fish) {
   const smaller = Math.min(ra.area, rb.area);
   if (smaller <= 0) return 0;
   return (width * height) / smaller;
-}
-
-/* Start turning before contact. Inside the field, keep pushing toward the nearest open water
-   without snapping the fish back to the boundary. */
-function findAvoidance(
-  x: number,
-  y: number,
-  obstacle: Obstacle,
-  reachX: number,
-  reachY: number,
-  range: number,
-): Avoidance | undefined {
-  const left = obstacle.left - reachX;
-  const right = obstacle.right + reachX;
-  const top = obstacle.top - reachY;
-  const bottom = obstacle.bottom + reachY;
-  const inside = x > left && x < right && y > top && y < bottom;
-
-  if (inside) {
-    const exits = [
-      { x: -1, y: 0, distance: x - left },
-      { x: 1, y: 0, distance: right - x },
-      { x: 0, y: -1, distance: y - top },
-      { x: 0, y: 1, distance: bottom - y },
-    ];
-    const nearest = exits.reduce((current, candidate) =>
-      candidate.distance < current.distance ? candidate : current,
-    );
-    return {
-      x: nearest.x,
-      y: nearest.y,
-      strength: 1 + Math.min(nearest.distance / range, 1),
-    };
-  }
-
-  const nearestX = clamp(x, left, right);
-  const nearestY = clamp(y, top, bottom);
-  const awayX = x - nearestX;
-  const awayY = y - nearestY;
-  const distance = Math.hypot(awayX, awayY);
-  if (distance >= range) return undefined;
-
-  if (distance > 0.001) {
-    return {
-      x: awayX / distance,
-      y: awayY / distance,
-      strength: 1 - distance / range,
-    };
-  }
-
-  if (x <= left) return { x: -1, y: 0, strength: 1 };
-  if (x >= right) return { x: 1, y: 0, strength: 1 };
-  if (y <= top) return { x: 0, y: -1, strength: 1 };
-  return { x: 0, y: 1, strength: 1 };
-}
-
-/* Nearest way out of an obstacle that has been grown by the solid body. */
-function findExit(x: number, y: number, obstacle: Obstacle, reachX: number, reachY: number) {
-  const left = obstacle.left - reachX;
-  const right = obstacle.right + reachX;
-  const top = obstacle.top - reachY;
-  const bottom = obstacle.bottom + reachY;
-  if (x <= left || x >= right || y <= top || y >= bottom) return undefined;
-
-  const toLeft = x - left;
-  const toRight = right - x;
-  const toTop = y - top;
-  const toBottom = bottom - y;
-  const shortest = Math.min(toLeft, toRight, toTop, toBottom);
-
-  if (shortest === toLeft) return { x: -1, y: 0, depth: toLeft, span: reachX };
-  if (shortest === toRight) return { x: 1, y: 0, depth: toRight, span: reachX };
-  if (shortest === toTop) return { x: 0, y: -1, depth: toTop, span: reachY };
-  return { x: 0, y: 1, depth: toBottom, span: reachY };
 }

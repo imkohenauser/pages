@@ -1,18 +1,16 @@
-import { FishSimulation, ATTRACTION_DURATION_S } from './fish-simulation';
-import { drawFishSchool } from './fish-renderer';
-import type { FishKind } from './fish-sprites';
+import { FishSimulation, ATTRACTION_DURATION_S } from './fish-simulation.ts';
+import { drawFishSchool } from './fish-renderer.ts';
+import { loadFishAtlas } from './fish-assets.ts';
 
 const SIMULATION_STEP_S = 1 / 60;
 // Bound catch-up after a stalled frame without slowing normal 15–144Hz rendering.
 const MAX_DELTA_S = 0.1;
-const SWIM_BAND_MIN_HEIGHT_PX = 360;
-const SWIM_BAND_MAX_HEIGHT_PX = 460;
-const SWIM_BAND_BASE_HEIGHT_PX = 300;
-const SWIM_BAND_HEIGHT_VIEWPORT_FACTOR = 0.1;
-const SWIM_BAND_ORIGINAL_HEIGHT_PX = 320;
+const SWIM_BAND_HEIGHT_PX = 640;
 const MAX_CANVAS_PIXELS = 4_000_000;
-const OBSTACLE_PADDING = 20;
-const LOAD_MARGIN_PX = 400;
+/* Fetch and decode well before the band arrives, so scrolling never waits on the atlas. */
+const LOAD_MARGIN_VIEWPORTS = 1.75;
+/* Rebuilding the observer costs a callback, so ignore small viewport height changes. */
+const LOAD_MARGIN_RESET_PX = 120;
 /* Match the gate replay guard while still allowing deliberate rapid multiplication. */
 const DUPLICATION_COOLDOWN_MS = 150;
 const INTERACTIVE_SELECTOR = [
@@ -31,22 +29,22 @@ const INTERACTIVE_SELECTOR = [
 class FishScene extends HTMLElement {
   private abortController?: AbortController;
   private resizeObserver?: ResizeObserver;
-  private intersectionObserver?: IntersectionObserver;
+  private preloadObserver?: IntersectionObserver;
+  private visibilityObserver?: IntersectionObserver;
   private reducedMotionQuery?: MediaQueryList;
   private hoverFineQuery?: MediaQueryList;
   private canvas?: HTMLCanvasElement;
   private context?: CanvasRenderingContext2D;
   private boundary?: HTMLElement;
-  private obstacleRoot?: HTMLElement;
-  private swimStart?: HTMLElement;
   private footer?: HTMLElement;
   private mosaic?: HTMLCanvasElement;
-  private sheets?: Record<FishKind, HTMLImageElement>;
+  private atlas?: HTMLImageElement;
   private animationFrame?: number;
   private resizeFrame?: number;
   private lastFrameAt?: number;
   private pendingTime = 0;
   private connectionId = 0;
+  private loadMarginPx = 0;
   private inView = false;
   private simulation = new FishSimulation();
   private pointerClientX?: number;
@@ -62,31 +60,16 @@ class FishScene extends HTMLElement {
     const context = canvas.getContext('2d');
     if (!context) return;
 
-    const obstacleRootId = this.getAttribute('data-fish-scene-obstacle-root');
-    const swimStartId = this.getAttribute('data-fish-scene-swim-start');
     const footerId = this.getAttribute('data-fish-scene-footer');
     const boundary = this.closest('[data-fish-scene-boundary]');
-    const obstacleRoot = obstacleRootId
-      ? document.getElementById(obstacleRootId)
-      : undefined;
-    const swimStart = swimStartId ? document.getElementById(swimStartId) : undefined;
     const footer = footerId ? document.getElementById(footerId) : undefined;
-    if (
-      !(boundary instanceof HTMLElement) ||
-      !(obstacleRoot instanceof HTMLElement) ||
-      !(swimStart instanceof HTMLElement) ||
-      !(footer instanceof HTMLElement)
-    ) {
-      return;
-    }
+    if (!(boundary instanceof HTMLElement) || !(footer instanceof HTMLElement)) return;
 
     const mosaic = document.createElement('canvas');
 
     this.canvas = canvas;
     this.context = context;
     this.boundary = boundary;
-    this.obstacleRoot = obstacleRoot;
-    this.swimStart = swimStart;
     this.footer = footer;
     this.mosaic = mosaic;
     this.abortController = new AbortController();
@@ -108,18 +91,15 @@ class FishScene extends HTMLElement {
     this.resizeObserver = new ResizeObserver(this.scheduleResize);
     this.resizeObserver.observe(this);
     this.resizeObserver.observe(boundary);
-    this.resizeObserver.observe(obstacleRoot);
-    this.resizeObserver.observe(swimStart);
     this.resizeObserver.observe(footer);
 
-    /* Size the expanded desktop band before intersection testing decides when to load the sheets. */
+    /* Size the band before intersection testing decides when to load the atlas. */
     this.resize();
+    this.observePreload();
 
-    this.intersectionObserver = new IntersectionObserver(this.handleIntersect, {
-      rootMargin: `${LOAD_MARGIN_PX}px 0px`,
-    });
+    this.visibilityObserver = new IntersectionObserver(this.handleVisible);
     /* The host has no height of its own, so the canvas is what can be observed for intersection. */
-    this.intersectionObserver.observe(canvas);
+    this.visibilityObserver.observe(canvas);
   }
 
   disconnectedCallback() {
@@ -128,8 +108,11 @@ class FishScene extends HTMLElement {
     this.abortController = undefined;
     this.resizeObserver?.disconnect();
     this.resizeObserver = undefined;
-    this.intersectionObserver?.disconnect();
-    this.intersectionObserver = undefined;
+    this.preloadObserver?.disconnect();
+    this.preloadObserver = undefined;
+    this.visibilityObserver?.disconnect();
+    this.visibilityObserver = undefined;
+    this.loadMarginPx = 0;
     if (this.resizeFrame !== undefined) {
       cancelAnimationFrame(this.resizeFrame);
       this.resizeFrame = undefined;
@@ -138,27 +121,46 @@ class FishScene extends HTMLElement {
     this.canvas = undefined;
     this.context = undefined;
     this.boundary = undefined;
-    this.obstacleRoot = undefined;
-    this.swimStart = undefined;
     this.footer = undefined;
     this.mosaic = undefined;
-    this.sheets = undefined;
+    this.atlas = undefined;
     this.reducedMotionQuery = undefined;
     this.hoverFineQuery = undefined;
     this.simulation.hoveredFish = undefined;
     this.simulation.attraction = undefined;
     this.lastDuplicationAt = -Infinity;
-    this.style.removeProperty('height');
     this.removeAttribute('data-fish-scene-ready');
   }
 
-  private handleIntersect = (entries: IntersectionObserverEntry[]) => {
+  /* The margin follows the viewport, and rootMargin is fixed once an observer exists. */
+  private observePreload() {
+    if (!this.canvas) return;
+
+    const margin = Math.round(window.innerHeight * LOAD_MARGIN_VIEWPORTS);
+    if (this.preloadObserver && Math.abs(margin - this.loadMarginPx) < LOAD_MARGIN_RESET_PX) {
+      return;
+    }
+
+    this.preloadObserver?.disconnect();
+    this.loadMarginPx = margin;
+    this.preloadObserver = new IntersectionObserver(this.handlePreload, {
+      rootMargin: `${margin}px 0px`,
+    });
+    this.preloadObserver.observe(this.canvas);
+  }
+
+  private handlePreload = (entries: IntersectionObserverEntry[]) => {
+    const entry = entries[entries.length - 1];
+    if (entry?.isIntersecting) void this.load();
+  };
+
+  /* Preparation happens a margin early; the animation only runs while the band is on screen. */
+  private handleVisible = (entries: IntersectionObserverEntry[]) => {
     const entry = entries[entries.length - 1];
     if (!entry) return;
 
     this.inView = entry.isIntersecting;
     if (this.inView) {
-      void this.load();
       this.start();
     } else {
       this.stop();
@@ -166,25 +168,19 @@ class FishScene extends HTMLElement {
   };
 
   private async load() {
-    if (this.sheets) return;
+    if (this.atlas) return;
 
     const connectionId = this.connectionId;
-    const male = new Image();
-    const female = new Image();
-    male.decoding = 'async';
-    female.decoding = 'async';
-    male.src = `${import.meta.env.BASE_URL}sprite-sheet/sacura-margaritacea-male-motion.webp`;
-    female.src = `${import.meta.env.BASE_URL}sprite-sheet/sacura-margaritacea-female-motion.webp`;
-
+    let atlas: HTMLImageElement;
     try {
-      await Promise.all([male.decode(), female.decode()]);
+      atlas = await loadFishAtlas();
     } catch {
       return;
     }
 
     if (connectionId !== this.connectionId) return;
 
-    this.sheets = { male, female };
+    this.atlas = atlas;
     this.resize();
     this.toggleAttribute('data-fish-scene-ready', true);
 
@@ -196,38 +192,29 @@ class FishScene extends HTMLElement {
     this.resizeFrame = requestAnimationFrame(() => {
       this.resizeFrame = undefined;
       this.resize();
+      this.observePreload();
     });
   };
 
   private resize() {
-    if (
-      !this.canvas ||
-      !this.context ||
-      !this.boundary ||
-      !this.obstacleRoot ||
-      !this.swimStart ||
-      !this.footer
-    ) {
-      return;
-    }
+    if (!this.canvas || !this.context || !this.boundary || !this.footer) return;
 
     const rootRect = this.getBoundingClientRect();
     if (rootRect.width <= 0) return;
 
     const viewportWidth = document.documentElement.clientWidth;
-    const desiredHeight = swimBandHeight(viewportWidth);
-    /* Reserve the added water below the cards instead of covering more obstacles above them. */
-    this.style.height = `${desiredHeight - SWIM_BAND_ORIGINAL_HEIGHT_PX}px`;
+    const footerRect = this.footer.getBoundingClientRect();
+    const documentTop = document.documentElement.getBoundingClientRect().top;
+    const height = Math.min(
+      SWIM_BAND_HEIGHT_PX,
+      Math.max(0, footerRect.bottom - documentTop),
+    );
+    const bandTop = footerRect.bottom - height;
 
     const boundaryRect = this.boundary.getBoundingClientRect();
-    const footerRect = this.footer.getBoundingClientRect();
-    const swimStartRect = this.swimStart.getBoundingClientRect();
     const usesDesktopBoundary = boundaryRect.width > rootRect.width + 1;
     const bandLeft = usesDesktopBoundary ? 0 : rootRect.left;
-    /* Grow with the viewport, but never climb above the projects title. */
-    const bandTop = Math.max(footerRect.bottom - desiredHeight, swimStartRect.top);
     const width = usesDesktopBoundary ? viewportWidth : rootRect.width;
-    const height = Math.max(0, footerRect.bottom - bandTop);
     if (width <= 0 || height <= 0) return;
 
     const pixelRatio = Math.min(
@@ -243,19 +230,6 @@ class FishScene extends HTMLElement {
     this.canvas.height = Math.round(height * pixelRatio);
     this.context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
-    /* Cards stay clickable; fish may swim over the column but steer around each card. */
-    const contentObstacles = [
-      ...this.obstacleRoot.querySelectorAll('[data-fish-scene-obstacle]'),
-    ];
-    this.simulation.obstacles = contentObstacles
-      .map((element) => element.getBoundingClientRect())
-      .map((rect) => ({
-        left: rect.left - bandLeft - OBSTACLE_PADDING,
-        top: rect.top - bandTop - OBSTACLE_PADDING,
-        right: rect.right - bandLeft + OBSTACLE_PADDING,
-        bottom: rect.bottom - bandTop + OBSTACLE_PADDING,
-      }));
-
     this.simulation.resize(width, height);
 
     this.draw();
@@ -263,7 +237,7 @@ class FishScene extends HTMLElement {
 
   private start() {
     if (this.animationFrame !== undefined) return;
-    if (!this.sheets || document.hidden || this.reducedMotionQuery?.matches) return;
+    if (!this.atlas || document.hidden || this.reducedMotionQuery?.matches) return;
 
     this.lastFrameAt = undefined;
     this.pendingTime = 0;
@@ -400,19 +374,9 @@ class FishScene extends HTMLElement {
   }
 
   private draw() {
-    if (!this.context || !this.sheets) return;
-    drawFishSchool(this.context, this.mosaic, this.sheets, this.simulation);
+    if (!this.context || !this.atlas) return;
+    drawFishSchool(this.context, this.mosaic, this.atlas, this.simulation);
   }
-}
-
-function swimBandHeight(viewportWidth: number) {
-  return Math.min(
-    Math.max(
-      SWIM_BAND_BASE_HEIGHT_PX + viewportWidth * SWIM_BAND_HEIGHT_VIEWPORT_FACTOR,
-      SWIM_BAND_MIN_HEIGHT_PX,
-    ),
-    SWIM_BAND_MAX_HEIGHT_PX,
-  );
 }
 
 export function defineFishScene() {

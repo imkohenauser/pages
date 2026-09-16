@@ -18,18 +18,14 @@ const projects = await getProjects();
 <Base description={site.bio}>
   <JsonLd slot="head" data={homeJsonLd()} />
   <Hero title={site.title} description={site.bio} />
-  <div id="home-sections" class="section-container">
+  <div class="section-container">
     <WritingSection
       writing={homeWriting}
       hasMore={writing.length > homeWriting.length}
     />
     <ProjectsSection projects={projects} />
   </div>
-  <FishScene
-    obstacleRootId="home-sections"
-    swimStartId="projects-title"
-    footerId="site-footer"
-  />
+  <FishScene footerId="site-footer" />
 </Base>
 
 <style lang="scss">

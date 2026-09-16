@@ -1,22 +1,32 @@
-import { TURN_COMMIT_PROGRESS, type FishTurnState } from './fish-turn';
+import type { FishTurnState } from './fish-turn.ts';
 
-export type FishKind = 'male' | 'female';
+const CELL_WIDTH = 168;
+const CELL_HEIGHT = 126;
+const ATLAS_COLUMNS = 4;
+/* The pivot the atlas was packed around: mid-body, one eye-length behind the eye. */
+const ANCHOR_X = 85.58;
+const ANCHOR_Y = 61.43;
+/* Measured on the export: snout to caudal peduncle spans 0.7 of the cell width. */
+const BODY_WIDTH_IN_CELL = 0.7 * CELL_WIDTH;
+
+const SWIM_FIRST_FRAME = 0;
+const SWIM_FRAMES = 8;
+const HOVER_FIRST_FRAME = 8;
+const HOVER_FRAMES = 4;
+const TURN_FIRST_FRAME = 12;
+
 export const REFERENCE_BODY_WIDTH = 256;
-export const spriteScale: Record<FishKind, number> = { male: 256 / 94, female: 256 / 94 };
+export const spriteScale = REFERENCE_BODY_WIDTH / BODY_WIDTH_IN_CELL;
 
-// Bounds include fins around the body anchor, without counting atlas padding as fish.
-export const extent = { left: 256, right: 256, top: 300, bottom: 210 };
+// Fin reach around the body anchor, in the same units as REFERENCE_BODY_WIDTH.
+export const extent = { left: 186, right: 177, top: 133, bottom: 130 };
 
-const SHEET_COLUMNS = 8;
-
-// Hold the side pose, spend time on the side-to-front gap, and leave the last frame short.
-const TURN_COLUMN_WEIGHTS = [0.2, TURN_COMMIT_PROGRESS - 0.2, 0.18, 0.16, 0.12, 0.1, 0.08, 0.04] as const;
-const BRAKE_COLUMN_WEIGHTS = [0.18, 0.12, 0.1, 0.1, 0.1, 0.1, 0.12, 0.18] as const;
-const RECOVERY_COLUMN_WEIGHTS = [0.06, 0.1, 0.12, 0.14, 0.16, 0.16, 0.14, 0.12] as const;
-const TURN_FRONTNESS: Record<FishKind, readonly number[]> = {
-  male: [0, 0.05, 0.25, 1, 0.95, 0.45, 0.15, 0],
-  female: [0, 0.05, 0.25, 0.45, 1, 0.45, 0.15, 0],
-};
+/* The first three frames still read as a profile, the rotation lands over frames four to eight,
+   and the rest settles into the opposite profile. */
+const TURN_FRAME_WEIGHTS = [
+  0.1, 0.08, 0.07, 0.07, 0.07, 0.08, 0.07, 0.07, 0.11, 0.1, 0.1, 0.08,
+] as const;
+const TURN_FRONTNESS = [0, 0, 0, 0.15, 0.6, 1, 0.6, 0.2, 0, 0, 0, 0] as const;
 
 export function sheetColumn(weights: readonly number[], progress: number) {
   const total = weights.reduce((sum, weight) => sum + weight, 0);
@@ -34,35 +44,43 @@ export function motionProgress(age: number, duration: number) {
   return Math.min(Math.max(0, age / duration), 0.999999);
 }
 
-export function turnFrontness(fish: FishTurnState, kind: FishKind) {
+export function turnFrontness(fish: FishTurnState) {
   if (fish.turnMode !== 'turning') return 0;
-  const column = sheetColumn(TURN_COLUMN_WEIGHTS, motionProgress(fish.motionAge, fish.turnSeconds));
-  return TURN_FRONTNESS[kind][column] ?? 0;
+  const frame = sheetColumn(TURN_FRAME_WEIGHTS, motionProgress(fish.motionAge, fish.turnSeconds));
+  return TURN_FRONTNESS[frame] ?? 0;
+}
+
+function loopFrame(first: number, count: number, phase: number) {
+  return first + Math.min(count - 1, Math.max(0, Math.floor(phase * count)));
 }
 
 export function fishPose(fish: FishTurnState) {
-  const left = fish.heading < 0;
-  let row = left ? 6 : 1;
-  let column = Math.min(SHEET_COLUMNS - 1, Math.max(0, Math.floor(fish.swimPhase * SHEET_COLUMNS)));
-  let flip = false;
+  let frame: number;
   switch (fish.turnMode) {
+    // Hover reads as a fish holding station, which is also what a braking fish is doing.
     case 'idle':
-      row = left ? 5 : 0;
-      break;
     case 'braking':
-      row = left ? 8 : 3;
-      column = sheetColumn(BRAKE_COLUMN_WEIGHTS, motionProgress(fish.motionAge, fish.brakeSeconds));
-      break;
-    case 'recovering':
-      row = left ? 7 : 2;
-      column = sheetColumn(RECOVERY_COLUMN_WEIGHTS, motionProgress(fish.motionAge, fish.recoverySeconds));
+      frame = loopFrame(HOVER_FIRST_FRAME, HOVER_FRAMES, fish.swimPhase);
       break;
     case 'turning':
-      // Row ten has invalid direction ordering. Mirror row five spatially, never in time.
-      row = 4;
-      flip = left;
-      column = sheetColumn(TURN_COLUMN_WEIGHTS, motionProgress(fish.motionAge, fish.turnSeconds));
+      frame =
+        TURN_FIRST_FRAME +
+        sheetColumn(TURN_FRAME_WEIGHTS, motionProgress(fish.motionAge, fish.turnSeconds));
+      break;
+    // Recovery resets the phase and runs one stroke over its own clock, so the swim loop fits it.
+    default:
+      frame = loopFrame(SWIM_FIRST_FRAME, SWIM_FRAMES, fish.swimPhase);
       break;
   }
-  return { x: column * 256, y: row * 320, width: 256, height: 320, anchorX: 128, anchorY: 128, flip };
+
+  return {
+    x: (frame % ATLAS_COLUMNS) * CELL_WIDTH,
+    y: Math.floor(frame / ATLAS_COLUMNS) * CELL_HEIGHT,
+    width: CELL_WIDTH,
+    height: CELL_HEIGHT,
+    anchorX: ANCHOR_X,
+    anchorY: ANCHOR_Y,
+    // The art faces right, and the turn clip runs right to left, so one mirror serves both.
+    flip: fish.heading < 0,
+  };
 }

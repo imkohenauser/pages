@@ -1,18 +1,14 @@
 ---
 interface Props {
-  obstacleRootId: string;
-  swimStartId: string;
   footerId: string;
 }
 
-const { obstacleRootId, swimStartId, footerId } = Astro.props;
+const { footerId } = Astro.props;
 ---
 
 <fish-scene
   class="fish-scene"
   aria-hidden="true"
-  data-fish-scene-obstacle-root={obstacleRootId}
-  data-fish-scene-swim-start={swimStartId}
   data-fish-scene-footer={footerId}
 >
   <canvas class="fish-scene__canvas" data-fish-scene-canvas></canvas>
@@ -21,7 +17,6 @@ const { obstacleRootId, swimStartId, footerId } = Astro.props;
 <style lang="scss">
   @use "tools" as *;
 
-  /* The script reserves only the responsive growth beyond the original swim band. */
   .fish-scene {
     position: relative;
     display: block;
@@ -36,8 +31,8 @@ const { obstacleRootId, swimStartId, footerId } = Astro.props;
     z-index: 1;
     display: block;
     width: 100%;
-    /* Replaced with the measured footer band once the script runs. */
-    height: rem(250);
+    /* Replaced with the measured band once the script runs. */
+    height: rem(640);
     opacity: 0;
     pointer-events: none;
   }

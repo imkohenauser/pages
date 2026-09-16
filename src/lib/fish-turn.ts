@@ -1,6 +1,5 @@
 export type FishHeading = -1 | 1;
 export type FishMotion = 'idle' | 'swimming' | 'braking' | 'turning' | 'recovering';
-export type FishTempoKind = 'male' | 'female';
 
 export interface FishMotionTempo {
   brakeSeconds: number;
@@ -22,7 +21,8 @@ export interface FishTurnState extends FishMotionTempo {
 }
 
 export const BRAKE_SECONDS = 0.28;
-export const TURN_SECONDS = 0.72;
+// Twelve turn frames need a longer window than the eight-frame sheet did to clear 60ms per frame.
+export const TURN_SECONDS = 0.85;
 export const RECOVERY_SECONDS = 0.7;
 const REQUEST_HOLD_SECONDS = 0.18;
 const MIN_BRAKE_SECONDS = 0.1;
@@ -30,26 +30,25 @@ const SWIM_SETTLE_SECONDS = 0.22;
 const TURN_COOLDOWN_SECONDS = 0.85;
 const TURN_SPEED = 2;
 const BRAKING_DRAG = 8;
+/* The last progress at which the fish still reads as a profile, so an abort stays legible. */
 export const TURN_COMMIT_PROGRESS = 0.32;
 const POST_TURN_HOLD_SECONDS = 0.18;
 const RECOVERY_EXIT_GAIN = 0.7;
 
-export function motionTempo(kind: FishTempoKind, phase: number): FishMotionTempo {
-  const sway = Math.sin(phase * 1.7);
-  const scale = 1 + 0.08 * sway;
-  const hover = scale * (kind === 'male' ? 1.06 : 0.96);
-  const pick = scale * (kind === 'male' ? 1.02 : 0.9);
+export function motionTempo(phase: number): FishMotionTempo {
+  // Each individual keeps its own tempo so duplicated fish do not beat in unison.
+  const scale = 1 + 0.08 * Math.sin(phase * 1.7);
   return {
-    brakeSeconds: BRAKE_SECONDS * hover,
+    brakeSeconds: BRAKE_SECONDS * scale,
     turnSeconds: TURN_SECONDS * scale,
-    recoverySeconds: RECOVERY_SECONDS * pick,
-    turnCooldownSeconds: TURN_COOLDOWN_SECONDS * hover,
+    recoverySeconds: RECOVERY_SECONDS * scale,
+    turnCooldownSeconds: TURN_COOLDOWN_SECONDS * scale,
   };
 }
 
-export function initialTurnClock(kind: FishTempoKind, phase: number) {
+export function initialTurnClock(phase: number) {
   return {
-    ...motionTempo(kind, phase),
+    ...motionTempo(phase),
     turnCooldown: 0,
     motionAge: 0,
   };
@@ -78,7 +77,12 @@ function swimmingGain(fish: FishTurnState) {
 }
 
 /** Locks only the committed flip, while retaining the latest steering request. */
-export function updateFishTurn(fish: FishTurnState, requested: FishHeading, delta: number, drive = true) {
+export function updateFishTurn(
+  fish: FishTurnState,
+  requested: FishHeading,
+  delta: number,
+  drive = true,
+) {
   fish.motionAge += delta;
   if (fish.turnCooldown > 0) {
     fish.turnCooldown = Math.max(0, fish.turnCooldown - delta);
@@ -141,7 +145,9 @@ export function updateFishTurn(fish: FishTurnState, requested: FishHeading, delt
     enterMotion(fish, 'recovering');
   }
   if (fish.turnMode === 'swimming') return swimmingGain(fish);
-  return fish.turnMode === 'recovering' ? recoveryGain(Math.min(1, fish.motionAge / fish.recoverySeconds)) : 0;
+  return fish.turnMode === 'recovering'
+    ? recoveryGain(Math.min(1, fish.motionAge / fish.recoverySeconds))
+    : 0;
 }
 
 export function brakeFishTurn(fish: FishTurnState, delta: number) {
