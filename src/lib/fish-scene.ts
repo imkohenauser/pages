@@ -1,6 +1,6 @@
-import { SeaBreamSimulation, ATTRACTION_DURATION_S } from './sea-bream-simulation.ts';
-import { drawSeaBreamSchool } from './sea-bream-renderer.ts';
-import { loadSeaBreamAtlas } from './sea-bream-assets.ts';
+import { FishSimulation, ATTRACTION_DURATION_S } from './fish-simulation.ts';
+import { drawFishSchool } from './fish-renderer.ts';
+import { loadFishAtlas } from './fish-assets.ts';
 
 const SIMULATION_STEP_S = 1 / 60;
 // Bound catch-up after a stalled frame without slowing normal 15–144Hz rendering.
@@ -46,7 +46,7 @@ class FishScene extends HTMLElement {
   private connectionId = 0;
   private loadMarginPx = 0;
   private inView = false;
-  private simulation = new SeaBreamSimulation();
+  private simulation = new FishSimulation();
   private pointerClientX?: number;
   private pointerClientY?: number;
   private lastDuplicationAt = -Infinity;
@@ -173,7 +173,7 @@ class FishScene extends HTMLElement {
     const connectionId = this.connectionId;
     let atlas: HTMLImageElement;
     try {
-      atlas = await loadSeaBreamAtlas();
+      atlas = await loadFishAtlas();
     } catch {
       return;
     }
@@ -375,7 +375,7 @@ class FishScene extends HTMLElement {
 
   private draw() {
     if (!this.context || !this.atlas) return;
-    drawSeaBreamSchool(this.context, this.mosaic, this.atlas, this.simulation);
+    drawFishSchool(this.context, this.mosaic, this.atlas, this.simulation);
   }
 }
 

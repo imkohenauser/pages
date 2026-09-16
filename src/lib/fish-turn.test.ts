@@ -3,15 +3,15 @@ import test from 'node:test';
 import {
   TURN_COMMIT_PROGRESS,
   initialTurnClock,
-  updateSeaBreamTurn,
-  type SeaBreamHeading,
-  type SeaBreamTurnState,
-} from './sea-bream-turn.ts';
+  updateFishTurn,
+  type FishHeading,
+  type FishTurnState,
+} from './fish-turn.ts';
 
 const STEP_S = 1 / 60;
 
-function swimmer(overrides: Partial<SeaBreamTurnState> = {}) {
-  const base: SeaBreamTurnState = {
+function swimmer(overrides: Partial<FishTurnState> = {}) {
+  const base: FishTurnState = {
     ...initialTurnClock(0),
     heading: 1,
     desiredHeading: 1,
@@ -24,18 +24,18 @@ function swimmer(overrides: Partial<SeaBreamTurnState> = {}) {
   return Object.assign(base, overrides);
 }
 
-function run(fish: SeaBreamTurnState, requested: SeaBreamHeading, seconds: number, drive = true) {
+function run(fish: FishTurnState, requested: FishHeading, seconds: number, drive = true) {
   const modes = new Set([fish.turnMode]);
   for (let elapsed = 0; elapsed < seconds; elapsed += STEP_S) {
-    updateSeaBreamTurn(fish, requested, STEP_S, drive);
+    updateFishTurn(fish, requested, STEP_S, drive);
     modes.add(fish.turnMode);
   }
   return modes;
 }
 
-function runUntilTurning(fish: SeaBreamTurnState) {
+function runUntilTurning(fish: FishTurnState) {
   for (let step = 0; step < 600; step += 1) {
-    updateSeaBreamTurn(fish, -1, STEP_S);
+    updateFishTurn(fish, -1, STEP_S);
     if (fish.turnMode === 'turning') return true;
   }
   return false;

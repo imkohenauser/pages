@@ -1,12 +1,12 @@
 import { GLITCH_SEQUENCE, drawMosaicImage, glitchFromAge, type Glitch } from './mosaic-glitch.ts';
-import { seaBreamPose, spriteScale } from './sea-bream-sprites.ts';
-import type { SeaBream, SeaBreamSimulation } from './sea-bream-simulation.ts';
+import { fishPose, spriteScale } from './fish-sprites.ts';
+import type { Fish, FishSimulation } from './fish-simulation.ts';
 
-export function drawSeaBreamSchool(
+export function drawFishSchool(
   context: CanvasRenderingContext2D,
   mosaic: HTMLCanvasElement | undefined,
   atlas: HTMLImageElement,
-  simulation: SeaBreamSimulation,
+  simulation: FishSimulation,
 ) {
   context.clearRect(0, 0, simulation.width, simulation.height);
 
@@ -19,20 +19,20 @@ export function drawSeaBreamSchool(
     const fish = simulation.school[index];
     const glitch = glitches[index];
     if (!fish || !glitch) continue;
-    drawSeaBream(context, mosaic, atlas, fish, glitch);
+    drawFish(context, mosaic, atlas, fish, glitch);
   }
 }
 
-function drawSeaBream(
+function drawFish(
   context: CanvasRenderingContext2D,
   mosaic: HTMLCanvasElement | undefined,
   atlas: HTMLImageElement,
-  fish: SeaBream,
+  fish: Fish,
   glitch: Glitch,
 ) {
   if (!mosaic) return;
 
-  const clip = seaBreamPose(fish);
+  const clip = fishPose(fish);
   const scale = fish.scale * spriteScale;
   const drawnWidth = clip.width * scale;
   const drawnHeight = clip.height * scale;

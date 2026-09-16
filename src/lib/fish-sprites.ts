@@ -1,4 +1,4 @@
-import { TURN_COMMIT_PROGRESS, type SeaBreamTurnState } from './sea-bream-turn.ts';
+import { TURN_COMMIT_PROGRESS, type FishTurnState } from './fish-turn.ts';
 
 const CELL_WIDTH = 168;
 const CELL_HEIGHT = 126;
@@ -45,7 +45,7 @@ export function motionProgress(age: number, duration: number) {
   return Math.min(Math.max(0, age / duration), 0.999999);
 }
 
-export function turnFrontness(fish: SeaBreamTurnState) {
+export function turnFrontness(fish: FishTurnState) {
   if (fish.turnMode !== 'turning') return 0;
   const frame = sheetColumn(TURN_FRAME_WEIGHTS, motionProgress(fish.motionAge, fish.turnSeconds));
   return TURN_FRONTNESS[frame] ?? 0;
@@ -60,7 +60,7 @@ function loopFrame(first: number, count: number, phase: number) {
   return first + Math.min(count - 1, Math.max(0, Math.floor(phase * count)));
 }
 
-export function seaBreamPose(fish: SeaBreamTurnState) {
+export function fishPose(fish: FishTurnState) {
   let frame: number;
   switch (fish.turnMode) {
     // Hover reads as a fish holding station, which is also what a braking fish is doing.

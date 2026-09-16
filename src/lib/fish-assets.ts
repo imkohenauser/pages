@@ -6,7 +6,7 @@ let atlasRequest: Promise<HTMLImageElement> | undefined;
  * Shares one decode across every instance and reconnection. Without this, re-entering the
  * observer before the first decode settles starts a second request for the same atlas.
  */
-export function loadSeaBreamAtlas() {
+export function loadFishAtlas() {
   if (!atlasRequest) {
     const atlas = new Image();
     atlas.decoding = 'async';

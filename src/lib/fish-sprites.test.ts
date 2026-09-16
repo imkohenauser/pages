@@ -3,19 +3,19 @@ import test from 'node:test';
 import {
   extent,
   motionProgress,
-  seaBreamPose,
+  fishPose,
   sheetColumn,
   spriteScale,
   turnFrontness,
-} from './sea-bream-sprites.ts';
-import { initialTurnClock, type SeaBreamMotion, type SeaBreamTurnState } from './sea-bream-turn.ts';
+} from './fish-sprites.ts';
+import { initialTurnClock, type FishMotion, type FishTurnState } from './fish-turn.ts';
 
 const ATLAS_WIDTH = 672;
 const ATLAS_HEIGHT = 756;
 const COLUMNS = 4;
 
-function state(turnMode: SeaBreamMotion, overrides: Partial<SeaBreamTurnState> = {}) {
-  const base: SeaBreamTurnState = {
+function state(turnMode: FishMotion, overrides: Partial<FishTurnState> = {}) {
+  const base: FishTurnState = {
     ...initialTurnClock(0),
     heading: 1,
     desiredHeading: 1,
@@ -28,28 +28,28 @@ function state(turnMode: SeaBreamMotion, overrides: Partial<SeaBreamTurnState> =
   return Object.assign(base, overrides);
 }
 
-function frameIndex(pose: ReturnType<typeof seaBreamPose>) {
+function frameIndex(pose: ReturnType<typeof fishPose>) {
   return (pose.y / pose.height) * COLUMNS + pose.x / pose.width;
 }
 
-function sweepPhase(turnMode: SeaBreamMotion, steps = 400) {
+function sweepPhase(turnMode: FishMotion, steps = 400) {
   return Array.from({ length: steps }, (_, step) =>
-    frameIndex(seaBreamPose(state(turnMode, { swimPhase: step / steps }))),
+    frameIndex(fishPose(state(turnMode, { swimPhase: step / steps }))),
   );
 }
 
 function sweepTurn(steps = 400) {
   const turnSeconds = initialTurnClock(0).turnSeconds;
   return Array.from({ length: steps }, (_, step) =>
-    frameIndex(seaBreamPose(state('turning', { motionAge: (step / steps) * turnSeconds }))),
+    frameIndex(fishPose(state('turning', { motionAge: (step / steps) * turnSeconds }))),
   );
 }
 
 test('every pose stays inside the atlas', () => {
-  const modes: SeaBreamMotion[] = ['idle', 'swimming', 'braking', 'turning', 'recovering'];
+  const modes: FishMotion[] = ['idle', 'swimming', 'braking', 'turning', 'recovering'];
   for (const mode of modes) {
     for (let step = 0; step < 64; step += 1) {
-      const pose = seaBreamPose(
+      const pose = fishPose(
         state(mode, { swimPhase: step / 64, motionAge: (step / 64) * 0.85 }),
       );
       assert.ok(pose.x >= 0 && pose.x + pose.width <= ATLAS_WIDTH, `${mode} x out of range`);
@@ -81,11 +81,11 @@ test('a turn plays all twelve frames once, in order', () => {
 
 test('a left heading mirrors every clip instead of selecting a second row', () => {
   for (const mode of ['idle', 'swimming', 'turning'] as const) {
-    assert.equal(seaBreamPose(state(mode)).flip, false);
-    assert.equal(seaBreamPose(state(mode, { heading: -1 })).flip, true);
+    assert.equal(fishPose(state(mode)).flip, false);
+    assert.equal(fishPose(state(mode, { heading: -1 })).flip, true);
     assert.equal(
-      frameIndex(seaBreamPose(state(mode))),
-      frameIndex(seaBreamPose(state(mode, { heading: -1 }))),
+      frameIndex(fishPose(state(mode))),
+      frameIndex(fishPose(state(mode, { heading: -1 }))),
       `${mode} uses one clip for both directions`,
     );
   }
@@ -123,7 +123,7 @@ test('motionProgress never reaches one, so the last frame stays addressable', ()
 });
 
 test('the sprite scale draws the body at the width the simulation asks for', () => {
-  const pose = seaBreamPose(state('swimming'));
+  const pose = fishPose(state('swimming'));
   const bodyWidth = 58;
   const scale = (bodyWidth / 256) * spriteScale;
   assert.ok(Math.abs(pose.width * scale * 0.7 - bodyWidth) < 0.001);

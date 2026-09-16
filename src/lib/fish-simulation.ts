@@ -1,13 +1,13 @@
 import { GLITCH_DURATION_S } from './mosaic-glitch.ts';
-import { advanceSwimPhase } from './sea-bream-swim-cycle.ts';
+import { advanceSwimPhase } from './fish-swim-cycle.ts';
 import {
-  brakeSeaBreamTurn,
+  brakeFishTurn,
   initialTurnClock,
-  updateSeaBreamTurn,
-  type SeaBreamHeading,
-  type SeaBreamTurnState,
-} from './sea-bream-turn.ts';
-import { extent, REFERENCE_BODY_WIDTH, turnFrontness } from './sea-bream-sprites.ts';
+  updateFishTurn,
+  type FishHeading,
+  type FishTurnState,
+} from './fish-turn.ts';
+import { extent, REFERENCE_BODY_WIDTH, turnFrontness } from './fish-sprites.ts';
 
 interface Avoidance {
   x: number;
@@ -21,7 +21,7 @@ interface Attraction {
   until: number;
 }
 
-export interface SeaBreamConfig {
+export interface FishConfig {
   readonly sizeFactor: number;
   readonly startX: number;
   readonly startY: number;
@@ -39,8 +39,8 @@ export interface SeaBreamConfig {
   readonly initialSwimPhase: number;
 }
 
-export interface SeaBream extends SeaBreamTurnState {
-  readonly config: SeaBreamConfig;
+export interface Fish extends FishTurnState {
+  readonly config: FishConfig;
   swimPhase: number;
   scale: number;
   x: number;
@@ -48,14 +48,14 @@ export interface SeaBream extends SeaBreamTurnState {
   vx: number;
   vy: number;
   pitch: number;
-  avoidanceHeading?: SeaBreamHeading;
+  avoidanceHeading?: FishHeading;
   /* Rearms once the fish has cleared its neighbours, so a crossing can spark another glitch. */
   glitchArmed: boolean;
   glitchAt: number;
 }
 
 /* The resident fish follows one deterministic current; duplicates derive their own from it. */
-const RESIDENT: SeaBreamConfig = {
+const RESIDENT: FishConfig = {
   sizeFactor: 1,
   startX: 0.68,
   startY: 0.8,
@@ -106,13 +106,13 @@ const EDGE_MARGIN = 6;
 /* A quarter body past the canvas lets the tail leave before the turn starts. */
 const TARGET_OVERSCAN_RATIO = 0.25;
 
-export interface SeaBreamInput {
+export interface FishInput {
   pointerX?: number;
   pointerY?: number;
   hoverEnabled: boolean;
 }
 
-export class SeaBreamSimulation {
+export class FishSimulation {
   elapsed = 0;
   width = 0;
   height = 0;
@@ -120,9 +120,9 @@ export class SeaBreamSimulation {
   placed = false;
   attraction?: Attraction;
   /* The fish the fine pointer is over, so a stay does not retrigger the sequence. */
-  hoveredFish?: SeaBream;
+  hoveredFish?: Fish;
   private nextCloneId = 1;
-  school: SeaBream[] = [
+  school: Fish[] = [
     {
       config: RESIDENT,
       swimPhase: RESIDENT.initialSwimPhase,
@@ -160,11 +160,11 @@ export class SeaBreamSimulation {
 
     const cloneId = this.nextCloneId;
     this.nextCloneId += 1;
-    const splitHeading: SeaBreamHeading = cloneId % 2 === 0 ? 1 : -1;
+    const splitHeading: FishHeading = cloneId % 2 === 0 ? 1 : -1;
     const splitDistance = REFERENCE_BODY_WIDTH * source.scale * 0.18;
     const phaseOffset = cloneId * 0.83;
     const rateFactor = 0.88 + (cloneId % 5) * 0.06;
-    const config: SeaBreamConfig = {
+    const config: FishConfig = {
       ...source.config,
       /* Duplicates read as the ones further out, which also settles who mosaics on a crossing. */
       sizeFactor: 0.94 - (cloneId % 6) * 0.03,
@@ -178,7 +178,7 @@ export class SeaBreamSimulation {
       phase: source.config.phase + phaseOffset,
       initialSwimPhase: (source.swimPhase + 0.5) % 1,
     };
-    const clone: SeaBream = {
+    const clone: Fish = {
       config,
       swimPhase: config.initialSwimPhase,
       scale: this.scale * config.sizeFactor,
@@ -246,7 +246,7 @@ export class SeaBreamSimulation {
   }
 
   /** Input coordinates are local to the swim area; missing input advances only the clock. */
-  step(delta: number, input?: SeaBreamInput) {
+  step(delta: number, input?: FishInput) {
     this.elapsed += delta;
 
     if (!input) return;
@@ -321,7 +321,7 @@ export class SeaBreamSimulation {
       ) {
         fish.avoidanceHeading = undefined;
       }
-      let heading: SeaBreamHeading = fish.heading;
+      let heading: FishHeading = fish.heading;
       if (fish.avoidanceHeading !== undefined) {
         heading = fish.avoidanceHeading;
       } else if (Math.abs(targetX - fish.x) > POINTER_TURN_HYSTERESIS) {
@@ -334,7 +334,7 @@ export class SeaBreamSimulation {
       }
       const driveDistance = bodyWidth * (fish.turnMode === 'idle' ? 0.9 : 0.58);
       const drive = Math.hypot(targetX - fish.x, (targetY - fish.y) * 0.4) > driveDistance;
-      const propulsionGain = updateSeaBreamTurn(fish, heading, delta, drive);
+      const propulsionGain = updateFishTurn(fish, heading, delta, drive);
       let cycleSeconds = fish.config.swimCycleSeconds;
       // Hover slows the fin beat; a dart or lure compresses it. Do not undo that with extra impulse.
       if (fish.turnMode === 'idle' || fish.turnMode === 'braking') {
@@ -407,7 +407,7 @@ export class SeaBreamSimulation {
         }
       }
 
-      brakeSeaBreamTurn(fish, delta);
+      brakeFishTurn(fish, delta);
       const integratedX = integrateAxis(fish.x, fish.vx, delta, hardX.min, hardX.max);
       const integratedY = integrateAxis(fish.y, fish.vy, delta, hardY.min, hardY.max);
       fish.x = integratedX.position;
@@ -437,7 +437,7 @@ export class SeaBreamSimulation {
     this.sparkHoverGlitch(pointerX, pointerY, hoverEnabled);
   }
 
-  private entryLaneY(fish: SeaBream, fallbackRatio: number) {
+  private entryLaneY(fish: Fish, fallbackRatio: number) {
     const hardY = hardBoundsY(this.height, fish.scale);
     return clamp(this.height * fallbackRatio, hardY.min, hardY.max);
   }
@@ -474,14 +474,14 @@ export class SeaBreamSimulation {
   }
 
   /* Play the encounter once and settle; a second spark waits until the sequence has finished. */
-  private sparkGlitch(fish: SeaBream) {
+  private sparkGlitch(fish: Fish) {
     const age = this.elapsed - fish.glitchAt;
     if (age >= 0 && age < GLITCH_DURATION_S) return;
     fish.glitchAt = this.elapsed;
   }
 
   private applySwimImpulse(
-    fish: SeaBream,
+    fish: Fish,
     targetX: number,
     targetY: number,
     fraction: number,
@@ -584,7 +584,7 @@ function findEdgeAvoidance(
   return strongest;
 }
 
-function bodyRect(fish: SeaBream) {
+function bodyRect(fish: Fish) {
   const width = REFERENCE_BODY_WIDTH * fish.scale;
   const height = width * BODY_HEIGHT_RATIO;
   // Front-facing turn poses are taller and narrower than the cruise silhouette.
@@ -600,7 +600,7 @@ function bodyRect(fish: SeaBream) {
   };
 }
 
-function bodyOverlap(a: SeaBream, b: SeaBream) {
+function bodyOverlap(a: Fish, b: Fish) {
   const ra = bodyRect(a);
   const rb = bodyRect(b);
   const width = Math.max(0, Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left));

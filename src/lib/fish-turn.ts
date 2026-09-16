@@ -1,18 +1,18 @@
-export type SeaBreamHeading = -1 | 1;
-export type SeaBreamMotion = 'idle' | 'swimming' | 'braking' | 'turning' | 'recovering';
+export type FishHeading = -1 | 1;
+export type FishMotion = 'idle' | 'swimming' | 'braking' | 'turning' | 'recovering';
 
-export interface SeaBreamMotionTempo {
+export interface FishMotionTempo {
   brakeSeconds: number;
   turnSeconds: number;
   recoverySeconds: number;
   turnCooldownSeconds: number;
 }
 
-export interface SeaBreamTurnState extends SeaBreamMotionTempo {
-  heading: SeaBreamHeading;
-  desiredHeading: SeaBreamHeading;
+export interface FishTurnState extends FishMotionTempo {
+  heading: FishHeading;
+  desiredHeading: FishHeading;
   headingRequestAge: number;
-  turnMode: SeaBreamMotion;
+  turnMode: FishMotion;
   motionAge: number;
   vx: number;
   swimPhase: number;
@@ -35,7 +35,7 @@ export const TURN_COMMIT_PROGRESS = 0.32;
 const POST_TURN_HOLD_SECONDS = 0.18;
 const RECOVERY_EXIT_GAIN = 0.7;
 
-export function motionTempo(phase: number): SeaBreamMotionTempo {
+export function motionTempo(phase: number): FishMotionTempo {
   // Each individual keeps its own tempo so duplicated fish do not beat in unison.
   const scale = 1 + 0.08 * Math.sin(phase * 1.7);
   return {
@@ -54,7 +54,7 @@ export function initialTurnClock(phase: number) {
   };
 }
 
-function enterMotion(fish: SeaBreamTurnState, mode: SeaBreamMotion) {
+function enterMotion(fish: FishTurnState, mode: FishMotion) {
   fish.turnMode = mode;
   fish.motionAge = 0;
   if (mode === 'braking' || mode === 'turning' || mode === 'recovering') {
@@ -71,15 +71,15 @@ function recoveryGain(progress: number) {
   return 0.85 + (RECOVERY_EXIT_GAIN - 0.85) * ((progress - 0.85) / 0.15);
 }
 
-function swimmingGain(fish: SeaBreamTurnState) {
+function swimmingGain(fish: FishTurnState) {
   if (fish.motionAge >= SWIM_SETTLE_SECONDS) return 1;
   return RECOVERY_EXIT_GAIN + (1 - RECOVERY_EXIT_GAIN) * (fish.motionAge / SWIM_SETTLE_SECONDS);
 }
 
 /** Locks only the committed flip, while retaining the latest steering request. */
-export function updateSeaBreamTurn(
-  fish: SeaBreamTurnState,
-  requested: SeaBreamHeading,
+export function updateFishTurn(
+  fish: FishTurnState,
+  requested: FishHeading,
   delta: number,
   drive = true,
 ) {
@@ -150,7 +150,7 @@ export function updateSeaBreamTurn(
     : 0;
 }
 
-export function brakeSeaBreamTurn(fish: SeaBreamTurnState, delta: number) {
+export function brakeFishTurn(fish: FishTurnState, delta: number) {
   if (fish.turnMode === 'braking') {
     fish.vx = fish.heading * Math.max(0, fish.vx * fish.heading) * Math.exp(-BRAKING_DRAG * delta);
   } else if (fish.turnMode === 'turning' || fish.turnMode === 'idle') {
