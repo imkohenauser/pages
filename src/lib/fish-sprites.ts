@@ -1,4 +1,4 @@
-import { TURN_COMMIT_PROGRESS, type FishTurnState } from './fish-turn.ts';
+import type { FishTurnState } from './fish-turn.ts';
 
 const CELL_WIDTH = 168;
 const CELL_HEIGHT = 126;
@@ -14,7 +14,6 @@ const SWIM_FRAMES = 8;
 const HOVER_FIRST_FRAME = 8;
 const HOVER_FRAMES = 4;
 const TURN_FIRST_FRAME = 12;
-const TURN_FRAMES = 12;
 
 export const REFERENCE_BODY_WIDTH = 256;
 export const spriteScale = REFERENCE_BODY_WIDTH / BODY_WIDTH_IN_CELL;
@@ -49,11 +48,6 @@ export function turnFrontness(fish: FishTurnState) {
   if (fish.turnMode !== 'turning') return 0;
   const frame = sheetColumn(TURN_FRAME_WEIGHTS, motionProgress(fish.motionAge, fish.turnSeconds));
   return TURN_FRONTNESS[frame] ?? 0;
-}
-
-/** Reports whether an abort can still happen before the turn shows a foreshortened pose. */
-export function turnStaysProfile(progress: number) {
-  return progress < TURN_COMMIT_PROGRESS;
 }
 
 function loopFrame(first: number, count: number, phase: number) {
