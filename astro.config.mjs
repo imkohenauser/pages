@@ -23,28 +23,67 @@ export default defineConfig({
   },
   fonts: [
     {
-      provider: fontProviders.npm({ remote: false }),
+      provider: fontProviders.local(),
       name: 'LINE Seed JP',
       cssVariable: '--font-line-seed-jp',
       weights: [400],
       styles: ['normal'],
-      options: { package: '@fontsource/line-seed-jp', file: '400.css' },
+      options: {
+        variants: [
+          {
+            weight: 400,
+            style: 'normal',
+            src: ['@fontsource/line-seed-jp/files/line-seed-jp-japanese-400-normal.woff2'],
+          },
+          {
+            weight: 400,
+            style: 'normal',
+            src: ['@fontsource/line-seed-jp/files/line-seed-jp-latin-400-normal.woff2'],
+          },
+        ],
+      },
     },
     {
-      provider: fontProviders.npm({ remote: false }),
+      provider: fontProviders.local(),
       name: 'LINE Seed JP',
       cssVariable: '--font-line-seed-jp',
       weights: [700],
       styles: ['normal'],
-      options: { package: '@fontsource/line-seed-jp', file: '700.css' },
+      options: {
+        variants: [
+          {
+            weight: 700,
+            style: 'normal',
+            src: ['@fontsource/line-seed-jp/files/line-seed-jp-japanese-700-normal.woff2'],
+          },
+          {
+            weight: 700,
+            style: 'normal',
+            src: ['@fontsource/line-seed-jp/files/line-seed-jp-latin-700-normal.woff2'],
+          },
+        ],
+      },
     },
     {
-      provider: fontProviders.npm({ remote: false }),
+      provider: fontProviders.local(),
       name: 'Michroma',
       cssVariable: '--font-michroma',
       weights: [400],
       styles: ['normal'],
-      options: { package: '@fontsource/michroma' },
+      options: {
+        variants: [
+          {
+            weight: 400,
+            style: 'normal',
+            src: ['@fontsource/michroma/files/michroma-latin-400-normal.woff2'],
+          },
+          {
+            weight: 400,
+            style: 'normal',
+            src: ['@fontsource/michroma/files/michroma-latin-ext-400-normal.woff2'],
+          },
+        ],
+      },
     },
   ],
   integrations: [
