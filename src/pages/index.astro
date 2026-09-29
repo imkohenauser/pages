@@ -5,13 +5,13 @@ import Hero from '../components/home/Hero.astro';
 import JsonLd from '../components/JsonLd.astro';
 import ProjectsSection from '../components/home/ProjectsSection.astro';
 import WritingSection from '../components/home/WritingSection.astro';
-import { getWriting, pickLatestWritingByLabels } from '../lib/writing';
+import { getWriting } from '../lib/writing';
 import { getProjects } from '../lib/projects';
 import { site } from '../data/site';
 import { homeJsonLd } from '../lib/seo';
 
 const writing = await getWriting();
-const homeWriting = pickLatestWritingByLabels(writing);
+const homeWriting = writing.slice(0, 5);
 const projects = await getProjects();
 ---
 
