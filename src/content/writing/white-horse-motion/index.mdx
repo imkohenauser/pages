@@ -2,6 +2,7 @@
 title: "トップページの白馬の表現について"
 description: "白馬のスプライト、足運びのリズム、WebGL の残像。トップページの動きを、再生できるデモとコードで説明します。"
 publishedAt: "2026-09-10T22:22:00+09:00"
+updatedAt: "2026-10-03T09:14:00+09:00"
 featuredImage: ./ogp.png
 featuredImageAlt: "トップページの白馬の表現について"
 label: blog
@@ -14,10 +15,11 @@ import HorseTimingDiagram from '../../../components/writing/HorseTimingDiagram.a
 import HorseEchoDiagram from '../../../components/writing/HorseEchoDiagram.astro';
 import HorseRunDemo from '../../../components/writing/HorseRunDemo.astro';
 import MarkdownFallback from '../../../components/writing/MarkdownFallback.astro';
-import PhotoComparison from '../../../components/writing/PhotoComparison.astro';
 import RenderedOnly from '../../../components/writing/RenderedOnly.astro';
 import { Image } from 'astro:assets';
 import motionPath from './motion-path.webp';
+import topPageCapture from './top-page-capture.mp4';
+import topPageCapturePoster from './top-page-capture-poster.webp';
 
 トップページでは、白馬がアーチの奥から現れ、こちらに向かって駆けてきます。滑らかにつながる映像ではなく、姿勢が一枚ずつ切り替わり、その後ろに残像が残る表現です。
 
@@ -137,36 +139,30 @@ Blenderで3Dの白馬を動かす案や、動画として配置する案も検�
 
 ---
 
-## 1992年の白馬と私
+## キャプチャ動画と記事の更新は iOS の Claude から
 
-今年は午年です。白馬はアーチ内の仮想空間からページの前景へ移動し、異なる空間を飛び越えます。制作面でも、グラフィック、モーション、WebGL 実装といった職域をまたぐモチーフです。
+トップページの白馬のモーションを録画するために、iOS 版の Claude アプリから、Claude Code に相談しました。ポインターとクリックのプロットは、白馬の表示時間や同時に駆けられる頭数などをコードベースから読み取ってもらい、一緒に組み立てました。そのまま動画が作成されたので、予定になかった記事更新まで進みました。
 
-造形では、シュルレアリスムに見られる異なる空間の接続と、初期 CG の離散的な動きや質感を参照しています。写実的な映像の再現ではなく、複数の技術と表現を一つの場面にまとめています。
-
-<PhotoComparison>
+<RenderedOnly>
   <figure>
-    <img
-      src="/images/white-horse-riding-1992-original.jpg"
-      alt="1992年、乗馬場で白馬に乗る幼少期の筆者と、左端に写る馬を引く男性"
-      width="1476"
-      height="1020"
-      loading="lazy"
-      decoding="async"
-    />
-    <figcaption>原版。おそらく「写ルンです」で撮影。写真を家庭用スキャナーで取り込んだもの。</figcaption>
+    <video
+      src={topPageCapture}
+      poster={topPageCapturePoster.src}
+      width="1440"
+      height="1080"
+      controls
+      playsinline
+      preload="none"
+    ></video>
+    <figcaption>トップページのキャプチャ動画（15秒、音声なし）。白馬が1頭走り去ったあと、アーチを1回、2回、3回とクリックしている。Playwright でブラウザを操作して1コマずつ書き出し、カーソルは撮影時にページへ重ねて描画。</figcaption>
   </figure>
-  <figure>
-    <img
-      src="/images/white-horse-riding-1992.webp"
-      alt="1992年、乗馬場で白馬に乗る幼少期の筆者"
-      width="1506"
-      height="1044"
-      loading="lazy"
-      decoding="async"
-    />
-    <figcaption>AIによる補正後。左端の人物を除去し、ゴミやノイズ、色味を補正。</figcaption>
-  </figure>
-</PhotoComparison>
+</RenderedOnly>
+
+<MarkdownFallback>
+> **キャプチャ動画:** 表示と同時に白馬が1頭走り去り、そのあとアーチを1回、2回、3回とクリックして白馬を走らせる15秒の動画です。[ブラウザで動画を見る](https://imkohenauser.com/white-horse-motion/#キャプチャ動画と記事の更新は-ios-の-claude-から)
+</MarkdownFallback>
+
+[2026年8月のホームページリニューアル](/website-rebuild-2026/)で書いたように、このサイトはエージェントとの会話から、投稿や更新ができるよう構築しています。CMS で編集する代わりに、Git のブランチで変更し、プルリクエストで反映します。今回もブランチの作成からプルリクエストまで、Claude Code で完結しました。
 
 ---
 
