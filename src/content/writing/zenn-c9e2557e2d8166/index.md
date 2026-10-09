@@ -11,5 +11,5 @@ label: zenn
 lang: ja
 canonicalUrl:
 noindex: true
-draft: false
+draft: true
 ---
