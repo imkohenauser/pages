@@ -1,5 +1,5 @@
 ---
-title: "コミットメッセージだけ任せる commit-ja エージェントスキル"
+title: "スキル：日本語コミットメッセージ commit-ja"
 description: "ステージ済みの差分からConventional Commits形式の日本語コミットメッセージを提案するAgent Skill「commit-ja」の導入方法と使い方を紹介します。"
 publishedAt: "2026-09-06 21:06"
 updatedAt:
