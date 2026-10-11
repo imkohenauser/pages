@@ -1,34 +1,33 @@
 ---
 name: commit-ja
-description: Write Japanese Conventional Commit messages from staged changes. Use when invoked as `$commit-ja` or `/commit-ja`, attached as a skill, or named as the project's commit convention. Create commits when requested.
+description: ステージ済みの変更から日本語の Conventional Commit メッセージを作成し、依頼されればコミットする。日本語のコミットメッセージを求められたとき、またはプロジェクトのコミット規約に指定されているときに使う。
 license: MIT
-disable-model-invocation: true
 ---
 
-# Japanese Commit Message
+# 日本語コミットメッセージ
 
-Generate a message now when invoked on its own. Empty input or a skill reference alone counts, even if the client omits the command text. When supplied as context for another request, follow that request.
+単独で起動されたら、すぐにメッセージを生成する。クライアントがコマンド文字列を省いても、入力が空かスキルの参照だけなら単独起動とみなす。別の依頼のコンテキストとして渡された場合は、その依頼に従う。
 
-## Generate
+## 生成
 
-1. Read `git status --short`, `git diff --cached --stat`, `git diff --cached`, and `git log -8 --format='%s'` in parallel.
-2. Base the message on staged changes; use recent subjects for style. Skip the history if the repository has no commits. Read more context only as needed.
-3. Return only the message in one `text` code block. If nothing is staged, return `ステージ済みの変更はありません` in that block. If inspection fails, report the error.
+1. `git status --short`、`git diff --cached --stat --patch`、`git log -8 --format='%s'` を並列で実行する。
+2. ステージ済みの変更を根拠にし、最近の件名は書き方の参考にする。コミットがまだなければ履歴は省く。差分で判断しきれない点だけ追加で調べる。
+3. メッセージだけを `text` コードブロック1つで返す。複数なら同じブロック内を `---` で区切る。ステージ済みの変更がなければ、そのブロックで `ステージ済みの変更はありません` と返す。確認に失敗したらエラーを報告する。
 
-Leave files and the index unchanged when generating a message. Finish with the result, not an acknowledgment or a request to invoke again.
+ファイルとインデックスは変更しない。了承の返事や再実行の依頼で終えず、結果を返す。
 
-## Message format
+## 形式
 
-Use `type(scope)!: subject`:
+`type(scope)!: subject` で書く。
 
-- Type: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `build`, `ci`, or `revert`.
-- Use English for type and scope; Japanese for subject and body. Include scope when the diff supports it.
-- Describe the resulting behavior with a concise noun phrase. Include meaningful terms, rather than filenames or generic words such as `修正` alone.
-- Aim for 50 characters; limit the subject to 72. Omit final punctuation, ticket numbers, URLs, and `〜しました`.
-- Add a body when motivation or impact needs explanation.
-- Mark breaking changes with `!`; add a `BREAKING CHANGE:` footer when migration needs explanation.
+- type: `feat`、`fix`、`docs`、`style`、`refactor`、`perf`、`test`、`chore`、`build`、`ci`、`revert`
+- scope は英語、subject と本文は日本語で書く。scope は差分から判断できるときに付ける。
+- subject は変更後の振る舞いを簡潔な名詞句で表す。ファイル名や `修正` 単独のような汎用語ではなく、意味のある語を入れる。
+- subject は50文字を目安に72文字以内とし、末尾の句読点、チケット番号、URL、`〜しました` を含めない。
+- 動機や影響の説明が要るときは本文を書く。
+- 破壊的変更には `!` を付け、移行の説明が要るときは `BREAKING CHANGE:` フッターを加える。
 
-Split independent concerns into separate messages, separated by `---` within the same block. Keep supporting tests and documentation with their change.
+独立した変更は分け、補助的なテストやドキュメントは対象の変更に含める。
 
 ```text
 feat(auth): OAuth2ログインエンドポイントの追加
@@ -36,10 +35,10 @@ feat(auth): OAuth2ログインエンドポイントの追加
 リフレッシュトークンを使ったセッション継続に対応。
 ```
 
-## Commit
+## コミット
 
-Create commits only when requested. Inspect staged and relevant unstaged changes, then stage the requested paths or hunks while preserving unrelated and partially staged work.
+コミットは依頼されたときだけ作成する。一括ステージ、空コミット、フックの回避はしない。
 
-Do not use blanket staging, create empty commits, or bypass hooks.
-
-Group independent concerns separately. Check each staged diff and required repository checks, commit with a message in the format above, and verify the commit and remaining Git state. Pass plain message text to Git. Report any commit or hook failure.
+1. ステージ済みの変更と関連する未ステージの変更を確認し、依頼されたパスやハンクだけをステージする。無関係な変更や部分的なステージは保つ。
+2. 分けた変更ごとに、ステージ済みの差分とリポジトリが求めるチェックを確かめてからコミットする。メッセージは上の形式のプレーンテキストで Git に渡す。
+3. 各コミットの後、コミットと残りの Git の状態を確認する。コミットやフックの失敗は報告する。
