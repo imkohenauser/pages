@@ -1,15 +1,15 @@
 import type { HeaderIconName } from '../lib/icon';
 
 export const site = {
-  name: 'Kohei Saito, or 廣円',
+  name: 'Kohei Saito / 廣円',
   kanaName: '(Kohen)',
   shortName: 'Kohei Saito',
-  title: 'Personal site of a Design Engineer, or Creative Technologist',
-  bio: 'Graphic design, print, web, and UI. I work with teams on the systems they already use. Projects, experiments, and notes on tools, AI, and the practical side of creative work.',
+  title: 'Personal site of a Design Engineer',
+  bio: 'I develop CX strategies, design and prototype interfaces, and write frontend code. I build harnesses for AI agents and keep them running. My background spans graphic design, print, and the web.',
   lang: 'ja',
   locale: 'ja_JP',
   ogImage: '/ogp.png',
-  ogImageAlt: 'Kohei Saito, or Kohen',
+  ogImageAlt: 'Kohei Saito / 廣円 (Kohen)',
   ogImageWidth: 1200,
   ogImageHeight: 630,
   twitterSite: '@imkohenauser',
