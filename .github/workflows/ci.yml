@@ -23,4 +23,5 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run test:fish
+      - run: npm run test:llms-txt
       - run: npm run build
