@@ -23,6 +23,17 @@ export function articleCopyMarkdown(body: string, filePath?: string, baseUrl?: s
   return transformMdx(body, filePath, { baseUrl, includeFallbacks: true });
 }
 
+export function articleMarkdownDocument(
+  title: string,
+  description: string,
+  body: string,
+  filePath?: string,
+  baseUrl?: string,
+) {
+  const markdownBody = articleCopyMarkdown(body, filePath, baseUrl);
+  return `# ${title}\n\n${description}\n\n${markdownBody}`;
+}
+
 // Strip executable MDX while retaining Markdown and static HTML, including image captions.
 function transformMdx(body: string, filePath: string | undefined, options: TransformOptions) {
   if (!filePath?.endsWith('.mdx')) return body;

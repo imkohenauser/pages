@@ -58,6 +58,11 @@ export function includeInSitemap(page: string) {
     return false;
   }
 
+  // Endpoint pathnames are recorded with a trailing slash, which is not the .md file URL.
+  if (pathname.endsWith('.md') || pathname.endsWith('.md/')) {
+    return false;
+  }
+
   return !excludedSlugs.some(
     (slug) => pathname.endsWith(`/${slug}/`) || pathname.endsWith(`/${slug}`),
   );
