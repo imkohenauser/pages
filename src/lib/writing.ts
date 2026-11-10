@@ -23,10 +23,4 @@ export function writingHref(entry: Writing) {
   return entry.data.externalUrl ?? `/${entry.id}/`;
 }
 
-// External entries have no local HTML page, so there is no Markdown file to pair with one.
-export function writingMarkdownPath(entry: Writing) {
-  if (entry.data.externalUrl) {
-    return undefined;
-  }
-  return `/${entry.id}.md`;
-}
+export { writingMarkdownPath } from './writing-markdown-path';

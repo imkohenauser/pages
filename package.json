@@ -20,7 +20,8 @@
     "check": "astro check",
     "test:article-markdown": "node --experimental-strip-types --test src/lib/article-markdown.test.ts",
     "test:fish": "node --experimental-strip-types --test src/lib/fish-*.test.ts",
-    "test:llms-txt": "node --experimental-strip-types --test src/lib/llms-txt.test.ts",
+    "test:llms-txt": "node --experimental-strip-types --test src/lib/llms-txt-document.test.ts",
+    "test:writing-markdown-path": "node --experimental-strip-types --test src/lib/writing-markdown-path.test.ts",
     "preview": "astro preview"
   },
   "dependencies": {

@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { articleCopyMarkdown, articleReadingSource } from './article-markdown.ts';
+import {
+  articleCopyMarkdown,
+  articleMarkdownDocument,
+  articleReadingSource,
+} from './article-markdown.ts';
 
 const mdx = `import Demo from './Demo.astro';
 import MarkdownFallback from './MarkdownFallback.astro';
@@ -37,6 +41,23 @@ test('copy Markdown retains explicit fallbacks and portable static HTML', () => 
   assert.match(result, /src="https:\/\/example\.com\/images\/example\.webp"/);
   assert.match(result, /Example caption\./);
   assert.doesNotMatch(result, /Rendered figure caption|import Demo|<Demo|<MarkdownFallback|<RenderedOnly|<PhotoComparison/);
+});
+
+test('static Markdown and Copy Markdown share absolute root-relative links', () => {
+  const body = 'See [the rebuild](/website-rebuild-2026/) and [GitHub](https://github.com/imkohenauser/pages).';
+  const baseUrl = 'https://imkohenauser.com/white-horse-motion/';
+  const absolute = 'See [the rebuild](https://imkohenauser.com/website-rebuild-2026/) and [GitHub](https://github.com/imkohenauser/pages).';
+
+  assert.equal(articleCopyMarkdown(body, 'index.mdx', baseUrl), absolute);
+  assert.equal(
+    articleMarkdownDocument('Title', 'Description', body, 'index.mdx', baseUrl),
+    `# Title\n\nDescription\n\n${absolute}`,
+  );
+  assert.equal(articleReadingSource(body, 'index.mdx'), body);
+  assert.equal(
+    articleCopyMarkdown(`\n${body}\n`, 'index.md', baseUrl),
+    `\n${absolute}\n`,
+  );
 });
 
 test('reading source excludes copy-only fallbacks', () => {
