@@ -7,8 +7,14 @@ function section(title: string, items: readonly string[]) {
   return [`## ${title}`, '', ...items, ''].join('\n');
 }
 
-const summary =
-  'Articles and project notes published on this site are HTML pages. Most writing is in Japanese; some posts are in English. Original article text is licensed under CC BY 4.0 unless noted otherwise.';
+export const llmsTxtSummary =
+  'Articles and project notes published on this site are HTML pages, and each local article also has a Markdown file. Most writing is in Japanese; some posts are in English. Original article text is licensed under CC BY 4.0 unless noted otherwise.';
+
+export function llmsItemDescription(description?: string, markdownUrl?: string) {
+  const markdown = markdownUrl ? `[Markdown](${markdownUrl})` : undefined;
+  const note = [description, markdown].filter((part) => part).join(' ');
+  return note || undefined;
+}
 
 export function renderLlmsTxtDocument(sections: {
   pages: readonly string[];
@@ -21,7 +27,7 @@ export function renderLlmsTxtDocument(sections: {
     '',
     `> ${site.bio}`,
     '',
-    summary,
+    llmsTxtSummary,
     '',
     section('Pages', sections.pages),
     section('Writing', sections.writing),

@@ -34,9 +34,47 @@ export function articleMarkdownDocument(
   return `# ${title}\n\n${description}\n\n${markdownBody}`;
 }
 
+// Root-relative links only resolve on the site. Static Markdown and Copy Markdown share this transform.
+function absoluteRootUrl(url: string, baseUrl: string) {
+  if (!url.startsWith('/') || url.startsWith('//')) return undefined;
+  return new URL(url, baseUrl).href;
+}
+
+function linkDestinationRange(source: string, url: string) {
+  const markerAt = source.lastIndexOf('](');
+  if (markerAt === -1) return undefined;
+  let index = markerAt + 2;
+  while (source[index] === ' ' || source[index] === '\t' || source[index] === '\n' || source[index] === '\r') {
+    index += 1;
+  }
+  if (source[index] === '<') index += 1;
+  if (!source.startsWith(url, index)) return undefined;
+  return { start: index, end: index + url.length };
+}
+
+function recordRootRelativeLink(
+  edits: Edit[],
+  body: string,
+  node: { url: string; position?: { start: { offset?: number | null }; end: { offset?: number | null } } },
+  baseUrl: string,
+) {
+  const absolute = absoluteRootUrl(node.url, baseUrl);
+  const start = node.position?.start.offset;
+  const end = node.position?.end.offset;
+  if (!absolute || start == null || end == null) return;
+  const relative = linkDestinationRange(body.slice(start, end), node.url);
+  if (!relative) return;
+  edits.push({
+    start: start + relative.start,
+    end: start + relative.end,
+    replacement: absolute,
+  });
+}
+
 // Strip executable MDX while retaining Markdown and static HTML, including image captions.
 function transformMdx(body: string, filePath: string | undefined, options: TransformOptions) {
-  if (!filePath?.endsWith('.mdx')) return body;
+  const isMdx = filePath?.endsWith('.mdx') ?? false;
+  if (!isMdx && !options.baseUrl) return body;
   const tree = parser.parse(body);
   const edits: Edit[] = [];
   type Node = typeof tree | (typeof tree.children)[number];
@@ -48,6 +86,9 @@ function transformMdx(body: string, filePath: string | undefined, options: Trans
   }
 
   function collect(node: Node) {
+    if (options.baseUrl && node.type === 'link') {
+      recordRootRelativeLink(edits, body, node, options.baseUrl);
+    }
     if (node.type === 'mdxjsEsm' || node.type === 'mdxFlowExpression' || node.type === 'mdxTextExpression') {
       replace(node);
       return;
@@ -132,9 +173,11 @@ function transformMdx(body: string, filePath: string | undefined, options: Trans
   }
 
   collect(tree);
+  if (!isMdx && edits.length === 0) return body;
   let result = body;
   for (const { start, end, replacement } of edits.sort((a, b) => b.start - a.start)) {
     result = result.slice(0, start) + replacement + result.slice(end);
   }
-  return result.trim();
+  // MDX stripping trims the reduced body. Plain Markdown keeps its original whitespace.
+  return isMdx ? result.trim() : result;
 }

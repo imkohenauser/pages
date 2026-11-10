@@ -1,7 +1,7 @@
-import { renderLlmsTxtDocument } from './llms-txt-document';
+import { llmsItemDescription, renderLlmsTxtDocument } from './llms-txt-document';
 import { getProjects, projectHref } from './projects';
 import { absoluteUrl, toAbsoluteUrl } from './seo';
-import { getWriting, writingHref } from './writing';
+import { getWriting, writingHref, writingMarkdownPath } from './writing';
 
 function linkItem(title: string, url: string, description?: string) {
   const note = description ? `: ${description}` : '';
@@ -24,13 +24,17 @@ export async function renderLlmsTxt() {
       linkItem('Home', absoluteUrl('/'), 'Profile, recent writing, and projects.'),
       linkItem('Writing', absoluteUrl('/writing/'), 'Index of published articles and notes.'),
     ],
-    writing: selectedWriting.map((entry) =>
-      linkItem(
+    writing: selectedWriting.map((entry) => {
+      const markdownPath = writingMarkdownPath(entry);
+      return linkItem(
         entry.data.title,
         toAbsoluteUrl(writingHref(entry)),
-        entry.data.description,
-      ),
-    ),
+        llmsItemDescription(
+          entry.data.description,
+          markdownPath ? absoluteUrl(markdownPath) : undefined,
+        ),
+      );
+    }),
     projects: selectedProjects.map((entry) =>
       linkItem(
         entry.data.title,

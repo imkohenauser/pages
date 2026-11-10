@@ -24,4 +24,6 @@ jobs:
       - run: npm run check
       - run: npm run test:fish
       - run: npm run test:llms-txt
+      - run: npm run test:article-markdown
+      - run: npm run test:writing-markdown-path
       - run: npm run build
